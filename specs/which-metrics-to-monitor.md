@@ -1,11 +1,29 @@
+# Summary
+
+- Disk
+    - Disk.iops.read [#] [PHYS,VIRT]
+    - Disk.iops.write [#] [PHYS,VIRT]
+    - Disk.throughput.read [MB] [PHYS,VIRT]
+    - Disk.throughput.write [MB] [PHYS,VIRT]
+- Network
+    - Network.packets.rx [#] [PHYS,VIRT]
+    - Network.packets.tx [#] [PHYS,VIRT]
+    - Network.throughput.incoming [MB] [PHYS,VIRT]
+    - Network.throughput.outgoing [MB] [PHYS,VIRT]
+- Host machine
+    - Machine.memory.ram.available [MB] [PHYS]
+    - Machine.memory.swap.left [MB] [PHYS]
+    - Machine.memory.swap.used [MB] [PHYS]
+    - Machine.CPU.contextswitch [#] [PHYS]
+
 # Disk
 
 ## Load
 
-- Disk.iops.read
-- Disk.iops.write
-- Disk.throughput.read
-- Disk.throughput.write
+- Disk.iops.read [#] [PHYS,VIRT]
+- Disk.iops.write [#] [PHYS,VIRT]
+- Disk.throughput.read [MB] [PHYS,VIRT]
+- Disk.throughput.write [MB] [PHYS,VIRT]
 
 The metrics that will be reading for iops as wel as for throughput will always be growing, so we'll have to write the logic ourselves to transform them into activity over the last x seconds. This should normally be taken care of by the lua scripts in the redis key value store.
 
@@ -49,16 +67,12 @@ In [45]: vm.blockStats('/mnt/vmstor/vm-12/base_image.raw')
 Out[45]: (596986L, 2453889024L, 5125L, 2538033152L, 18446744073709551615L)
 ```
 
-## Disk.orphans.count
-
-An orphaned disk is a disk that is not tied to a machine any more.
-
 # Network
 
-- Network.packets.rx (phys & virt)
-- Network.packets.tx (phys & virt)
-- Network.throughput.incoming (phys & virt)
-- Network.throughput.outgoing (phys & virt)
+- Network.packets.rx [#] [PHYS,VIRT]
+- Network.packets.tx [#] [PHYS,VIRT]
+- Network.throughput.incoming [MB] [PHYS,VIRT]
+- Network.throughput.outgoing [MB] [PHYS,VIRT]
 
 
 Metrics of Network will also be ever growing, so the same comment applies on Network like on Disk.
@@ -70,6 +84,46 @@ cat /sys/class/net/vm-138-00d5/statistics/rx_packets
 8769876987
 ```
 
-Todo:
-- Machine.memory.left (phys)
-- Machine.CPU.contextswitch (phys)
+# Memory
+
+We only monitor memory of the physical machine.
+
+The following are important:
+
+- Machine.memory.ram.available [MB] [PHYS]
+- Machine.memory.swap.left [MB] [PHYS]
+- Machine.memory.swap.used [MB] [PHYS]
+
+### Implementation hints
+
+```
+cat /proc/meminfo
+root@fastgeert-VirtualBox:~# cat /proc/meminfo
+...
+MemAvailable:    1821220 kB
+...
+SwapTotal:       4092924 kB
+SwapFree:        4092924 kB
+...
+```
+
+# CPU
+
+- Machine.CPU.contextswitch [#] [PHYS]
+
+### Implementation hints
+
+See http://www.linuxhowtos.org/System/procstat.htm
+
+```
+> cat /proc/stat
+cpu  2255 34 2290 22625563 6290 127 456
+cpu0 1132 34 1441 11311718 3675 127 438
+cpu1 1123 0 849 11313845 2614 0 18
+intr 114930548 113199788 3 0 5 263 0 4 [... lots more numbers ...]
+ctxt 1990473
+btime 1062191376
+processes 2915
+procs_running 1
+procs_blocked 0
+```
