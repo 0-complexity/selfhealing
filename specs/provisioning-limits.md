@@ -2,17 +2,31 @@
 
 In order to protect the cloud infrastructure from its own consumers we are going to make sure that the deployed resources cannot drain all capacity from the cloud infrastructure, disabling the cloud infrastructure itself as such.
 
+## General principles
+
+- define the minimum amount of resources required by the G8OS to function properly on each of the nodes
+- define the maximum amount of resources that is allowed to be used by both G8OS and guests (can be a % of total resources to be configured at install time per node)
+- make sure this amount of resources is guaranteed on each of the nodes
+- agents measure the resource utilization and throttle the utilization by guests to make sure that minimum resources are always guaranteed for the G8OS
+- this allows for thin provisioning and thus oversubscription
+- @TODO later - add a scheduler that provides intelligent provisioning of resources on the nodes
+
 ## Network
 
-?? Is this possible via OpenvSwitch ??
+- resources to be constraint are packets/sec Tx / Rx for each of the interfaces
+- ?? Is this possible via OpenvSwitch ??
 
 ## CPU
 
-Via vcpu pinning we can make sure that guests are not able to consume every bit of cpu power preventing the cloud itself from functioning, by freeing up **G8.minimum-reserved-host-cpu**.
+- resources to be constraint is CPU utilization
+- we should do thin provisioning
+- Via vcpu pinning we can make sure that guests are not able to consume every bit of cpu power preventing the cloud itself from functioning, by freeing up **G8.minimum-reserved-host-cpu**.
 
 ## Memory
 
-Before booting up a virtual machine we need to check that the combined assigned memory sizes to the guests leaves at least **G8.minimum-reserved-host-os-memory** MB of memory available to the host operating system.
+- resources to be constraint is used memory per node
+- no thin provisioning, Memory does not get oversubscribed
+- Before booting up a virtual machine we need to check that the combined assigned memory sizes to the guests leaves at least **G8.minimum-reserved-host-os-memory** MB of memory available to the host operating system.
 To make sure that only 1 process can do this check simultaniously this process should try to exclusifly lock some file before executing this task, and only free-up the lock file after the guest has been started.
 
 ## G8 provisioning limits
