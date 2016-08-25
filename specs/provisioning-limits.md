@@ -13,8 +13,7 @@ In order to protect the cloud infrastructure from its own consumers we are going
 
 ## Network
 
-- resources to be constraint are packets/sec Tx / Rx for each of the interfaces
-- ?? Is this possible via OpenvSwitch ??
+No need to constrain the network because mgmt traffic for physical machines goes over a reserved 1GB backplane with a separate reserved switch connecting the G8 nodes and controller together in one mgmt lan.
 
 ## CPU
 
@@ -33,4 +32,3 @@ To make sure that only 1 process can do this check simultaniously this process s
 
 - G8.minimum-reserved-host-os-memory [MB]
 - G8.minimum-reserved-host-cpu [#]
-- G8.minimum-reserved-host-networking-bandwidth [MB/s]

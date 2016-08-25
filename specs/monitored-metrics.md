@@ -10,6 +10,8 @@
     - Network.packets.tx [#] [PHYS,VIRT]
     - Network.throughput.incoming [MB] [PHYS,VIRT]
     - Network.throughput.outgoing [MB] [PHYS,VIRT]
+- CPU
+    - Machine.CPU.utilisation [s] [PHYS,VIRT]
 - Host machine
     - Machine.memory.ram.available [MB] [PHYS]
     - Machine.memory.swap.left [MB] [PHYS]
