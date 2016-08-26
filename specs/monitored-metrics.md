@@ -112,8 +112,9 @@ SwapFree:        4092924 kB
 # CPU
 
 - Machine.CPU.contextswitch [#] [PHYS]
+- Machine.CPU.utilisation [s] [PHYS,VIRT]
 
-### Implementation hints
+### Implementation hints 4 contextswitch
 
 See http://www.linuxhowtos.org/System/procstat.htm
 
@@ -128,4 +129,24 @@ btime 1062191376
 processes 2915
 procs_running 1
 procs_blocked 0
+```
+
+### Implementation hints 4 utilisation on virtual machines
+
+```
+root@cpu-01:~# virsh dominfo 6
+Id:             6
+Name:           vm-1
+UUID:           eab0aa16-8faf-46b5-a85a-d5da8e5132a8
+OS Type:        hvm
+State:          running
+CPU(s):         1
+CPU time:       3381.0s
+Max memory:     1000448 KiB
+Used memory:    1000000 KiB
+Persistent:     yes
+Autostart:      disable
+Managed save:   no
+Security model: none
+Security DOI:   0
 ```
