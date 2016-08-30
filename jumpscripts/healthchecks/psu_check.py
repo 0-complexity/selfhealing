@@ -33,7 +33,7 @@ def action():
                 if status != "ok"
                     results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s"%id_ ))
                 else:
-                    results.append(dict(state='OK', category=category, message="Power is okay on %s"%id_))
+                    results.append(dict(state='OK', category=category, message="Power supply (%s) is OK %s"%id_))
     return results
 
 if __name__ == '__main__':
