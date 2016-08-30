@@ -1,6 +1,7 @@
 from JumpScale import j
-descr = """
 
+descr = """
+Checks the power redundancy of a node using ipmitool.
 """
 
 organization = 'cloudscalers'
@@ -16,8 +17,23 @@ log = True
 
 def action():
     results = []
+    rc, _ = j.system.process.execute("which ipmitool", dieOnNonZeroExitCode=False)
+    #command doesn't exist.
+    if rc != 0:
+        #rc, out = j.system.process.execute(""" ipmitool -c sdr type "Power Supply" | awk 'BEGIN {FS=","; OFS=":"}; { print $1, $3}'""",dieOnNonZeroExitCode=False)
+        rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False)
+        if out:
+            # SAMPLE:
+            # root@du-conv-3-01:~# ipmitool -c sdr type "Power Supply"
+            # PS1 Status,C8h,ok,10.1,Presence detected
+            # PS2 Status,C9h,ok,10.2,Presence detected
+            for line in out.splitlines():
+                id_, status = [part.strip() for part in line.split(",")]
+                if status != "ok"
+                    results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s"%id_ ))
+                else:
+                    results.append(dict(state='OK', category=category, message="No power redundancy"))
     return results
-
 
 if __name__ == '__main__':
     print action()
