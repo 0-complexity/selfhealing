@@ -29,11 +29,11 @@ def action():
             # PS2 Status,C9h,ok,10.2,Presence detected
             for line in out.splitlines():
                 parts = [part.strip() for part in line.split(",")]
-                id_ , status = parts[0] , parts[2]
+                id_ , status = parts[0], parts[2]
                 if status != "ok"
                     results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s"%id_ ))
                 else:
-                    results.append(dict(state='OK', category=category, message="No power redundancy"))
+                    results.append(dict(state='OK', category=category, message="Power is okay on %s"%id_))
     return results
 
 if __name__ == '__main__':
