@@ -16,24 +16,60 @@ queue = 'process'
 log = True
 
 def action():
+    category = "Power"
     results = []
     rc, _ = j.system.process.execute("which ipmitool", dieOnNonZeroExitCode=False)
-    #command doesn't exist.
+    ps_errmsgs = """
+Power Supply AC lost
+Failure detected
+Predictive failure
+AC lost or out-of-range
+AC out-of-range, but present
+Config Error
+Power Supply Inactive
+    """.splitlines()
+    ps_errmsgs = [x.lower() for x in ps_errmsgs if x.strip()]
+    linehaserrmsg = lambda line: any([x in line for x in ps_errmsgs])
     if rc != 0:
-        #rc, out = j.system.process.execute(""" ipmitool -c sdr type "Power Supply" | awk 'BEGIN {FS=","; OFS=":"}; { print $1, $3}'""",dieOnNonZeroExitCode=False)
         rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False)
         if out:
-            # SAMPLE:
+            # SAMPLE 1:
             # root@du-conv-3-01:~# ipmitool -c sdr type "Power Supply"
             # PS1 Status,C8h,ok,10.1,Presence detected
             # PS2 Status,C9h,ok,10.2,Presence detected
+
+            #SAMPLE 2:
+            # root@stor-04:~# ipmitool -c sdr type "Power Supply"
+            # PSU1_Status,DEh,ok,10.1,Presence detected
+            # PSU2_Status,DFh,ns,10.2,No Reading
+            # PSU3_Status,E0h,ok,10.3,Presence detected
+            # PSU4_Status,E1h,ns,10.4,No Reading
+            # PSU Redundancy,E6h,ok,21.1,Fully Redundant
+
+            #SAMPPLE 3:
+            # root@stor-01:~# ipmitool -c sdr type "Power Supply"
+            # PSU1_Status,DEh,ok,10.1,Presence detected, Power Supply AC lost
+            # PSU2_Status,DFh,ns,10.2,No Reading
+            # PSU3_Status,E0h,ok,10.3,Presence detected
+            # PSU4_Status,E1h,ok,10.4,Presence detected
+            # PSU Redundancy,E6h,ok,21.1,Redundancy Lost
+            # PSU Alert,16h,ns,208.1,Event-Only
+
+            psu_redun_in_out = "PSU Redundancy".lower() in out.lower()
+            is_fully_redundant = True if "fully redundant" in out.lower() else False
             for line in out.splitlines():
-                parts = [part.strip() for part in line.split(",")]
-                id_ , status = parts[0], parts[2]
-                if status != "ok"
-                    results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s"%id_ ))
-                else:
-                    results.append(dict(state='OK', category=category, message="Power supply (%s) is OK %s"%id_))
+                if "status" in line.lower():
+                    parts = [part.strip() for part in line.split(",")]
+                    id_ , status, presence = parts[0], parts[2], parts[-1]
+                    id_ = id_.strip("Status").strip("_").strip() # clean the power supply name.
+                    if linehaserrmsg(line):
+                        if psu_redun_in_out and is_fully_redundant:
+                            results.append(dict(state='SKIPPED', category=category, message="Power redundancy problem on %s (%s)"%(id_, presence )))
+                        else:
+                            results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)"%(id_, presence )))
+                    else:
+                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK %s"%id_))
+
     return results
 
 if __name__ == '__main__':
