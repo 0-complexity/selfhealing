@@ -23,9 +23,8 @@ roles = []
 def action():
     import psutil
     import os
-    import statsd
-    statscl = statsd.StatsClient()
-    pipe = statscl.pipeline()
+    rediscl = j.clients.redis.getByInstance('system')
+    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     results={}
     val=psutil.cpu_percent()
@@ -74,9 +73,10 @@ def action():
     results["cpu.num_ctx_switches"]=num_ctx_switches
 
     for key, value in results.iteritems():
-        pipe.gauge("%s_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, key), value)
+        key = "%s_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, key)
+        tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+        aggregatorcl.measure(key, tags, value, timestamp=None)
 
-    pipe.send()
     return results
 
 if __name__ == '__main__':

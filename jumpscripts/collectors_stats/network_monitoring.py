@@ -19,10 +19,10 @@ roles = []
 log=False
 
 def action():
-    import statsd
-    stats = statsd.StatsClient()
-    pipe = stats.pipeline()
-    counters=psutil.network_io_counters(True)
+    rediscl = j.clients.redis.getByInstance('system')
+    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+
+    counters = psutil.network_io_counters(True)
     pattern = None
     if j.application.config.exists('gridmonitoring.nic.pattern'):
         pattern = j.application.config.getStr('gridmonitoring.nic.pattern')
@@ -43,8 +43,9 @@ def action():
         result['dropin'] = dropin
         result['dropout'] = dropout
         for key, value in result.iteritems():
-            pipe.gauge("%s_%s_nic_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic, key), value)
-    pipe.send()
+            key = "%s_%s_nic_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic, key)
+            tags = 'gid:%d nid:%d nic:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic)
+            aggregatorcl.measure(key, tags, value, timestamp=None)
 
 if __name__ == '__main__':
     action()

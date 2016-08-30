@@ -22,23 +22,23 @@ roles = []
 
 def action():
     import JumpScale.lib.diskmanager
-    import statsd
     import psutil
 
     dcl = j.clients.osis.getCategory(j.core.osis.client, "system", "disk")
     rediscl = j.clients.redis.getByInstance('system')
-    stats = statsd.StatsClient()
-    pipe = stats.pipeline()
+    rediscl = j.clients.redis.getByInstance('system')
+    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     disks = j.system.platform.diskmanager.partitionsFind(mounted=True, prefix='', minsize=0, maxsize=None)
 
     #disk counters
     counters=psutil.disk_io_counters(True)
+    all_results = {}
 
     for disk in disks:
 
         results = {'time_read': 0, 'time_write': 0, 'count_read': 0, 'count_write': 0,
-                   'kbytes_read': 0, 'kbytes_write': 0, 
+                   'kbytes_read': 0, 'kbytes_write': 0,
                    'space_free_mb': 0, 'space_used_mb': 0, 'space_percent': 0}
         path=disk.path.replace("/dev/","")
 
@@ -73,12 +73,17 @@ def action():
             rediscl.hset('disks', path, ckey)
 
         for key, value in results.iteritems():
-            pipe.gauge("%s_%s_disk_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, path, key), value)
+            key = "%s_%s_dev_%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid, path, key)
+            tags = 'gid:%d nid:%d device:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, path)
+            aggregatorcl.measure(key, tags, value, timestamp=None)
 
-    result = pipe.send()
-    return {'results': result, 'errors': []}
+        all_results[path] = results
+
+    return {'results': all_results, 'errors': []}
 
 if __name__ == '__main__':
     import JumpScale.grid.osis
     j.core.osis.client = j.clients.osis.getByInstance('processmanager')
-    action()
+    rt = action()
+    import yaml
+    print yaml.dump(rt['results'])
