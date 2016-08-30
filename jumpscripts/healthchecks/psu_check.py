@@ -28,7 +28,8 @@ def action():
             # PS1 Status,C8h,ok,10.1,Presence detected
             # PS2 Status,C9h,ok,10.2,Presence detected
             for line in out.splitlines():
-                id_, status = [part.strip() for part in line.split(",")]
+                parts = [part.strip() for part in line.split(",")]
+                id_ , status = parts[0] , parts[2]
                 if status != "ok"
                     results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s"%id_ ))
                 else:
