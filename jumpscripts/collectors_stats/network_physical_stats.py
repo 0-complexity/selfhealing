@@ -24,6 +24,7 @@ def action():
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     counters = psutil.network_io_counters(True)
+    now = j.base.time.getTimeEpoch()
     pattern = None
     if j.application.config.exists('gridmonitoring.nic.pattern'):
         pattern = j.application.config.getStr('gridmonitoring.nic.pattern')
@@ -46,7 +47,7 @@ def action():
         for key, value in result.iteritems():
             key = "%s_phys.%d.%d.%s" % (key, j.application.whoAmI.gid, j.application.whoAmI.nid, nic)
             tags = 'gid:%d nid:%d nic:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic)
-            aggregatorcl.measureDiff(key, tags, value, timestamp=None)
+            aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
         all_results[nic] = result
 

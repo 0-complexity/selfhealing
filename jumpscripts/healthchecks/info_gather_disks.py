@@ -23,6 +23,7 @@ period = 600
 log = True
 
 
+
 def action():
     import JumpScale.lib.diskmanager
     result = dict()
@@ -45,6 +46,16 @@ def action():
         else:
             return '%s %s' % (disk.path, disk.model)
 
+    def getLogsDisks(disks):
+        """Return a list of disks that might have logs written to it"""
+        disks = sorted(disks, key=lambda d: d.mountpoint)
+        disks = filter(disks, lambda d: d.mountpoint in ['/', '/opt', '/var'])
+        if len(disks) > 1:
+            disks = disks[1:]
+        return disks
+
+    logsdisks = getLogsDisks(disks)
+
     results = list()
     for disk in filter(diskfilter, disks):
         result = {'category': 'Disks'}
@@ -54,6 +65,9 @@ def action():
         result['message'] = disktoStr(disk)
         if disk.free and disk.size:
             freepercent = (disk.free / float(disk.size)) * 100
+            if checkusage and disk in logsdisks and (freepercent < 20):
+                jumpscript = j.clients.redisworker.getJumpscriptFromName('0-complexity', 'logs_truncate')
+                j.clients.redisworker.execJumpscript(jumpscript=jumpscript, mountpoint=disk.mountpoint)
             if checkusage and (freepercent < 10):
                 j.errorconditionhandler.raiseOperationalWarning(result['message'], 'monitoring')
                 result['state'] = 'WARNING'
