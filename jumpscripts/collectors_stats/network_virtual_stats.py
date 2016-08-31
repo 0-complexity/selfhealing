@@ -20,18 +20,26 @@ log = False
 
 
 def action():
+    import libvirt
+
+    connection = libvirt.open()
     scl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "stack")
     vmcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "vmachine")
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     # search stackid of the node where we execute this script
-    stack = scl.simpleSearch({'referenceId': str(j.application.whoAmI.nid)})[0]
+    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
-    vms = vmcl.simpleSearch({'stackId': stack['id'], 'status': 'RUNNING'})
+    domains = connection.listAllDomains()
 
     all_results = {}
-    for vm in vms:
+    for domain in domains:
+
+        vm = next(iter(vmcl.search({'referenceId': domain.UUIDString()})[1:]), None)
+        if vm is None:
+            continue
+
         for nic in vm['nics']:
             mac = nic['macAddress']
             path = j.system.fs.joinPaths('/sys/class/net', nic['deviceName'], 'statistics')

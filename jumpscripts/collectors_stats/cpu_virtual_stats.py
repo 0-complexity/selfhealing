@@ -31,20 +31,24 @@ def action():
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     # search stackid of the node where we execute this script
-    stack = scl.simpleSearch({'referenceId': str(j.application.whoAmI.nid)})[0]
+    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
-    vms = vmcl.simpleSearch({'stackId': stack['id'], 'status': 'RUNNING'})
+    domains = connection.listAllDomains()
 
     all_results = {}
-    for vm in vms:
+    for domain in domains:
         result = {}
-        domain = connection.lookupByUUIDString(vm['referenceId'])
+
+        vm = next(iter(vmcl.search({'referenceId': domain.UUIDString()})[1:]), None)
+        if vm is None:
+            continue
+
         state, maxMem, memory, nrVirtCpu, cpuTime, = domain.info()
         now = j.base.time.getTimeEpoch()
 
         key = 'machine.CPU.utilisation.virt.%d' % vm['id']
         value = int(cpuTime)
-        tags = 'gid:%d nid:%d vmid:' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
+        tags = 'gid:%d nid:%d vmid:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
         aggregatorcl.measure(key, tags, value, timestamp=now)
 
         all_results[vm['id']] = value
@@ -54,6 +58,6 @@ def action():
 if __name__ == '__main__':
     import JumpScale.grid.osis
     j.core.osis.client = j.clients.osis.getByInstance('main')
-    rt = action()
+    results = action()
     import yaml
-    print yaml.dump(rt['results'])
+    print yaml.dump(results)

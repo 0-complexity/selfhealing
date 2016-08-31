@@ -32,14 +32,17 @@ def action():
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     # search stackid of the node where we execute this script
-    stack = scl.simpleSearch({'referenceId': str(j.application.whoAmI.nid)})[0]
+    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
-    vms = vmcl.simpleSearch({'stackId': stack['id'], 'status': 'RUNNING'})
+    domains = connection.list_domains()
 
     all_results = {}
-    for vm in vms:
+    for domain in domains:
+        vm = next(iter(vmcl.search({'referenceId': domain['id']})[1:]), None)
+        if vm is None:
+            continue
 
-        domain = connection.get_domain(vm['referenceId'])
+        domain = connection.get_domain(domain['id'])
         domaindisks = list(connection.get_domain_disks(domain['XMLDesc']))
 
         # TODO move get_domain_disk into LibvirtUtil
@@ -53,16 +56,14 @@ def action():
                         return target.attrib['dev']
 
         # get all the disks attached to a vm
-        disks = dcl.search({'id': {'$in': vm['disks']}})[1]
-        if isinstance(disks, dict):
-            disks = [disks]
+        disks = dcl.search({'id': {'$in': vm['disks']}})[1:]
 
         # get statistics for each disks
         for disk in disks:
             parsed_url = urlparse.urlparse(disk['referenceId'])
             dev = get_domain_disk(parsed_url.path)
 
-            libvirt_domain = connection._get_domain(vm['referenceId'])
+            libvirt_domain = connection._get_domain(domain['id'])
             stats = libvirt_domain.blockStats(dev)
             now = j.base.time.getTimeEpoch()
             read_count, read_bytes, write_count, write_bytes, _ = stats
