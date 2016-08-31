@@ -20,9 +20,11 @@ log = True
 def action(mountpoint='/opt/'):
     def callback(_, file):
         j.logger.log('truncate "%s"' % file, 1)
-        code, _ = j.system.process.execute('truncate -s 0 %s' % file, dieOnNonZeroExitCode=False)
-        if code != 0:
-            j.logger.log('failed to truncate "%s"' % file, 2)
+        try:
+            with open(file, 'w') as f:
+                f.truncate() # open in write mode would truncate the file anyway but just to make sure.
+        except Exception as e:
+            j.logger.log('failed to truncate "%s": %s' % (file, e), 2)
 
     j.system.fswalker.walk(mountpoint, callback, pathRegexIncludes=['.*\.log$'])
 
