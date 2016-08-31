@@ -28,6 +28,7 @@ def action():
 
     results = {}
     memory = psutil.virtual_memory()
+    now = j.base.time.getTimeEpoch()
     results['machine.memory.ram.available'] = round(memory.available / (1024.0 * 1024.0), 2)
 
     swap = psutil.swap_memory()
@@ -37,7 +38,7 @@ def action():
     for key, value in results.iteritems():
         key = "%s_%d_%d" % (key, j.application.whoAmI.gid, j.application.whoAmI.nid)
         tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
-        aggregatorcl.measure(key, tags, value, timestamp=None)
+        aggregatorcl.measure(key, tags, value, timestamp=now)
 
     return results
 
