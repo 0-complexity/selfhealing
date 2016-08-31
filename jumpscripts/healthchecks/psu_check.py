@@ -68,7 +68,7 @@ Power Supply Inactive
                         else:
                             results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)"%(id_, presence )))
                     else:
-                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK %s"%id_))
+                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK"%id_))
 
     return results
 

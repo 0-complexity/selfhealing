@@ -21,6 +21,11 @@ No need to constrain the network because mgmt traffic for physical machines goes
 - we should do thin provisioning
 - Via vcpu pinning we can make sure that guests are not able to consume every bit of cpu power preventing the cloud itself from functioning, by freeing up **G8.minimum-reserved-host-cpu**.
 
+**Interesting links:**
+- [vcpu pinning](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization_Tuning_and_Optimization_Guide/sect-Virtualization_Tuning_Optimization_Guide-NUMA-NUMA_and_libvirt-vcpu_pinning_with_virsh.html)
+- [emulator pinning](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Virtualization_Tuning_and_Optimization_Guide/sect-Virtualization_Tuning_Optimization_Guide-NUMA-NUMA_and_libvirt-domain_cpu_pinning_with_virsh.html)
+- https://pythonhosted.org/psutil/#cpu
+
 ## Memory
 
 - resources to be constraint is used memory per node
@@ -31,4 +36,6 @@ To make sure that only 1 process can do this check simultaniously this process s
 ## G8 provisioning limits
 
 - G8.minimum-reserved-host-os-memory [MB]
+  - For now hardcode to 16GB RAM
 - G8.minimum-reserved-host-cpu [#]
+  - For now hardcode to 4 CPUs (2 cores)
