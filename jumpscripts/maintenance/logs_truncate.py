@@ -19,8 +19,12 @@ log = True
 
 def action(mountpoint='/opt/'):
     def callback(_, file):
-        code, _ = j.system.prcess.execute('truncate -s 0 %s' % file, dieOnNonZeroExitCode=False)
+        j.logger.log('truncate "%s"' % file, 1)
+        code, _ = j.system.process.execute('truncate -s 0 %s' % file, dieOnNonZeroExitCode=False)
         if code != 0:
             j.logger.log('failed to truncate "%s"' % file, 2)
 
     j.system.fswalker.walk(mountpoint, callback, pathRegexIncludes=['.*\.log$'])
+
+if __name__ == '__main__':
+    action('/opt/jumpscale7/')

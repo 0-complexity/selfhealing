@@ -49,7 +49,7 @@ def action():
     def getLogsDisks(disks):
         """Return a list of disks that might have logs written to it"""
         disks = sorted(disks, key=lambda d: d.mountpoint)
-        disks = filter(disks, lambda d: d.mountpoint in ['/', '/opt', '/var'])
+        disks = filter(lambda d: d.mountpoint.rstrip('/') in ['', '/opt', '/var'], disks)
         if len(disks) > 1:
             disks = disks[1:]
         return disks
