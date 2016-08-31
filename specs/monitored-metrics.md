@@ -1,33 +1,43 @@
 # Summary
 
 - Disk
-    - Disk.iops.read [#] [PHYS,VIRT]
-    - Disk.iops.write [#] [PHYS,VIRT]
-    - Disk.throughput.read [MB] [PHYS,VIRT]
-    - Disk.throughput.write [MB] [PHYS,VIRT]
+    - disk.iops.read [#] [PHYS,VIRT]
+    - disk.iops.write [#] [PHYS,VIRT]
+    - disk.throughput.read [MB] [PHYS,VIRT]
+    - disk.throughput.write [MB] [PHYS,VIRT]
 - Network
-    - Network.packets.rx [#] [PHYS,VIRT]
-    - Network.packets.tx [#] [PHYS,VIRT]
-    - Network.throughput.incoming [MB] [PHYS,VIRT]
-    - Network.throughput.outgoing [MB] [PHYS,VIRT]
+    - network.packets.rx [#] [PHYS,VIRT]
+    - network.packets.tx [#] [PHYS,VIRT]
+    - network.throughput.incoming [MB] [PHYS,VIRT]
+    - network.throughput.outgoing [MB] [PHYS,VIRT]
 - CPU
-    - Machine.CPU.utilisation [s] [PHYS,VIRT]
+    - machine.CPU.utilisation [s] [PHYS,VIRT]
 - Host machine
-    - Machine.memory.ram.available [MB] [PHYS]
-    - Machine.memory.swap.left [MB] [PHYS]
-    - Machine.memory.swap.used [MB] [PHYS]
-    - Machine.CPU.contextswitch [#] [PHYS]
+    - machine.memory.ram.available [MB] [PHYS]
+    - machine.memory.swap.left [MB] [PHYS]
+    - machine.memory.swap.used [MB] [PHYS]
+    - machine.CPU.contextswitch [#] [PHYS]
 
 # Disk
 
-## Load
+- disk.iops.read [#] [PHYS,VIRT]
+- disk.iops.write [#] [PHYS,VIRT]
+- disk.throughput.read [MB] [PHYS,VIRT]
+- disk.throughput.write [MB] [PHYS,VIRT]
 
-- Disk.iops.read [#] [PHYS,VIRT]
-- Disk.iops.write [#] [PHYS,VIRT]
-- Disk.throughput.read [MB] [PHYS,VIRT]
-- Disk.throughput.write [MB] [PHYS,VIRT]
+## Notation
 
-The metrics that will be reading for iops as wel as for throughput will always be growing, so we'll have to write the logic ourselves to transform them into activity over the last x seconds. This should normally be taken care of by the lua scripts in the redis key value store.
+For physical machines we will be using the gid/nid combination to identify the machine and the device name to identify the monitored device.
+
+For virtual machines we will be using the vdiskid from the model. The metric collection jumpscript on the physical node will do the matching between the model and the deployed vdisks and cache the result into the local redis to not overload the model server.
+
+- physical: disk.iops.read.phys.[gid].[nid].[device_name]
+- virtual: disk.iops.read.virt.[vdiskid]
+- example:
+  - disk.iops.read.phys.2.3.sda = 238
+  - disk.iops.read.virt.45 = 2568
+
+The metrics for iops as wel as for throughput will always be growing, so we'll have to write the logic ourselves to transform them into activity over the last x seconds. This should normally be taken care of by the lua scripts in the redis key value store.
 
 ### Implementation hints on Physical machines
 
@@ -71,11 +81,22 @@ Out[45]: (596986L, 2453889024L, 5125L, 2538033152L, 18446744073709551615L)
 
 # Network
 
-- Network.packets.rx [#] [PHYS,VIRT]
-- Network.packets.tx [#] [PHYS,VIRT]
-- Network.throughput.incoming [MB] [PHYS,VIRT]
-- Network.throughput.outgoing [MB] [PHYS,VIRT]
+- network.packets.rx [#] [PHYS,VIRT]
+- network.packets.tx [#] [PHYS,VIRT]
+- network.throughput.incoming [MB] [PHYS,VIRT]
+- network.throughput.outgoing [MB] [PHYS,VIRT]
 
+## Notation
+
+For physical machines we will be using the gid/nid combination to identify the machine and the device name to identify the monitored device.
+
+For virtual machines we will be using the macaddress which allows to easily look it up in the model afterwards
+
+- physical: network.packets.rx.phys.[gid].[nid].[device_name]
+- virtual: network.packets.rx.virt.[macaddress]
+example:
+- network.packets.rx.phys.2.3.eth0 = 238
+- network.packets.rx.virt.45 = 2568
 
 Metrics of Network will also be ever growing, so the same comment applies on Network like on Disk.
 
@@ -92,9 +113,17 @@ We only monitor memory of the physical machine.
 
 The following are important:
 
-- Machine.memory.ram.available [MB] [PHYS]
-- Machine.memory.swap.left [MB] [PHYS]
-- Machine.memory.swap.used [MB] [PHYS]
+- machine.memory.ram.available [MB] [PHYS]
+- machine.memory.swap.left [MB] [PHYS]
+- machine.memory.swap.used [MB] [PHYS]
+
+## Notation
+
+For physical machines we will be using the gid/nid combination to identify the machine.
+
+- physical: machine.memory.ram.available.phys.[gid].[nid]
+example:
+- machine.memory.ram.available.phys.2.3 = 238
 
 ### Implementation hints
 
@@ -111,8 +140,22 @@ SwapFree:        4092924 kB
 
 # CPU
 
-- Machine.CPU.contextswitch [#] [PHYS]
-- Machine.CPU.utilisation [s] [PHYS,VIRT]
+- machine.CPU.contextswitch [#] [PHYS]
+- machine.CPU.utilisation [s] [PHYS,VIRT]
+
+## Notation
+
+For physical machines we will be using the gid/nid combination to identify the machine and the cpu number to identify the monitored device.
+
+For virtual machines we will be using the vmid from the model which allows to easily look it up in the model afterwards.
+
+- physical:
+  - machine.CPU.contextswitch.phys.[gid].[nid]
+  - machine.CPU.utilisation.phys.[gid].[nid].[cpu-number]
+  - machine.CPU.utilisation.virt.[vmid]
+example:
+- machine.CPU.contextswitch.phys.2.3 = 238
+
 
 ### Implementation hints 4 contextswitch
 
