@@ -34,10 +34,10 @@ def action():
                 id_ , sensorstatus, message = parts[0], parts[2], parts[-1]
                 if sensorstatus == "ns" and "no reading" in message.lower():
                     results.append(dict(state='SKIPPED', category=category, message="No reading on %s (%s)"%(id_, message)))
-                elif sensorstatus != "ok" and "no reading" not in message.lower()::
+                elif sensorstatus != "ok" and "no reading" not in message.lower():
                     results.append(dict(state='WARNING', category=category, message="Fan %s has problem (%s)"%(id_, message)))
                 else:
-                    results.append(dict(state='OK', category=category, message="(%s) is OK: %s"%(id_, message))
+                    results.append(dict(state='OK', category=category, message="(%s) is OK: %s"%(id_, message)))
 
     return results
 
