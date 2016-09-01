@@ -11,7 +11,7 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['master']
-period = 1800 # 30mins.
+period = 1800  # 30mins.
 enable = True
 async = True
 queue = 'process'
@@ -22,7 +22,7 @@ def action():
     category = "Network"
     results = []
     ccl = j.clients.osis.getNamespace('cloudbroker')
-    pools = ccl.publicipv4pool.search(query={})[1:] #ignore the count of search result.
+    pools = ccl.publicipv4pool.search(query={})[1:]  # ignore the count of search result.
 
     for pool in pools:
         network = netaddr.IPNetwork(pool['id'])
@@ -36,13 +36,21 @@ def action():
                 if nic['type'] == 'PUBLIC' and netaddr.IPNetwork(nic['ipAddress']).ip in network:
                     usedips_count += 1
 
+        percent = (float(usedips_count) / (usedips_count + pubips_count)) * 100
+        if percent > 95:
+            results.append(dict(state='ERROR', category=category,
+                                message="Used public IPs on {poolid} passed the dangerous threshold. ({percent:.0f}%)"
+                                .format(poolid=poolid, percent=percent)))
+        elif percent > 80:
+            results.append(dict(state='WARNING', category=category,
+                                message="Used public IPs on {poolid} passed the critical threshold. ({percent:.0f}%)"
+                                .format(poolid=poolid, percent=percent)))
 
-        critical = 0.8 < (float(usedips_count)/usedips_count+pubips_count) < 0.95
-        dangerous = 0.95 < (float(usedips_count)/usedips_count+pubips_count)
-        if critical:
-            results.append(dict(state='WARNING', category=category, message="used public IPs on {poolid} passed the critical threshold. (80%)".format(poolid=poolid)))
-        if dangerous:
-            results.append(dict(state='ERROR', category=category, message="used public IPs on {poolid} passed the dangerous threshold. (95%)".format(poolid=poolid)))
+        else:
+            results.append(dict(state='OK', category=category,
+                                message="Used public IPs on {poolid} ({percent:.0f}%)"
+                                .format(poolid=poolid, percent=percent)))
+
     return results
 
 if __name__ == "__main__":
