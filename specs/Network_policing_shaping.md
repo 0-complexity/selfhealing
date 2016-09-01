@@ -61,16 +61,22 @@ tc qdisc add dev ${iface} root handle 1: prio
 
 # classify traffic
 # rate traffic to vm for interactive (22,3389)
-tc qdisc add dev ${iface} parent 1:2 handle 20: tbf rate ${rate} buffer 1600 limit 3000
+tc qdisc add dev ${iface} parent 1:2 handle 20: tbf \
+    rate ${rate} buffer 1600 limit 3000
 # all the rest sluggish
-tc qdisc add dev ${iface} parent 1:3 handle 30: netem delay ${delay}
+tc qdisc add dev ${iface} parent 1:3 handle 30: netem \
+    delay ${delay}
 # set filters
-tc filter add dev ${iface} protocol ip parent 1: prio 2 route flowid 1:1
+tc filter add dev ${iface} protocol ip parent 1: \
+    prio 2 route flowid 1:1
 # send dport 22 and 3389 TO vm on the happy path
-tc filter add dev ${iface} protocol ip parent 1: prio 1 u32 match ip dport 22 0xffff flowid 1:2
-tc filter add dev ${iface} protocol ip parent 1: prio 1 u32 match ip dport 3389 0xffff flowid 1:2
+tc filter add dev ${iface} protocol ip \
+    parent 1: prio 1 u32 match ip dport 22 0xffff flowid 1:2
+tc filter add dev ${iface} protocol ip \
+    parent 1: prio 1 u32 match ip dport 3389 0xffff flowid 1:2
 # send all the rest to the delayer
-tc filter add dev ${iface} protocol ip parent 1: prio 1 u32 match u32 0 0 flowid 1:3
+tc filter add dev ${iface} protocol ip \
+    parent 1: prio 1 u32 match u32 0 0 flowid 1:3
 ```
 
 For changing the (already set) limitations in place
@@ -85,8 +91,10 @@ burst=11mbit
 handle=`tc filter show dev ${iface} parent ffff: | \
     awk -F'fh' '/fh/&&/::/{split($2,a," ");print a[1]}'`
 
-tc qdisc change dev ${iface} parent 1:2 handle 20: tbf rate ${rate} burst ${burst} limit 3000
-tc filter change dev ${iface} parent ffff: pref ${prio} handle ${handle} u32 police rate ${rate} burst ${burst}
+tc qdisc change dev ${iface} parent 1:2 handle 20: tbf \
+    rate ${rate} burst ${burst} limit 3000
+tc filter change dev ${iface} parent ffff: pref ${prio} \
+    handle ${handle} u32 police rate ${rate} burst ${burst}
 
 ```
 
