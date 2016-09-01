@@ -4,24 +4,27 @@ Limiting bandwidth for a vm can only be done properly on egress interfaces, i.e.
 we could set an ingress filter, but that would only be capable to drop packets of which the aggregate bandwidth exceed a certain limit ( 1Mbit for example, could be 5Kpps of small udp frames, or millions of TCP syn packets)
 Policing on ingress (that can only drop) needs to be accompanied by an egress shaper too (as we dont know the direction), to limit bandwith TO the vm
 
-Definitions :  
-   1) from the host perspective , ingress is traffic coming FROM the vm, egress is traffic going TO the vm.  
-   2) A ROS has two interfaces that can be used for policing/shaping  
-   3) The vx-00aa vxlan VTEP is, from the host's perspective, an egress port, that can be used to enforce a standard bandwidth limitation.  
+#### Definitions :  
+  1. from the host perspective , ingress is traffic coming FROM the vm, egress is traffic going TO the vm.  
+  2. A ROS has two interfaces that can be used for policing/shaping  
+  3. The vx-00aa vxlan VTEP is, from the host's perspective, an egress port, that can be used to enforce a standard bandwidth limitation.  
 
-Requirements:
-We need to know (from influx or any other bw monitor) what the actual bandwidth and pps (packets per second) rate is for the interface that generated the alert.
+#### Requirements:
+
+  * We need to know (from influx or any other bw monitor) what the actual bandwidth and pps (packets per second) rate is for the interface that generated the alert.
+  * and of course have a pretty good idea (with the least amount of false positives) _what_ exactly _is_ irregular network usage
 
 In a correct situation, we would have  
-   1) an alert for vm-${num}-${netidinhex} on a cpu node  
-   2) an alert for vx-${netidinhex} on a cpu node hosting the vm  
-   3) an alert for vx-${netidinhex} on a cpu node hosting the ROS  
-   4) an alert for spc-${netidinhex} on a cpu node hosting the ROS  
-   5) an alert for pub-${netidinhex} on a cpu node hosting the ROS  
-   6) an alert for vxbackend on all cpu nodes (maybe, depending on the type of attack)  
+  1. an alert for vm-${num}-${netidinhex} on a cpu node  
+  2. an alert for vx-${netidinhex} on a cpu node hosting the vm  
+  3. an alert for vx-${netidinhex} on a cpu node hosting the ROS  
+  4. an alert for spc-${netidinhex} on a cpu node hosting the ROS  
+  5. an alert for pub-${netidinhex} on a cpu node hosting the ROS  
+  6. an alert for vxbackend on all cpu nodes (maybe, depending on the type of attack)  
 
 When a trigger/alert is generated for bw/pps to/from a vm (can as well be a routeros_xxxx), immediate action would be a jumpscript that issues these commands to limit the vm's network usage.
-Shaping is not possible, so we police traffic coming from the vm, dropping packets in line with the allowed bandwidth for everyting that is not ssh and/or rdp, so that a user can still access the vm for analysing.
+Shaping is not possible for traffice coming from the VM, so we police traffic coming from the vm, dropping packets in line with the allowed bandwidth for everyting that is not ssh and/or rdp, so that a user can still access the vm for analysing.
+For traffic to the VM, we can shape, making the link like the VM is behind a *very* slow SLIRP line (Anyone remembers? ;-))
 
 So: FROM the VM
 
@@ -52,8 +55,13 @@ tc filter add dev ${iface} parent ffff: protocol ip \
 tc filter add dev ${iface} parent ffff:  u32 \
     match u32 0 0 police rate ${rate} burst ${burst} \
     flowid 1: action drop continue
+```
 
-# Shape traffic outgoing on vxlan vtep
+To the VM
+
+```
+
+# Shape traffic outgoing on VM interface
 # here we can be a little bit smarter/astuce
 
 # Create Token Bucket Filter
@@ -107,4 +115,29 @@ iface=vm-3-00c9
 tc qdisc del dev ${iface} root
 tc qdisc del dev {iface} parent ffff:
 # this removes  all qdiscs, classes and filters for this device
+```
+
+### RouterOS 
+
+In a ROS, we have 2 interfaces that can be properly shaped, where (read carefully):  
+  * pub-xxxx is the interface facing outside, 
+  * spc-xxxx is the interface facing the tenant network (a vxlan)
+
+This gives us the possibility to shape OUTGOING traffic (i.e traffic leaving the pub-xxxx, but passing the ROS VM), by shaping the traffic that GOES TO the RouterOS from the tenant network (spc-xxxx).  
+And we then can shape traffic that is sent from the public vlan TO the ROS (i.e incoming Internet) to counter high bw coming in.  
+
+Wrap you head around it, I'll wait ...  
+
+Ready? Ok, then.  
+
+What you'll need:
+
+  * knowing what vm that was the culprit, and the portforwards towards it. That is: only ssh and rdp destinations.  
+  * A policy to handle all other traffic of your choosing; i.e :  
+    * if you would consider to limit only the nasty vm(s) or  
+    * blanket the WHOLE tenant network, until the customer resolves the issue  
+
+```
+# Shape for allowing portforwards towards VMs as being prioritized, bit limited
+
 ```
