@@ -1,5 +1,4 @@
 from JumpScale import j
-import time
 
 descr = """
 gather network statistics for virtual machines
@@ -15,7 +14,7 @@ timeout = period * 0.2
 enable = True
 async = True
 queue = 'process'
-roles = []
+roles = ['cpunode']
 log = False
 
 
@@ -23,13 +22,10 @@ def action():
     import libvirt
 
     connection = libvirt.open()
-    scl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "stack")
     vmcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "vmachine")
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
-    # search stackid of the node where we execute this script
-    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
     domains = connection.listAllDomains()
 
