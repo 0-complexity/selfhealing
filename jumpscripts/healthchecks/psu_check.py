@@ -9,16 +9,16 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['node']
-period = 60 # 1min
+period = 60  # 1min
 enable = True
 async = True
 queue = 'process'
 log = True
 
+
 def action():
     category = "Power"
     results = []
-    rc, _ = j.system.process.execute("which ipmitool", dieOnNonZeroExitCode=False)
     ps_errmsgs = """
 Power Supply AC lost
 Failure detected
@@ -30,15 +30,15 @@ Power Supply Inactive
     """.splitlines()
     ps_errmsgs = [x.lower() for x in ps_errmsgs if x.strip()]
     linehaserrmsg = lambda line: any([x in line for x in ps_errmsgs])
-    if rc != 0:
-        rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False)
+    rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False)
+    if rc != 127:
         if out:
             # SAMPLE 1:
             # root@du-conv-3-01:~# ipmitool -c sdr type "Power Supply"
             # PS1 Status,C8h,ok,10.1,Presence detected
             # PS2 Status,C9h,ok,10.2,Presence detected
 
-            #SAMPLE 2:
+            # SAMPLE 2:
             # root@stor-04:~# ipmitool -c sdr type "Power Supply"
             # PSU1_Status,DEh,ok,10.1,Presence detected
             # PSU2_Status,DFh,ns,10.2,No Reading
@@ -46,7 +46,7 @@ Power Supply Inactive
             # PSU4_Status,E1h,ns,10.4,No Reading
             # PSU Redundancy,E6h,ok,21.1,Fully Redundant
 
-            #SAMPPLE 3:
+            # SAMPLE 3:
             # root@stor-01:~# ipmitool -c sdr type "Power Supply"
             # PSU1_Status,DEh,ok,10.1,Presence detected, Power Supply AC lost
             # PSU2_Status,DFh,ns,10.2,No Reading
@@ -60,15 +60,15 @@ Power Supply Inactive
             for line in out.splitlines():
                 if "status" in line.lower():
                     parts = [part.strip() for part in line.split(",")]
-                    id_ , status, presence = parts[0], parts[2], parts[-1]
-                    id_ = id_.strip("Status").strip("_").strip() # clean the power supply name.
+                    id_, presence = parts[0], parts[-1]
+                    id_ = id_.strip("Status").strip("_").strip()  # clean the power supply name.
                     if linehaserrmsg(line):
                         if psu_redun_in_out and is_fully_redundant:
-                            results.append(dict(state='SKIPPED', category=category, message="Power redundancy problem on %s (%s)"%(id_, presence )))
+                            results.append(dict(state='SKIPPED', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
                         else:
-                            results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)"%(id_, presence )))
+                            results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
                     else:
-                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK"%id_))
+                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK" % id_))
 
     return results
 
