@@ -96,4 +96,4 @@ def action():
 
 if __name__ == '__main__':
     import yaml
-    print yaml.dump(action(), default_flow_style=False)
+    print(yaml.dump(action(), default_flow_style=False))
