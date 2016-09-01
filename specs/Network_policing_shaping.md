@@ -5,20 +5,20 @@ we could set an ingress filter, but that would only be capable to drop packets o
 Policing on ingress (that can only drop) needs to be accompanied by an egress shaper too (as we dont know the direction), to limit bandwith TO the vm
 
 Definitions :
-   1) from the host perspective , ingress is traffic coming FROM the vm, egress is traffic going TO the vm.
-   2) A ROS has two interfaces that can be used for policing/shaping
-   3) The vx-00aa vxlan VTEP is, from the host's perspective, an egress port, that can be used to enforce a standard bandwidth limitation.
+   1) from the host perspective , ingress is traffic coming FROM the vm, egress is traffic going TO the vm.  
+   2) A ROS has two interfaces that can be used for policing/shaping  
+   3) The vx-00aa vxlan VTEP is, from the host's perspective, an egress port, that can be used to enforce a standard bandwidth limitation.  
 
 Requirements:
 We need to know (from influx or any other bw monitor) what the actual bandwidth and pps (packets per second) rate is for the interface that generated the alert.
 
 In a correct situation, we would have
-   1) an alert for vm-${num}-${netidinhex} on a cpu node
-   2) an alert for vx-${netidinhex} on a cpu node hosting the vm
-   3) an alert for vx-${netidinhex} on a cpu node hosting the ROS
-   4) an alert for spc-${netidinhex} on a cpu node hosting the ROS
-   5) an alert for pub-${netidinhex} on a cpu node hosting the ROS
-   6) an alert for vxbackend on all cpu nodes (maybe, depending on the type of attack)
+   1) an alert for vm-${num}-${netidinhex} on a cpu node  
+   2) an alert for vx-${netidinhex} on a cpu node hosting the vm  
+   3) an alert for vx-${netidinhex} on a cpu node hosting the ROS  
+   4) an alert for spc-${netidinhex} on a cpu node hosting the ROS  
+   5) an alert for pub-${netidinhex} on a cpu node hosting the ROS  
+   6) an alert for vxbackend on all cpu nodes (maybe, depending on the type of attack)  
 
 When a trigger/alert is generated for bw/pps to/from a vm (can as well be a routeros_xxxx), immediate action would be a jumpscript that issues these commands to limit the vm's network usage.
 Shaping is not possible, so we police traffic coming from the vm, dropping packets in line with the allowed bandwidth for everyting that is not ssh and/or rdp, so that a user can still access the vm for analysing.
