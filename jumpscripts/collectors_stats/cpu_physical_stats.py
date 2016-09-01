@@ -38,7 +38,7 @@ def action():
         _, key, value = re.split("^(\w+)\s", line)
         stats[key] = value
 
-    results["machine.CPU.contextswitch"] = int(stats['ctxt'])
+    results["machine.CPU.contextswitch.phys.%d.%d" % (j.application.whoAmI.gid, j.application.whoAmI.nid)] = int(stats['ctxt'])
 
     for key, value in results.iteritems():
         tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
