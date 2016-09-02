@@ -94,8 +94,8 @@ def action():
             }
         }
         for key, info in stats.iteritems():
-            key = '%s.phys.%d.%d.%s' % (key, j.application.whoAmI.gid, j.application.whoAmI.nid, path)
-            tags = 'gid:%d nid:%d device:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, path)
+            key = '%s@phys.%d.%d.%s' % (key, j.application.whoAmI.gid, j.application.whoAmI.nid, path)
+            tags = 'gid:%d nid:%d device:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, path)
             value = results[info['value_key']]
             aggregatorcl._measure(key, tags, value, type=info['type'], timestamp=now)
 
@@ -105,7 +105,7 @@ def action():
 
 if __name__ == '__main__':
     import JumpScale.grid.osis
-    j.core.osis.client = j.clients.osis.getByInstance('processmanager')
+    j.core.osis.client = j.clients.osis.getByInstance('main')
     rt = action()
     import yaml
     print yaml.dump(rt['results'])

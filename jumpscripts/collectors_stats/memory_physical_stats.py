@@ -36,8 +36,8 @@ def action():
     results["machine.memory.swap.used"] = round(swap.used / (1024.0 * 1024.0), 2)
 
     for key, value in results.iteritems():
-        key = "%s_%d_%d" % (key, j.application.whoAmI.gid, j.application.whoAmI.nid)
-        tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+        key = "%s@phys.%d.%d" % (key, j.application.whoAmI.gid, j.application.whoAmI.nid)
+        tags = 'gid:%d nid:%d type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
         aggregatorcl.measure(key, tags, value, timestamp=now)
 
     return results

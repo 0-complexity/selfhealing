@@ -29,8 +29,12 @@ def action():
     results = {}
     cpu_times = psutil.cpu_times(percpu=True)
     now = j.base.time.getTimeEpoch()
-    for cpu_nbr, cpu_time in enumerate(cpu_times):
-        results['machine.CPU.utilisation.phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nbr)] = int(cpu_time.user + cpu_time.system)
+    for cpu_nr, cpu_time in enumerate(cpu_times):
+        value = int(cpu_time.user + cpu_time.system)
+        key = 'machine.CPU.utilisation@phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
+        tags = 'gid:%d nid:%d cpu_nr:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
+        aggregatorcl.measure(key, tags, value, timestamp=now)
+        results[key] = value
 
     stat = j.system.fs.fileGetContents('/proc/stat')
     stats = dict()
@@ -38,11 +42,11 @@ def action():
         _, key, value = re.split("^(\w+)\s", line)
         stats[key] = value
 
-    results["machine.CPU.contextswitch.phys.%d.%d" % (j.application.whoAmI.gid, j.application.whoAmI.nid)] = int(stats['ctxt'])
-
-    for key, value in results.iteritems():
-        tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
-        aggregatorcl.measure(key, tags, value, timestamp=now)
+    key = "machine.CPU.contextswitch@phys.%d.%d" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    value = int(stats['ctxt'])
+    tags = 'gid:%d nid:%d type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    aggregatorcl.measure(key, tags, value, timestamp=now)
+    results[key] = int(stats['ctxt'])
 
     return results
 

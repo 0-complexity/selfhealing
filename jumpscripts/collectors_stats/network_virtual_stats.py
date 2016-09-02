@@ -47,16 +47,17 @@ def action():
             packets_sent = int(j.system.fs.fileGetContents(path + '/tx_packets'))
             packets_recv = int(j.system.fs.fileGetContents(path + '/rx_packets'))
 
-            result['network.throughput.outgoing.virt.%s' % mac] = int(round(bytes_sent / 1024.0 * 1024, 0))
-            result['network.throughput.incoming.virt.%s' % mac] = int(round(bytes_recv / 1024.0 * 1024, 0))
-            result['network.packets.tx.virt.%s' % mac] = packets_sent
-            result['network.packets.rx.virt.%s' % mac] = packets_recv
+            result['network.throughput.outgoing'] = int(round(bytes_sent / 1024.0 * 1024, 0))
+            result['network.throughput.incoming'] = int(round(bytes_recv / 1024.0 * 1024, 0))
+            result['network.packets.tx'] = packets_sent
+            result['network.packets.rx'] = packets_recv
 
             all_results["%s_%s" % (vm['id'], mac)] = result
 
             # send data to aggregator
             for key, value in result.iteritems():
-                tags = 'gid:%d nid:%d nic:%s mac:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic['deviceName'], mac)
+                key = "%s@virt.%s" % (key, mac)
+                tags = 'gid:%d nid:%d nic:%s mac:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic['deviceName'], mac)
                 aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
     return all_results

@@ -69,16 +69,17 @@ def action():
             read_count, read_bytes, write_count, write_bytes, _ = stats
 
             result = {}
-            result['disk.iops.read.%s' % disk['id']] = read_count
-            result['disk.iops.write.%s' % disk['id']] = write_count
-            result['disk.throughput.read.%s' % disk['id']] = int(round(read_bytes / 1024 * 1024, 0))
-            result['disk.throughput.write.%s' % disk['id']] = int(round(write_bytes / 1024 * 1024, 0))
+            result['disk.iops.read'] = read_count
+            result['disk.iops.write'] = write_count
+            result['disk.throughput.read'] = int(round(read_bytes / 1024 * 1024, 0))
+            result['disk.throughput.write'] = int(round(write_bytes / 1024 * 1024, 0))
 
             all_results["%s_%s" % (vm['id'], dev)] = result
 
             # send data to aggregator
             for key, value in result.iteritems():
-                tags = 'gid:%d nid:%d device:%s vdiskid:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, dev, disk['id'])
+                key = "%s@virt.%s" % (key, disk['id'])
+                tags = 'gid:%d nid:%d device:%s vdiskid:%s type:virtual' % (j.application.whoAmI.gid, j.application.whoAmI.nid, dev, disk['id'])
                 aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
     return {'results': all_results, 'errors': []}

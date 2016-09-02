@@ -46,9 +46,9 @@ def action():
         state, maxMem, memory, nrVirtCpu, cpuTime, = domain.info()
         now = j.base.time.getTimeEpoch()
 
-        key = 'machine.CPU.utilisation.virt.%d' % vm['id']
-        value = int(cpuTime)
-        tags = 'gid:%d nid:%d vmid:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
+        key = 'machine.CPU.utilisation@virt.%d' % vm['id']
+        value = int(cpuTime / pow(10, 9))
+        tags = 'gid:%d nid:%d vmid:%s type:virtual' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
         aggregatorcl.measure(key, tags, value, timestamp=now)
 
         all_results[vm['id']] = value
