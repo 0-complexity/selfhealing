@@ -57,7 +57,7 @@ def action():
             # send data to aggregator
             for key, value in result.iteritems():
                 key = "%s@virt.%s" % (key, mac)
-                tags = 'gid:%d nid:%d nic:%s mac:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic['deviceName'], mac)
+                tags = 'gid:%d nid:%d nic:%s mac:%s type:virtual' % (j.application.whoAmI.gid, j.application.whoAmI.nid, nic['deviceName'], mac)
                 aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
     return all_results
