@@ -1,9 +1,10 @@
 
-# JumpScript: /opt/code/github/selfhealing/jumpscripts/healthchecks/stackstatus.py
-        ### category: monitor.healthcheck
-### enable: True
-### roles: ['cpunode']
-### descr: 
+# JumpScript: stackstatus.py
+        
+#### category: monitor.healthcheck
+#### enable: True
+#### roles: ['cpunode']
+#### descr: 
 ```
 Checks the status of each stack.
 
@@ -13,11 +14,11 @@ ERROR state is automatically attributed to a stack by OpenVCloud - this is done 
 
 
 ```
-### author: deboeckj@codescalers.com
-### queue: io
-### scriptname: /opt/code/github/selfhealing/jumpscripts/healthchecks/stackstatus.py
-### version: 1.0
-### async: True
-### organization: cloudscalers
-### action_docstring: None
-### log: True
+#### author: deboeckj@codescalers.com
+#### queue: io
+#### scriptname: /opt/code/github/selfhealing/jumpscripts/healthchecks/stackstatus.py
+#### version: 1.0
+#### async: True
+#### organization: cloudscalers
+#### action_docstring: None
+#### log: True
