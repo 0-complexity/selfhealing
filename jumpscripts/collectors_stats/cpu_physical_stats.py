@@ -3,7 +3,7 @@ import re
 
 
 descr = """
-gather statistics about system
+gather statistics about system cpu for physical
 """
 
 organization = "jumpscale"
