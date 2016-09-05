@@ -33,7 +33,7 @@ def action():
         value = int(cpu_time.user + cpu_time.system)
         key = 'machine.CPU.utilisation@phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
         tags = 'gid:%d nid:%d cpu_nr:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
-        aggregatorcl.measure(key, tags, value, timestamp=now)
+        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
         results[key] = value
 
     stat = j.system.fs.fileGetContents('/proc/stat')
