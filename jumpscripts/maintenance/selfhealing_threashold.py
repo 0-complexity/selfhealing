@@ -25,6 +25,7 @@ IOPS_THRESHOLD = 200
 IOPS_REDIS_KEY = 'throttle.iops.%s'
 
 NETS_THRESHOLD = 1  # MB/sec
+NETS_PACKET_THRRSHOLD = 500
 NETS_REDIS_KEY = 'throttle.net.%s'
 
 
@@ -62,15 +63,17 @@ def _process_iops(ovc, influx):
 
 
 def _process_network(ovc, influx):
+    throughput = influx.query('''SELECT value FROM /network.throughput.*\|m/ WHERE "type" = 'virtual' AND time > now() - 10m GROUP BY "mac"''')
+    agg_throughput = _aggregate(throughput.raw['series'], 'mac')
 
-    result = influx.query('''SELECT value FROM /network.throughput.*\|m/ WHERE "type" = 'virtual' AND time > now() - 10m GROUP BY "mac"''')
-    aggregated = _aggregate(result.raw['series'], 'mac')
+    packet = influx.query('''SELECT value FROM /network.packets.*\|m/ WHERE "type" = 'virtual'  AND time > now() - 10m GROUP BY "mac"''')
+    agg_packet = _aggregate(packet.raw['series'], 'mac')
 
-    for mac, count in aggregated.items():
+    for mac, count in agg_throughput.items():
+        pac = agg_packet.get(mac, 0)
+
         key = NETS_REDIS_KEY % mac
-        if count > NETS_THRESHOLD:
-            # last 2 values are over IOPS_THRESHOLD. We need to take action.
-            # limit IO.
+        if count > NETS_THRESHOLD and pac > NETS_PACKET_THRRSHOLD:
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
             j.core.db.set(key, 'x')
             continue
