@@ -31,11 +31,11 @@ For physical machines we will be using the gid/nid combination to identify the m
 
 For virtual machines we will be using the vdiskid from the model. The metric collection jumpscript on the physical node will do the matching between the model and the deployed vdisks and cache the result into the local redis to not overload the model server.
 
-- physical: disk.iops.read.phys.[gid].[nid].[device_name]
-- virtual: disk.iops.read.virt.[vdiskid]
+- physical: disk.iops.read@phys.[gid].[nid].[device_name]
+- virtual: disk.iops.read@virt.[vdiskid]
 - example:
-  - disk.iops.read.phys.2.3.sda = 238
-  - disk.iops.read.virt.45 = 2568
+  - disk.iops.read@phys.2.3.sda = 238
+  - disk.iops.read@virt.45 = 2568
 
 The metrics for iops as wel as for throughput will always be growing, so we'll have to write the logic ourselves to transform them into activity over the last x seconds. This should normally be taken care of by the lua scripts in the redis key value store.
 
@@ -92,11 +92,11 @@ For physical machines we will be using the gid/nid combination to identify the m
 
 For virtual machines we will be using the macaddress which allows to easily look it up in the model afterwards
 
-- physical: network.packets.rx.phys.[gid].[nid].[device_name]
-- virtual: network.packets.rx.virt.[macaddress]
+- physical: network.packets.rx@phys.[gid].[nid].[device_name]
+- virtual: network.packets.rx@virt.[macaddress]
 example:
-- network.packets.rx.phys.2.3.eth0 = 238
-- network.packets.rx.virt.45 = 2568
+- network.packets.rx@phys.2.3.eth0 = 238
+- network.packets.rx@virt.45 = 2568
 
 Metrics of Network will also be ever growing, so the same comment applies on Network like on Disk.
 
@@ -121,9 +121,9 @@ The following are important:
 
 For physical machines we will be using the gid/nid combination to identify the machine.
 
-- physical: machine.memory.ram.available.phys.[gid].[nid]
+- physical: machine.memory.ram.available@phys.[gid].[nid]
 example:
-- machine.memory.ram.available.phys.2.3 = 238
+- machine.memory.ram.available@phys.2.3 = 238
 
 ### Implementation hints
 
@@ -150,11 +150,11 @@ For physical machines we will be using the gid/nid combination to identify the m
 For virtual machines we will be using the vmid from the model which allows to easily look it up in the model afterwards.
 
 - physical:
-  - machine.CPU.contextswitch.phys.[gid].[nid]
-  - machine.CPU.utilisation.phys.[gid].[nid].[cpu-number]
-  - machine.CPU.utilisation.virt.[vmid]
+  - machine.CPU.contextswitch@phys.[gid].[nid]
+  - machine.CPU.utilisation@phys.[gid].[nid].[cpu-number]
+  - machine.CPU.utilisation@virt.[vmid]
 example:
-- machine.CPU.contextswitch.phys.2.3 = 238
+- machine.CPU.contextswitch@phys.2.3 = 238
 
 
 ### Implementation hints 4 contextswitch
