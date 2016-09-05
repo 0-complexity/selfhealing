@@ -94,7 +94,7 @@ def action():
     influx.switch_database('statistics')
 
     _process_iops(ovc, influx)
-    _process_network(influx)
+    _process_network(ovc, influx)
 
 if __name__ == '__main__':
     action()
