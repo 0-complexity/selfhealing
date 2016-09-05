@@ -45,7 +45,7 @@ def action():
     key = "machine.CPU.contextswitch@phys.%d.%d" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
     value = int(stats['ctxt'])
     tags = 'gid:%d nid:%d type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
-    aggregatorcl.measure(key, tags, value, timestamp=now)
+    aggregatorcl.measureDiff(key, tags, value, timestamp=now)
     results[key] = int(stats['ctxt'])
 
     return results
