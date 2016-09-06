@@ -17,6 +17,7 @@
     - machine.memory.swap.left [MB] [PHYS]
     - machine.memory.swap.used [MB] [PHYS]
     - machine.CPU.contextswitch [#] [PHYS]
+    - machine.CPU.interrupts [#] [PHYS]
 
 # Disk
 
@@ -142,6 +143,7 @@ SwapFree:        4092924 kB
 
 - machine.CPU.contextswitch [#] [PHYS]
 - machine.CPU.utilisation [s] [PHYS,VIRT]
+- machine.CPU.interrupts [#] [PHYS]
 
 ## Notation
 
@@ -157,7 +159,7 @@ example:
 - machine.CPU.contextswitch@phys.2.3 = 238
 
 
-### Implementation hints 4 contextswitch
+### Implementation hints 4 contextswitch & interrupts
 
 See http://www.linuxhowtos.org/System/procstat.htm
 
