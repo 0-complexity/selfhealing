@@ -9,13 +9,13 @@ author = "deboeckj@incubaid.com"
 license = "bsd"
 version = "1.0"
 category = "monitoring.machine"
-period = 60*60 #always in sec
+period = 60 * 60  # always in sec
 timeout = period * 0.2
 order = 1
-enable=True
-async=True
-queue='process'
-log=False
+enable = True
+async = True
+queue = 'process'
+log = False
 
 roles = []
 
@@ -24,26 +24,28 @@ try:
     import JumpScale.lib.qemu_img
     import libvirt
 except:
-    enable=False
+    enable = False
+
 
 def getContentKey(obj):
-    dd=j.code.object2json(obj, True, ignoreKeys=["guid","id","sguid","moddate", 'lastcheck'], ignoreUnderscoreKeys=True)
+    dd = j.code.object2json(obj, True, ignoreKeys=["guid", "id", "sguid", "moddate", 'lastcheck'], ignoreUnderscoreKeys=True)
     return j.tools.hash.md5_string(str(dd))
+
 
 def action():
     syscl = j.clients.osis.getNamespace('system')
     rediscl = j.clients.redis.getByInstance('system')
     con = libvirt.open('qemu:///system')
-    #con = libvirt.open('qemu+ssh://10.101.190.24/system')
+    # con = libvirt.open('qemu+ssh://10.101.190.24/system')
     stateMap = {libvirt.VIR_DOMAIN_RUNNING: 'RUNNING',
                 libvirt.VIR_DOMAIN_NOSTATE: 'NOSTATE',
                 libvirt.VIR_DOMAIN_PAUSED: 'PAUSED'}
 
-    allmachines = syscl.machine.search({'nid': j.application.whoAmI.nid, 
-                                        'gid': j.application.whoAmI.gid, 
+    allmachines = syscl.machine.search({'nid': j.application.whoAmI.nid,
+                                        'gid': j.application.whoAmI.gid,
                                         'state': {'$ne': 'DELETED'}
                                         })[1:]
-    allmachines = { machine['guid']: machine for machine in allmachines }
+    allmachines = {machine['guid']: machine for machine in allmachines}
     domainmachines = list()
     try:
         domains = con.listAllDomains()
@@ -68,7 +70,7 @@ def action():
                 name = None
                 if alias is not None:
                     name = alias.attrib['name']
-                netaddr[mac] = [ name, None ]
+                netaddr[mac] = [name, None]
 
             machine.mem = int(xml.find('memory').text)
 
@@ -109,7 +111,7 @@ def action():
                         vdisk.backingpath = ''
 
                 if ckeyOld != vdisk.getContentKey():
-                    #obj changed
+                    #  obj changed
                     rediscl.hset('vdisks', path, vdisk.getContentKey())
                     syscl.vdisk.set(vdisk)
     finally:
@@ -123,6 +125,5 @@ def action():
         con.close()
 
 if __name__ == '__main__':
-    import JumpScale.grid.osis
     j.core.osis.client = j.clients.osis.getByInstance('main')
     action()
