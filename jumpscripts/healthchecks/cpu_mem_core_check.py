@@ -13,62 +13,58 @@ author = "deboeckj@codescalers.com"
 category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
-period = 15*60  # always in sec
+period = 15 * 60  # always in sec
 timeout = period * 0.2
 startatboot = True
 order = 1
 enable = True
 async = True
 log = True
-queue ='process'
+queue = 'process'
+
 
 def action():
-    osiscl = j.clients.osis.getNamespace('system')
+    import psutil
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    try:
-        cpuresults = osiscl.stats.search('select mean(value) from "%s_%s_cpu.percent.gauge" where time > now() - 1h group by time(1h)' %
-            (gid, nid))
-        memresults = osiscl.stats.search('select mean(value) from "%s_%s_memory.percent.gauge" where time > now() - 1h group by time(1h)' %
-            (gid, nid))
-    except RemoteException , e:
-        return [{'category':'CPU', 'state':'ERROR', 'message':'influxdb is halted cannot access data', 'uid':'influxdb is halted cannot access data'}]
+    nodekey = '{}_{}'.format(gid, nid)
 
-    try:
-        return get_results(cpuresults['series']) + get_results(memresults['series'])
-    except (KeyError,IndexError):
-        return [{'category':'CPU', 'state':'WARNING', 'message':'Not enough data collected', 'uid':'Not enough data collected'}]
+    rcl = j.clients.redis.getByInstance('system')
+    statsclient = j.tools.aggregator.getClient(rcl, nodekey)
+    stat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
+    totalram = psutil.phymem_usage().total
+    avgmempercent = (stat.h_avg / float(totalram)) * 100
+
+    # TODO: add cpu percent
+
+    return get_results('memory', avgmempercent)
 
 
-def get_results(series):
+def get_results(type_, percent):
     res = list()
-    for sira in series:
 
-        parts = sira['name'].split('.')[0]
-        type = parts.split('_')[2]
-        avgvalue = sira['values'][1][1]
-        level = None
-        result = dict()
-        result ['state'] = 'OK'
-        result ['message'] =  r'%s load -> last hour avergage is: %s %%' %(type.upper(), avgvalue)
-        result ['category'] = 'CPU'
-        if avgvalue > 95:
-            level = 1
-            result['state'] = 'ERROR'
-            result ['uid'] =  r'%s load -> last hour avergage is too high' %(type.upper())
-        elif avgvalue > 80:
-            level = 2
-            result['state'] = 'WARNING'
-            result ['uid'] =  r'%s load -> last hour avergage is too high' %(type.upper())
-        if level:
-            #500_6_cpu.promile
-            msg = '%s load -> above treshhold avgvalue last hour avergage is: %s %%' % (type.upper(), avgvalue)
-            result['message'] = msg
-            eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-            eco.nid = j.application.whoAmI.nid
-            eco.gid = j.application.whoAmI.gid
-            eco.process()
-        res.append(result)
+    level = None
+    result = dict()
+    result['state'] = 'OK'
+    result['message'] = r'%s load -> last hour avergage is: %s %%' % (type_.upper(), percent)
+    result['category'] = 'CPU'
+    if percent > 95:
+        level = 1
+        result['state'] = 'ERROR'
+        result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
+    elif percent > 80:
+        level = 2
+        result['state'] = 'WARNING'
+        result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
+    if level:
+        #  500_6_cpu.promile
+        msg = '%s load -> above treshhold avgvalue last hour avergage is: %s %%' % (type_.upper(), percent)
+        result['message'] = msg
+        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
+        eco.nid = j.application.whoAmI.nid
+        eco.gid = j.application.whoAmI.gid
+        eco.process()
+    res.append(result)
     return res
 
 if __name__ == '__main__':
