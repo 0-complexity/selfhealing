@@ -12,7 +12,7 @@ category = "monitor.maintenance"
 
 async = True
 queue = 'process'
-roles = []
+roles = ['statscollector']
 enable = True
 period = 600
 log = True
