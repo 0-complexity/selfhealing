@@ -35,7 +35,14 @@ To make sure that only 1 process can do this check simultaniously this process s
 
 ## G8 provisioning limits
 
-- G8.minimum-reserved-host-os-memory [MB]
-  - For now hardcode to 16GB RAM
-- G8.minimum-reserved-host-cpu [#]
-  - For now hardcode to 4 CPUs (2 cores)
+| TOTAL HOST MEMORY | G8.minimum-reserved-host-os-memory [MB] |
+| ----: | ---- |
+| # <= 64 | 1 |
+| 64 < # <= 196 | 2 |
+| 196 < # | 4 |
+
+| TOTAL NUMBER OF CPUs | G8.minimum-reserved-host-cpu [#] |
+| ----: | ---- |
+| # <= 16 | 1 |
+| 16 < # <= 32 | 2 |
+| 32 < # | 4 |
