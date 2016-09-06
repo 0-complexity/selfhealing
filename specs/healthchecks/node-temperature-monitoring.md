@@ -23,4 +23,4 @@ Use smartctl -A /dev/sda | awk '/Temp/{print $10}', make sure smartmontools are 
 
 Compare 5min avg with temp\d_crit if it has reached 90% of crit raise warning of it reached 100% or more raise error
 
-For disks a warning shoudl be raised when temperature is above 50degrees and an error when above 60degrees
+For disks a warning shoudl be raised when temperature is above 60degrees and an error when above 70degrees
