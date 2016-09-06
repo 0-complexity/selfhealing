@@ -49,7 +49,7 @@ def action():
         key = 'machine.CPU.utilisation@virt.%d' % vm['id']
         value = int(cpuTime / pow(10, 9))
         tags = 'gid:%d nid:%d vmid:%s type:virtual' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
-        aggregatorcl.measure(key, tags, value, timestamp=now)
+        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
         all_results[vm['id']] = value
 

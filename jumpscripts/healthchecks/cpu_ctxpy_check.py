@@ -1,4 +1,3 @@
-from JumpScale.grid.serverbase.Exceptions import RemoteException
 from JumpScale import j
 
 descr = """
@@ -15,40 +14,26 @@ author = "deboeckj@codescalers.com"
 category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
-period = 15*60  # always in sec
+period = 15 * 60  # always in sec
 timeout = period * 0.2
 startatboot = True
 order = 1
 enable = True
 async = True
 log = True
-queue ='process'
+queue = 'process'
+
 
 def action():
-    osis = j.core.osis.client
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
+    nodekey = '{}_{}'.format(gid, nid)
 
-    try:
-       oldest = osis.search('system', 'stats',
-            'select value from "%s_%s_cpu.num_ctx_switches.gauge" where time > now() - 1h limit 1' %
-            (gid, nid))
+    rcl = j.clients.redis.getByInstance('system')
+    statsclient = j.tools.aggregator.getClient(rcl, nodekey)
+    stat = statsclient.statGet('machine.CPU.contextswitch@phys.{}.{}'.format(gid, nid))
 
-       newest = osis.search('system', 'stats',
-            'select value from "%s_%s_cpu.num_ctx_switches.gauge" where time > now() - 1h order by time desc limit 1' %
-            (gid, nid))
-    except RemoteException , e:
-        return [{'category':'CPU', 'state':'ERROR', 'message':'influxdb halted cannot access data', 'uid':'influxdb halted cannot access data'}]
-
-    res=list()
-
-    try:
-        newvalue = newest['series'][0]['values'][0][1]
-        oldestvalue = oldest['series'][0]['values'][0][1]
-    except (KeyError,IndexError):
-        return [{'category':'CPU', 'state':'WARNING', 'message':'Not enough data collected', 'uid':'Not enough data collected'}]
-
-    avgctx = (newvalue - oldestvalue) / 3600.
+    avgctx = stat.h_avg
     level = None
     result = dict()
     result['state'] = 'OK'
@@ -56,12 +41,12 @@ def action():
     result['category'] = 'CPU'
     if avgctx > 1000000:
         level = 1
-        result ['state'] = 'ERROR'
+        result['state'] = 'ERROR'
         result['uid'] = 'CPU contextswitch value is too large'
 
     elif avgctx > 600000:
         level = 2
-        result ['state'] = 'WARNING'
+        result['state'] = 'WARNING'
         result['uid'] = 'CPU contextswitch value is too large'
 
     if level:
@@ -71,11 +56,8 @@ def action():
         eco.gid = gid
         eco.process()
 
-    res.append(result)
-    return res
+    return [result]
 
 
 if __name__ == '__main__':
-    import JumpScale.grid.osis
-    j.core.osis.client = j.clients.osis.getByInstance('main')
-    print  action()
+    print(action())

@@ -3,7 +3,7 @@ import re
 
 
 descr = """
-gather statistics about system
+gather statistics about system cpu for physical
 """
 
 organization = "jumpscale"
@@ -33,7 +33,15 @@ def action():
         value = int(cpu_time.user + cpu_time.system)
         key = 'machine.CPU.utilisation@phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
         tags = 'gid:%d nid:%d cpu_nr:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
-        aggregatorcl.measure(key, tags, value, timestamp=now)
+        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
+        results[key] = value
+
+    cpu_percent = psutil.cpu_percent(percpu=True)
+    now = j.base.time.getTimeEpoch()
+    for cpu_nr, cpu_percent in enumerate(cpu_percent):
+        key = 'machine.CPU.percent@phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
+        tags = 'gid:%d nid:%d cpu_nr:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
+        aggregatorcl.measureDiff(key, tags, cpu_percent, timestamp=now)
         results[key] = value
 
     stat = j.system.fs.fileGetContents('/proc/stat')

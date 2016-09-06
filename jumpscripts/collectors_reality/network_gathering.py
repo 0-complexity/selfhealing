@@ -2,7 +2,8 @@ from JumpScale import j
 import psutil
 
 descr = """
-gather statistics about system
+gather statistics about nic's
+is send to grid manager only
 """
 
 organization = "jumpscale"

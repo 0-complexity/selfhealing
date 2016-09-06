@@ -1,5 +1,3 @@
-# Selfhealing
+# Self-healing JumpScripts
 
-* Collection of JumpScripts for monitoring and healing the environment
-  * Gather environment statistics
-  * Analyze statistics to take actions.
+Documentation [here](/docs/README.md).
