@@ -13,7 +13,7 @@ In order to protect the cloud infrastructure from its own consumers we are going
 
 ## Network
 
-No need to constrain the network because mgmt traffic for physical machines goes over a reserved 1GB backplane with a separate reserved switch connecting the G8 nodes and controller together in one mgmt lan.
+Any virtual nic of any virtual machine (including routeros vms) should be limited to 1G bit bandwidth.
 
 ## CPU
 
