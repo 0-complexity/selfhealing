@@ -23,6 +23,7 @@
     - machine.CPU.interrupts [#] [PHYS]
     - machine.CPU.interrupts [#] [PHYS]
     - machine.temperature [°C] [PHYS]
+    - machine.process.threads [#] [PHYS]
 
 # Disk
 
@@ -215,6 +216,18 @@ Security model: none
 Security DOI:   0
 ```
 
-# System Temperature
+# Host machine
 
 - machine.temperature [°C] [PHYS]
+- machine.process.threads [#] [PHYS]
+
+
+### Implementation hints 4 process threads
+
+```
+import psutil
+threads = 0
+for proc in psutil.process_iter():
+    threads += proc.num_threads()
+
+```
