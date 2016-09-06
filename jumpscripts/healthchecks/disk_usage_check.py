@@ -23,7 +23,6 @@ period = 600
 log = True
 
 
-
 def action():
     import JumpScale.lib.diskmanager
     result = dict()
