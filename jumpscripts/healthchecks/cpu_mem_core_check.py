@@ -35,9 +35,14 @@ def action():
     totalram = psutil.phymem_usage().total
     avgmempercent = (stat.h_avg / float(totalram)) * 100
 
-    # TODO: add cpu percent
+    cpupercent = 0
+    count = 0
+    for percent in statsclient.statsByPerfix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
+        count += 1
+        cpupercent += percent.h_avg
+    cpuavg = cpupercent / float(count)
 
-    return get_results('memory', avgmempercent)
+    return get_results('memory', avgmempercent), get_results('cpu', cpuavg)
 
 
 def get_results(type_, percent):
