@@ -67,5 +67,104 @@ After this test, one can see 10% packets lost
   * WARNING when 2% packet loss
   * ALERT when 5% packet loss
 
+### iperf3 :
 
+Iperf3 can generate json with a swath of info; what you want :
+
+`end->sum->lost_percent`
+
+
+```
+iperf3 -c 10.101.106.254 --format m -u -k 10000 -b 1000M -J
+{
+	"start":	{
+		"connected":	[{
+				"socket":	4,
+				"local_host":	"192.168.16.240",
+				"local_port":	60667,
+				"remote_host":	"10.101.106.254",
+				"remote_port":	5201
+			}],
+		"version":	"iperf 3.1.3",
+		"system_info":	"Linux delandtj-Desktop 4.7.2-1-ARCH #1 SMP PREEMPT Sat Aug 20 23:02:56 CEST 2016 x86_64",
+		"timestamp":	{
+			"time":	"Tue, 06 Sep 2016 11:45:58 GMT",
+			"timesecs":	1473162358
+		},
+		"connecting_to":	{
+			"host":	"10.101.106.254",
+			"port":	5201
+		},
+		"cookie":	"delandtj-Desktop.1473162358.163449.3",
+		"test_start":	{
+			"protocol":	"UDP",
+			"num_streams":	1,
+			"blksize":	8192,
+			"omit":	0,
+			"duration":	0,
+			"bytes":	0,
+			"blocks":	10000,
+			"reverse":	0
+		}
+	},
+	"intervals":	[{
+			"streams":	[{
+					"socket":	4,
+					"start":	0,
+					"end":	0.785134,
+					"seconds":	0.785134,
+					"bytes":	81920000,
+					"bits_per_second":	834711189.017002,
+					"packets":	10000,
+					"omitted":	false
+				}],
+			"sum":	{
+				"start":	0,
+				"end":	0.785134,
+				"seconds":	0.785134,
+				"bytes":	81920000,
+				"bits_per_second":	834711189.017002,
+				"packets":	10000,
+				"omitted":	false
+			}
+		}],
+	"end":	{
+		"streams":	[{
+				"udp":	{
+					"socket":	4,
+					"start":	0,
+					"end":	0.785134,
+					"seconds":	0.785134,
+					"bytes":	81920000,
+					"bits_per_second":	834711189.017002,
+					"jitter_ms":	0.092000,
+					"lost_packets":	69,
+					"packets":	9996,
+					"lost_percent":	0.690276,
+					"out_of_order":	0
+				}
+			}],
+		"sum":	{
+			"start":	0,
+			"end":	0.785134,
+			"seconds":	0.785134,
+			"bytes":	81920000,
+			"bits_per_second":	834711189.017002,
+			"jitter_ms":	0.092000,
+			"lost_packets":	69,
+			"packets":	9996,
+			"lost_percent":	0.690276
+		},
+		"cpu_utilization_percent":	{
+			"host_total":	17.769540,
+			"host_user":	1.931197,
+			"host_system":	15.836373,
+			"remote_total":	0.136453,
+			"remote_user":	0,
+			"remote_system":	0.133847
+		}
+	}
+}
+
+```
 
