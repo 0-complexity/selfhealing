@@ -5,6 +5,7 @@
     - disk.iops.write [#] [PHYS,VIRT]
     - disk.throughput.read [MB] [PHYS,VIRT]
     - disk.throughput.write [MB] [PHYS,VIRT]
+    - disk.temperature [°C] [PHYS]
 - Network
     - network.packets.rx [#] [PHYS,VIRT]
     - network.packets.tx [#] [PHYS,VIRT]
@@ -12,12 +13,17 @@
     - network.throughput.outgoing [MB] [PHYS,VIRT]
 - CPU
     - machine.CPU.utilisation [s] [PHYS,VIRT]
+    - machine.CPU.percent [%] [PHYS]
+    - machine.CPU.temperature [°C] [PHYS]
 - Host machine
     - machine.memory.ram.available [MB] [PHYS]
     - machine.memory.swap.left [MB] [PHYS]
     - machine.memory.swap.used [MB] [PHYS]
     - machine.CPU.contextswitch [#] [PHYS]
     - machine.CPU.interrupts [#] [PHYS]
+    - machine.CPU.interrupts [#] [PHYS]
+    - machine.temperature [°C] [PHYS]
+    - machine.process.threads [#] [PHYS]
 
 # Disk
 
@@ -25,6 +31,9 @@
 - disk.iops.write [#] [PHYS,VIRT]
 - disk.throughput.read [MB] [PHYS,VIRT]
 - disk.throughput.write [MB] [PHYS,VIRT]
+- disk.temperature [°C] [PHYS]
+
+Use smartctl -A /dev/sda | awk '/Temp/{print $10}', make sure smartmontools are installed
 
 ## Notation
 
@@ -144,6 +153,8 @@ SwapFree:        4092924 kB
 - machine.CPU.contextswitch [#] [PHYS]
 - machine.CPU.utilisation [s] [PHYS,VIRT]
 - machine.CPU.interrupts [#] [PHYS]
+- machine.CPU.percent [%] [PHYS]
+- machine.CPU.temperature [%] [PHYS]
 
 ## Notation
 
@@ -154,9 +165,14 @@ For virtual machines we will be using the vmid from the model which allows to ea
 - physical:
   - machine.CPU.contextswitch@phys.[gid].[nid]
   - machine.CPU.utilisation@phys.[gid].[nid].[cpu-number]
+  - machine.CPU.percent@phys.[gid].[nid].[cpu-number]
+  - machine.CPU.temperature@phys.[gid].[nid].[cpu-number]
   - machine.CPU.utilisation@virt.[vmid]
 example:
 - machine.CPU.contextswitch@phys.2.3 = 238
+
+## Tags
+- Add tags for temp\d_label and location under hwmon
 
 
 ### Implementation hints 4 contextswitch & interrupts
@@ -176,6 +192,10 @@ procs_running 1
 procs_blocked 0
 ```
 
+### Implementation hints 4 temperature of cpus
+Collect data system temperature from `/sys/class/hwmon/*/temp*_{input,value}`
+
+
 ### Implementation hints 4 utilisation on virtual machines
 
 ```
@@ -194,4 +214,20 @@ Autostart:      disable
 Managed save:   no
 Security model: none
 Security DOI:   0
+```
+
+# Host machine
+
+- machine.temperature [°C] [PHYS]
+- machine.process.threads [#] [PHYS]
+
+
+### Implementation hints 4 process threads
+
+```
+import psutil
+threads = 0
+for proc in psutil.process_iter():
+    threads += proc.num_threads()
+
 ```
