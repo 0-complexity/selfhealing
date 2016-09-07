@@ -1,5 +1,4 @@
 from JumpScale import j
-from constant import PERIOD
 
 descr = """
 Checks the temperature on the system.
@@ -10,7 +9,7 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitoring.processes"
 roles = ['node']
-period = PERIOD  # 1min
+period = 60  # 1min
 enable = True
 async = True
 queue = 'process'

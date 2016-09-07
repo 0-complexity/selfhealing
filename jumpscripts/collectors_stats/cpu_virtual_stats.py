@@ -1,5 +1,4 @@
 from JumpScale import j
-from constant import PERIOD
 import re
 
 
@@ -12,7 +11,7 @@ author = "christophe@greenitglobe.com"
 license = "bsd"
 version = "1.0"
 category = "monitoring.processes"
-period = PERIOD  # always in sec
+period = 60  # always in sec
 timeout = period * 0.2
 enable = True
 async = True
