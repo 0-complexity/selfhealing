@@ -54,7 +54,13 @@ def action():
     value = int(stats['ctxt'])
     tags = 'gid:%d nid:%d type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
     aggregatorcl.measureDiff(key, tags, value, timestamp=now)
-    results[key] = int(stats['ctxt'])
+    results[key] = value
+
+    key = "machine.CPU.interrupts@phys.%d.%d" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    value = int(stats['intr'].split(' ')[0])
+    tags = 'gid:%d nid:%d type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    aggregatorcl.measureDiff(key, tags, value, timestamp=now)
+    results[key] = value
 
     return results
 
