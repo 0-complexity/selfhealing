@@ -30,12 +30,21 @@ def action():
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.process.threads.{}.{}'.format(gid, nid))
 
-    avg_thread = stat.h_avg
-    level = None
     result = dict()
     result['state'] = 'OK'
-    result['message'] = 'Number of thread is: %.2f/s' % avg_thread
     result['category'] = 'CPU'
+
+    if stat is None:
+        level = 2
+        result['state'] = 'WARNING'
+        result['message'] = 'Number of thread is not available'
+        result['uid'] = result['message']
+        return [result]
+
+    avg_thread = stat.h_avg
+    result['message'] = 'Number of thread is: %.2f/s' % avg_thread
+    level = None
+
     if avg_thread > 20000:
         level = 1
         result['state'] = 'ERROR'
