@@ -46,7 +46,7 @@ def _aggregate(series, tag):
 def _process_iops(ovc, influx):
     result = influx.query('''SELECT mean(value) FROM /disk.iops.*\|m/ WHERE "type" = 'virtual' AND time > now() - 10m GROUP BY "vdiskid"''')
     if 'series' not in result.raw:
-        print('IOPS no data')
+        print('disk.iops no data')
         return
     aggregated = _aggregate(result.raw['series'], 'vdiskid')
 
@@ -67,9 +67,15 @@ def _process_iops(ovc, influx):
 
 def _process_network(ovc, influx):
     throughput = influx.query('''SELECT mean(value) FROM /network.throughput.*\|m/ WHERE "type" = 'virtual' AND time > now() - 10m GROUP BY "mac"''')
+    if 'series' not in throughput.raw:
+        print('network.throughput no data')
+        return
     agg_throughput = _aggregate(throughput.raw['series'], 'mac')
 
     packet = influx.query('''SELECT value FROM /network.packets.*\|m/ WHERE "type" = 'virtual'  AND time > now() - 10m GROUP BY "mac"''')
+    if 'series' not in packet.raw:
+        print('network.packets no data')
+        return
     agg_packet = _aggregate(packet.raw['series'], 'mac')
 
     for mac, count in agg_throughput.items():
