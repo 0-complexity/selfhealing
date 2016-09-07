@@ -25,7 +25,7 @@ def action():
         return []
     elif rc != 0:
         msg = 'Failed to execute ovs-appctl'
-        results.append({'message': msg, 'uid': msg, 'category': category})
+        results.append({'message': msg, 'uid': msg, 'category': category, 'state': 'ERROR'})
     else:
         bonds = []
         bond = {}
@@ -45,12 +45,14 @@ def action():
             for slave in bond['slaves']:
                 if slave['state'] != 'enabled':
                     badslaves.append(bond['name'])
+            state = 'OK'
             if badslaves:
                 msg = 'Bond: {} has problems with slaves {}'.format(bond['name'], ', '.join(badslaves))
+                state = 'ERROR'
             else:
                 msg = 'Bond: {}, all slave are ok'.format(bond['name'])
 
-            result = {'mesage': msg, 'category': category, 'uid': msg + str(j.application.whoAmI)}
+            result = {'mesage': msg, 'category': category, 'uid': msg + str(j.application.whoAmI), 'state': state}
             results.append(result)
     return results
 
