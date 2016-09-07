@@ -17,6 +17,8 @@ log = True
 
 
 def action():
+    from multiprocessing import Process
+    import glob
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
     gid, nid = j.application.whoAmI.gid, j.application.whoAmI.nid
@@ -33,6 +35,23 @@ def action():
             aggregatorcl.measure(key, tags, value, timestamp=now)
 
     #  collect disks temperature thorugh smartctrl.
+    def disktemp(disk):
+        cmd = 'smartctl -A /dev/{disk}'.format(disk=disk)
+        pat = "(\d+) \(Min/Max (\d+)/(\d+)\)"
+        rc, out = j.system.process.execute(cmd, dieOnNonZeroExitCode=False)
+        if rc == 0 and out:
+            current, mint, maxt = map(int, re.findall(pat, out)[0])
+            key = "machine.disk.temperature@phys.{gid}.{nid}.{disk}".format(gid=gid, nid=nid, disk=disk)
+            tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+            value = current
+            aggregatorcl.measure(key, tags, value, timestamp=now)
+
+    # disks are ssd, hdd, nvm
+    disks = glob.glob("/sys/block/sd*").extend(glob.glob("/sys/block/hd*")).extend(glob.glob("/sys/block/nvm*"))
+    for disk in disks:
+        p = Process(target=disktemp, args=(disk))
+        p.start()
+        p.join()
 
 if __name__ == '__main__':
     print action()
