@@ -14,7 +14,7 @@ async = True
 queue = 'process'
 roles = ['statscollector']
 enable = True
-period = 600
+period = 300
 log = True
 
 ###############
