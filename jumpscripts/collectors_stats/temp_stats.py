@@ -27,13 +27,12 @@ def action():
             continue
         coreid = int(label.split()[1])
         inputtemp = int(open(f.replace("_label", "_input")).read())
-        # crit = int(open(f.replace("_label", "_crit")).read())
-        # maxt = int(open(f.replace("_label", "_max")).read())
         key = "machine.CPU.temperature@phys.{gid}.{nodeid}.{coreid}".format(gid=gid, nid=nid, coreid=coreid)
         tags = 'gid:%d nid:%d labelfile:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, f)
-        value = (inputtemp)
-        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
+        value = inputtemp
+        aggregatorcl.measure(key, tags, value, timestamp=now)
 
+    #collect disks temperature thorugh smartctrl.
 
 if __name__ == '__main__':
     print action()

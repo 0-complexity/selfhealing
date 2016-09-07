@@ -9,23 +9,24 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['node']
-period = 60  # 1min
+period = 60*5  # 5mins
 enable = True
 async = True
 queue = 'process'
 log = True
 
+
 def action():
+    results = []
     category = "Temperature"
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    import multiprocessing
     rcl = j.clients.redis.getByInstance('system')
+    statsclient = j.tools.aggregator.getClient(rcl, "{gid}_{nid}".format(gid=gid, nid=nid))
+
     labeled = sorted(glob.glob("/sys/class/hwmon/*/temp*_label")
-    for coreid in range(multiprocessing.cpu_count()):
-        key = "machine.CPU.temperature@phys.{gid}.{nodeid}.{coreid}".format(gid=gid, nid=nid, coreid=coreid)
-        statsclient = j.tools.aggregator.getClient(rcl, key)
-        stat = statsclient.statGet(key)
+
+    for stat in statsclient.statsByPrefix('machine.cpu.temperature@phis.gid.nid'):
         filelabel = stat.tags['filelabel']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
@@ -35,8 +36,9 @@ def action():
             results.append(dict(state='ERROR', category=category, message="Temperature on {label} = {inputtemp} > critical {critical}".format(label=label, inputtemp=inputtemp, critical=crit)))
         elif stat > maxt:
             results.append(dict(state='WARNING', category=category, message="Temperature on {label} = {inputtemp} > max {maxt}".format(label=label, inputtemp=inputtemp, maxt=maxt)))
-        else:
-            results.append(dict(state='OK', category=category, message="Temperature on {label} = {inputtemp} OK".format(label=label, inputtemp=inputtemp)))
+
+    if len(results) == 0:
+        results.append(dict(state='OK', category=category, message="Temperature OK")
 
     return results
 
