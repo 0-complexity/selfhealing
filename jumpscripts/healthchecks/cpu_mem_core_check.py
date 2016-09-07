@@ -37,7 +37,7 @@ def action():
 
     cpupercent = 0
     count = 0
-    for percent in statsclient.statsByPerfix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
+    for percent in statsclient.statsByPrefix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
         count += 1
         cpupercent += percent.h_avg
     cpuavg = cpupercent / float(count)
