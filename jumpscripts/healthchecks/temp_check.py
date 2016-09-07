@@ -24,10 +24,7 @@ def action():
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, "{gid}_{nid}".format(gid=gid, nid=nid))
 
-    labeled = sorted(glob.glob("/sys/class/hwmon/*/temp*_label")
-
-
-    for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid,nid=nid)):
+    for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid, nid=nid)):
         filelabel = stat.tags['filelabel']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
@@ -40,10 +37,10 @@ def action():
             results.append(dict(state='WARNING', category=category, message="Temperature on {label} = {inputtemp} > max {maxt}".format(label=label, inputtemp=inputtemp, maxt=maxt)))
 
     if len(results) == 0:
-        results.append(dict(state='OK', category=category, message="CPU Temperature OK")
-
+        results.append(dict(state='OK', category=category, message="CPU Temperature OK"))
 
     return results
 
 if __name__ == '__main__':
-    print action()
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))
