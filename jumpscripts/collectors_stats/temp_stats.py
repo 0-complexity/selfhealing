@@ -50,7 +50,8 @@ def action():
             aggregatorcl.measure(key, tags, value, timestamp=now)
 
     # disks are ssd, hdd, nvm
-    disks = glob.glob("/sys/block/sd*").extend(glob.glob("/sys/block/hd*")).extend(glob.glob("/sys/block/nvm*"))
+    disks = glob.glob("/sys/block/sd*") + glob.glob("/sys/block/hd*") + glob.glob("/sys/block/nvm*")
+
     for disk in disks:
         p = Process(target=disktemp, args=(disk))
         p.start()
