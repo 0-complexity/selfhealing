@@ -37,7 +37,7 @@ def action():
         memoryresult['state'] = 'WARNING'
         memoryresult['category']
         memoryresult['message'] = 'CPU contextswitch is not collected yet'
-        memoryresult['uid'] = result['message']
+        memoryresult['uid'] = memoryresult['message']
     else:
         totalram = psutil.phymem_usage().total
         avgmempercent = (stat.h_avg / float(totalram)) * 100
@@ -48,9 +48,18 @@ def action():
     for percent in statsclient.statsByPrefix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
         count += 1
         cpupercent += percent.h_avg
-    cpuavg = cpupercent / float(count)
 
-    return memoryresult, get_results('cpu', cpuavg)
+    if count == 0:
+        cpuresult = {}
+        cpuresult['state'] = 'WARNING'
+        cpuresult['category']
+        cpuresult['message'] = 'CPU percent is not collected yet'
+        cpuresult['uid'] = cpuresult['message']
+    else:
+        cpuavg = cpupercent / float(count)
+        cpuresults = get_results('cpu', cpuavg)
+
+    return memoryresult,
 
 
 def get_results(type_, percent):
