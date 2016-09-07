@@ -167,4 +167,4 @@ iperf3 -c 10.101.106.254 --format m -u -k 10000 -b 1000M -J
 }
 
 ```
-
+That said, on a 40G link (i.e. the backplane for instance) you shouldn't see any loss for 1Gbit/sec
