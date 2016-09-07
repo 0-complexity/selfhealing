@@ -43,7 +43,7 @@ def action():
     for cpu_nr, cpu_percent in enumerate(cpu_percent):
         key = 'machine.CPU.percent@phys.%d.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
         tags = 'gid:%d nid:%d cpu_nr:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, cpu_nr)
-        aggregatorcl.measureDiff(key, tags, cpu_percent, timestamp=now)
+        aggregatorcl.measure(key, tags, cpu_percent, timestamp=now)
         results[key] = value
 
     # Number of threads
