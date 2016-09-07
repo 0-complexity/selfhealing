@@ -32,8 +32,16 @@ def action():
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
-    totalram = psutil.phymem_usage().total
-    avgmempercent = (stat.h_avg / float(totalram)) * 100
+    if stat is None:
+        memoryresult = {}
+        memoryresult['state'] = 'WARNING'
+        memoryresult['category']
+        memoryresult['message'] = 'CPU contextswitch is not collected yet'
+        memoryresult['uid'] = result['message']
+    else:
+        totalram = psutil.phymem_usage().total
+        avgmempercent = (stat.h_avg / float(totalram)) * 100
+        memoryresult = get_results('memory', avgmempercent)
 
     cpupercent = 0
     count = 0
@@ -42,7 +50,7 @@ def action():
         cpupercent += percent.h_avg
     cpuavg = cpupercent / float(count)
 
-    return get_results('memory', avgmempercent), get_results('cpu', cpuavg)
+    return memoryresult, get_results('cpu', cpuavg)
 
 
 def get_results(type_, percent):

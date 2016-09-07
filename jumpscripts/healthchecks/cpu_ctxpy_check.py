@@ -39,6 +39,8 @@ def action():
 
     if stat is None:
         result['state'] = 'WARNING'
+        result['message'] = 'CPU contextswitch is not collected yet'
+        result['uid'] = result['message']
         return [result]
 
     avgctx = stat.h_avg
