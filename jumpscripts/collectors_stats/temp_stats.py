@@ -32,6 +32,7 @@ def action():
             key = "machine.CPU.temperature@phys.{gid}.{nid}.{coreid}".format(gid=gid, nid=nid, coreid=coreid)
             tags = 'gid:%d nid:%d labelfile:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, f)
             value = inputtemp
+            now = j.base.time.getTimeEpoch()
             aggregatorcl.measure(key, tags, value, timestamp=now)
 
     #  collect disks temperature thorugh smartctrl.
@@ -44,6 +45,7 @@ def action():
             key = "machine.disk.temperature@phys.{gid}.{nid}.{disk}".format(gid=gid, nid=nid, disk=disk)
             tags = 'gid:%d nid:%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)
             value = current
+            now = j.base.time.getTimeEpoch()
             aggregatorcl.measure(key, tags, value, timestamp=now)
 
     # disks are ssd, hdd, nvm
