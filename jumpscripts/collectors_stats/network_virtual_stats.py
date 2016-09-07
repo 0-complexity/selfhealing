@@ -1,4 +1,5 @@
 from JumpScale import j
+from constant import PERIOD
 
 descr = """
 gather network statistics for virtual machines
@@ -9,7 +10,7 @@ author = "deboeckj@codescalers.com"
 license = "bsd"
 version = "1.0"
 category = "info.gather.nic"
-period = 60  # always in sec
+period = PERIOD  # always in sec
 timeout = period * 0.2
 enable = True
 async = True

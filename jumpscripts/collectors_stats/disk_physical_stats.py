@@ -1,4 +1,5 @@
 from JumpScale import j
+from constant import PERIOD
 import time
 
 descr = """
@@ -10,7 +11,7 @@ author = "kristof@incubaid.com"
 license = "bsd"
 version = "1.0"
 category = "disk.monitoring"
-period = 300  # always in sec
+period = PERIOD  # always in sec
 timeout = period * 0.2
 order = 1
 enable = True
