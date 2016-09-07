@@ -26,19 +26,22 @@ def action():
 
     labeled = sorted(glob.glob("/sys/class/hwmon/*/temp*_label")
 
-    for stat in statsclient.statsByPrefix('machine.cpu.temperature@phis.gid.nid'):
+
+    for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid,nid=nid)):
         filelabel = stat.tags['filelabel']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
         maxt = int(open(filelabel.replace("_label", "_max")).read())
         inputtemp = stat.m_avg
-        if stat > crit:
+
+        if inputtemp > crit:
             results.append(dict(state='ERROR', category=category, message="Temperature on {label} = {inputtemp} > critical {critical}".format(label=label, inputtemp=inputtemp, critical=crit)))
-        elif stat > maxt:
+        elif inputtemp > maxt:
             results.append(dict(state='WARNING', category=category, message="Temperature on {label} = {inputtemp} > max {maxt}".format(label=label, inputtemp=inputtemp, maxt=maxt)))
 
     if len(results) == 0:
-        results.append(dict(state='OK', category=category, message="Temperature OK")
+        results.append(dict(state='OK', category=category, message="CPU Temperature OK")
+
 
     return results
 
