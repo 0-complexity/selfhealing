@@ -44,17 +44,18 @@ def action():
             badslaves = []
             for slave in bond['slaves']:
                 if slave['state'] != 'enabled':
-                    badslaves.append(bond['name'])
+                    badslaves.append(slave['name'])
             state = 'OK'
             if badslaves:
                 msg = 'Bond: {} has problems with slaves {}'.format(bond['name'], ', '.join(badslaves))
-                state = 'ERROR'
+                state = 'ERROR' if len(badslaves) == len(bond['slaves']) else 'WARNING'
             else:
                 msg = 'Bond: {}, all slave are ok'.format(bond['name'])
 
-            result = {'mesage': msg, 'category': category, 'uid': msg + str(j.application.whoAmI), 'state': state}
+            result = {'message': msg, 'category': category, 'uid': msg + str(j.application.whoAmI), 'state': state}
             results.append(result)
     return results
 
 if __name__ == '__main__':
-    import yaml; print(yaml.dump(action(), default_flow_style=False))
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))
