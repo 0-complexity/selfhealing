@@ -40,8 +40,8 @@ def action():
         result['uid'] = result['message']
         return [result]
 
-    avg_inter = stat.h_avg
-    result['message'] = 'Number of interrupts value is: %.2f/s' % avg_inter
+    avg_inter = int(stat.h_avg)
+    result['message'] = 'Number of interrupts value is: %d/s' % avg_inter
     level = None
     if avg_inter > 10000:
         level = 1
@@ -54,7 +54,7 @@ def action():
         result['uid'] = 'Number of interrupts value is too large'
 
     if level:
-        msg = 'Number of interrupts is to high current value: %.2f/s' % avg_inter
+        msg = 'Number of interrupts is to high current value: %d/s' % avg_inter
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
