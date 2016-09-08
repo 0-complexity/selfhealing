@@ -27,7 +27,7 @@ def action():
     statsclient = j.tools.aggregator.getClient(rcl, "{gid}_{nid}".format(gid=gid, nid=nid))
 
     for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid, nid=nid)):
-        filelabel = stat.tabObject.tags['filelabel']
+        filelabel = stat.tagObject.tags['labelfile']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
         maxt = int(open(filelabel.replace("_label", "_max")).read())
@@ -51,9 +51,9 @@ def action():
             disktempresults.append(dict(state='WARNING', category=category, message="Temperature on disk {disk} = {disktemp}".format(disk=diskid, disktemp=disktemp)))
 
     if len(cputempresults) == 0:
-        results.append(dict(state='OK', category=category, message="CPU temperature is OK."))
+        cputempresults.append(dict(state='OK', category=category, message="CPU temperature is OK."))
     if len(disktempresults) == 0:
-        results.append(dict(state='OK', category=category, message="Disks temperature is OK."))
+        disktempresults.append(dict(state='OK', category=category, message="Disks temperature is OK."))
 
     results = cputempresults + disktempresults
     return results
