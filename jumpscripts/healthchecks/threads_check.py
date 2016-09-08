@@ -28,7 +28,7 @@ def action():
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.process.threads.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet('machine.process.threads@phys.{}.{}'.format(gid, nid))
 
     result = dict()
     result['state'] = 'OK'
@@ -37,7 +37,7 @@ def action():
     if stat is None:
         level = 2
         result['state'] = 'WARNING'
-        result['message'] = 'Number of thread is not available'
+        result['message'] = 'Number of threads are not available'
         result['uid'] = result['message']
         return [result]
 
