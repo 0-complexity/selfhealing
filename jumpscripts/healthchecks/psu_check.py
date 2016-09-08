@@ -17,7 +17,7 @@ log = True
 
 
 def action():
-    category = "Power"
+    category = "Hardware"
     results = []
     ps_errmsgs = """
 Power Supply AC lost

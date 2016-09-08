@@ -32,7 +32,7 @@ def action():
 
     result = dict()
     result['state'] = 'OK'
-    result['category'] = 'CPU'
+    result['category'] = 'System Load'
 
     if stat is None:
         level = 2

@@ -35,7 +35,7 @@ def action():
 
     result = dict()
     result['state'] = 'OK'
-    result['category'] = 'CPU'
+    result['category'] = 'System Load'
 
     if stat is None:
         result['state'] = 'WARNING'
