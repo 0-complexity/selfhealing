@@ -41,8 +41,8 @@ def action():
         result['uid'] = result['message']
         return [result]
 
-    avg_thread = stat.h_avg
-    result['message'] = 'Number of thread is: %.2f' % avg_thread
+    avg_thread = int(stat.h_avg)
+    result['message'] = 'Number of thread is: %d' % avg_thread
     level = None
 
     if avg_thread > 20000:
@@ -56,7 +56,7 @@ def action():
         result['uid'] = 'Number of thread is too large'
 
     if level:
-        msg = 'Number of thread is to high current value: %.2f' % avg_thread
+        msg = 'Number of thread is to high current value: %d' % avg_thread
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
