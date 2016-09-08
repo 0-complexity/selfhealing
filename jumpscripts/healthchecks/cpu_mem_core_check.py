@@ -1,4 +1,3 @@
-from JumpScale.grid.serverbase.Exceptions import RemoteException
 from JumpScale import j
 
 descr = """
@@ -58,18 +57,16 @@ def action():
         cpuresult['uid'] = cpuresult['message']
     else:
         cpuavg = cpupercent / float(count)
-        cpuresults = get_results('cpu', cpuavg)
+        cpuresult = get_results('cpu', cpuavg)
 
-    return memoryresult,
+    return [memoryresult, cpuresult]
 
 
 def get_results(type_, percent):
-    res = list()
-
     level = None
     result = dict()
     result['state'] = 'OK'
-    result['message'] = r'%s load -> last hour avergage is: %s %%' % (type_.upper(), percent)
+    result['message'] = r'%s load -> last hour avergage is: %.2f%%' % (type_.upper(), percent)
     result['category'] = 'System Load'
     if percent > 95:
         level = 1
@@ -81,16 +78,14 @@ def get_results(type_, percent):
         result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
     if level:
         #  500_6_cpu.promile
-        msg = '%s load -> above treshhold avgvalue last hour avergage is: %s %%' % (type_.upper(), percent)
+        msg = '%s load -> above treshhold avgvalue last hour avergage is: %.2f%%' % (type_.upper(), percent)
         result['message'] = msg
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = j.application.whoAmI.nid
         eco.gid = j.application.whoAmI.gid
         eco.process()
-    res.append(result)
-    return res
+    return result
 
 if __name__ == '__main__':
-    import JumpScale.grid.osis
-    j.core.osis.client = j.clients.osis.getByInstance('main')
-    print action()
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))
