@@ -1,9 +1,9 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if the amount of swap used by the system is higher than expected.
+This healthcheck checks if amount of interrupts is higher than expected.
 
-Currently throws WARNING if more than 1GB interrupts  and throws ERROR if more than 2GB interrupts
+Currently throws WARNING if more than 8K interrupts and throws ERROR if more than 10K interrupts
 """
 
 organization = "jumpscale"
@@ -11,7 +11,7 @@ author = "christophe@greenitglobe.com"
 category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
-period = 15 * 60  # always in sec
+period = 60  # always in sec
 timeout = period * 0.2
 startatboot = True
 order = 1
@@ -28,35 +28,33 @@ def action():
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.memory.swap.used@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet('machine.CPU.interrupts@phys.{}.{}'.format(gid, nid))
 
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
 
     if stat is None:
-        level = 2
         result['state'] = 'WARNING'
-        result['message'] = 'Swap used value is not available'
+        result['message'] = 'Number of interrupts is not collected yet'
         result['uid'] = result['message']
         return [result]
 
-    avg_swap_used = stat.h_avg
-    result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
+    avg_inter = stat.h_avg
+    result['message'] = 'Number of interrupts value is: %.2f/s' % avg_inter
     level = None
-
-    if avg_swap_used > 2000:
+    if avg_inter > 10000:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = 'Swap used value is too large'
+        result['uid'] = 'Number of interrupts value is too large'
 
-    elif avg_swap_used > 1000:
+    elif avg_inter > 80000:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = 'Swap used value is too large'
+        result['uid'] = 'Number of interrupts value is too large'
 
     if level:
-        msg = 'Swap used is to high current value: %.2fMB' % avg_swap_used
+        msg = 'Number of interrupts is to high current value: %.2f/s' % avg_inter
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
