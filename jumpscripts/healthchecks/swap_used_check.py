@@ -42,7 +42,7 @@ def action():
         return [result]
 
     avg_swap_used = stat.h_avg
-    result['message'] = 'Swap used value is: %.2f/s' % avg_swap_used
+    result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
     level = None
 
     if avg_swap_used > 2000:
@@ -56,7 +56,7 @@ def action():
         result['uid'] = 'Swap used value is too large'
 
     if level:
-        msg = 'Swap used is to high current value: %.2f/s' % avg_swap_used
+        msg = 'Swap used is to high current value: %.2fMB' % avg_swap_used
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
