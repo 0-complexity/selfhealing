@@ -28,6 +28,7 @@ def action():
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     nodekey = '{}_{}'.format(gid, nid)
+    category = 'System Load'
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
@@ -35,7 +36,7 @@ def action():
     if stat is None:
         memoryresult = {}
         memoryresult['state'] = 'WARNING'
-        memoryresult['category']
+        memoryresult['category'] = category
         memoryresult['message'] = 'CPU contextswitch is not collected yet'
         memoryresult['uid'] = memoryresult['message']
     else:
@@ -52,7 +53,7 @@ def action():
     if count == 0:
         cpuresult = {}
         cpuresult['state'] = 'WARNING'
-        cpuresult['category']
+        cpuresult['category'] = category
         cpuresult['message'] = 'CPU percent is not collected yet'
         cpuresult['uid'] = cpuresult['message']
     else:
@@ -69,7 +70,7 @@ def get_results(type_, percent):
     result = dict()
     result['state'] = 'OK'
     result['message'] = r'%s load -> last hour avergage is: %s %%' % (type_.upper(), percent)
-    result['category'] = 'CPU'
+    result['category'] = 'System Load'
     if percent > 95:
         level = 1
         result['state'] = 'ERROR'
