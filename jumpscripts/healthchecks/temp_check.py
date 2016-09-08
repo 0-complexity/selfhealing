@@ -9,7 +9,7 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['node']
-period = 60*5  # 5mins
+period = 60 * 5  # 5mins
 enable = True
 async = True
 queue = 'process'
@@ -17,8 +17,6 @@ log = True
 
 
 def action():
-    import multiprocessing
-    import glob
     results = []
     cputempresults = []
     disktempresults = []
@@ -29,7 +27,7 @@ def action():
     statsclient = j.tools.aggregator.getClient(rcl, "{gid}_{nid}".format(gid=gid, nid=nid))
 
     for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid, nid=nid)):
-        filelabel = stat.tags['filelabel']
+        filelabel = stat.tabObject.tags['filelabel']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
         maxt = int(open(filelabel.replace("_label", "_max")).read())
