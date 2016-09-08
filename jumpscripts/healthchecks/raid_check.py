@@ -17,11 +17,7 @@ log = True
 
 
 def action():
-    try:
-        import mdstat
-    except ImportError:
-        j.system.process.execute('pip install mdstat')
-        import mdstat
+    import mdstat
     category = "Hardware"
     results = []
 
