@@ -28,14 +28,23 @@ def action():
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.process.threads.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet('machine.process.threads@phys.{}.{}'.format(gid, nid))
 
-    avg_thread = stat.h_avg
-    level = None
     result = dict()
     result['state'] = 'OK'
+    result['category'] = 'System Load'
+
+    if stat is None:
+        level = 2
+        result['state'] = 'WARNING'
+        result['message'] = 'Number of threads are not available'
+        result['uid'] = result['message']
+        return [result]
+
+    avg_thread = stat.h_avg
     result['message'] = 'Number of thread is: %.2f/s' % avg_thread
-    result['category'] = 'CPU'
+    level = None
+
     if avg_thread > 20000:
         level = 1
         result['state'] = 'ERROR'

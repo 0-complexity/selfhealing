@@ -1,4 +1,3 @@
-from JumpScale.grid.serverbase.Exceptions import RemoteException
 from JumpScale import j
 
 descr = """
@@ -28,31 +27,47 @@ def action():
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     nodekey = '{}_{}'.format(gid, nid)
+    category = 'System Load'
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
-    totalram = psutil.phymem_usage().total
-    avgmempercent = (stat.h_avg / float(totalram)) * 100
+    if stat is None:
+        memoryresult = {}
+        memoryresult['state'] = 'WARNING'
+        memoryresult['category'] = category
+        memoryresult['message'] = 'CPU contextswitch is not collected yet'
+        memoryresult['uid'] = memoryresult['message']
+    else:
+        totalram = psutil.phymem_usage().total
+        avgmempercent = (stat.h_avg / float(totalram)) * 100
+        memoryresult = get_results('memory', avgmempercent)
 
     cpupercent = 0
     count = 0
-    for percent in statsclient.statsByPerfix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
+    for percent in statsclient.statsByPrefix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
         count += 1
         cpupercent += percent.h_avg
-    cpuavg = cpupercent / float(count)
 
-    return get_results('memory', avgmempercent), get_results('cpu', cpuavg)
+    if count == 0:
+        cpuresult = {}
+        cpuresult['state'] = 'WARNING'
+        cpuresult['category'] = category
+        cpuresult['message'] = 'CPU percent is not collected yet'
+        cpuresult['uid'] = cpuresult['message']
+    else:
+        cpuavg = cpupercent / float(count)
+        cpuresult = get_results('cpu', cpuavg)
+
+    return [memoryresult, cpuresult]
 
 
 def get_results(type_, percent):
-    res = list()
-
     level = None
     result = dict()
     result['state'] = 'OK'
-    result['message'] = r'%s load -> last hour avergage is: %s %%' % (type_.upper(), percent)
-    result['category'] = 'CPU'
+    result['message'] = r'%s load -> last hour avergage is: %.2f%%' % (type_.upper(), percent)
+    result['category'] = 'System Load'
     if percent > 95:
         level = 1
         result['state'] = 'ERROR'
@@ -63,16 +78,14 @@ def get_results(type_, percent):
         result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
     if level:
         #  500_6_cpu.promile
-        msg = '%s load -> above treshhold avgvalue last hour avergage is: %s %%' % (type_.upper(), percent)
+        msg = '%s load -> above treshhold avgvalue last hour avergage is: %.2f%%' % (type_.upper(), percent)
         result['message'] = msg
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = j.application.whoAmI.nid
         eco.gid = j.application.whoAmI.gid
         eco.process()
-    res.append(result)
-    return res
+    return result
 
 if __name__ == '__main__':
-    import JumpScale.grid.osis
-    j.core.osis.client = j.clients.osis.getByInstance('main')
-    print action()
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))

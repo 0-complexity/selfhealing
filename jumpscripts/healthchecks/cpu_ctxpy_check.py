@@ -33,12 +33,19 @@ def action():
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.CPU.contextswitch@phys.{}.{}'.format(gid, nid))
 
-    avgctx = stat.h_avg
-    level = None
     result = dict()
     result['state'] = 'OK'
+    result['category'] = 'System Load'
+
+    if stat is None:
+        result['state'] = 'WARNING'
+        result['message'] = 'CPU contextswitch is not collected yet'
+        result['uid'] = result['message']
+        return [result]
+
+    avgctx = stat.h_avg
     result['message'] = 'CPU contextswitch value is: %.2f/s' % avgctx
-    result['category'] = 'CPU'
+    level = None
     if avgctx > 1000000:
         level = 1
         result['state'] = 'ERROR'

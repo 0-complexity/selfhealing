@@ -30,12 +30,21 @@ def action():
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.memory.swap.used@phys.{}.{}'.format(gid, nid))
 
-    avg_swap_used = stat.h_avg
-    level = None
     result = dict()
     result['state'] = 'OK'
+    result['category'] = 'System Load'
+
+    if stat is None:
+        level = 2
+        result['state'] = 'WARNING'
+        result['message'] = 'Swap used value is not available'
+        result['uid'] = result['message']
+        return [result]
+
+    avg_swap_used = stat.h_avg
     result['message'] = 'Swap used value is: %.2f/s' % avg_swap_used
-    result['category'] = 'CPU'
+    level = None
+
     if avg_swap_used > 2000:
         level = 1
         result['state'] = 'ERROR'
