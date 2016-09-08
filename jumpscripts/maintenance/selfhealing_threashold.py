@@ -66,13 +66,13 @@ def _process_iops(ovc, influx):
 
 
 def _process_network(ovc, influx):
-    throughput = influx.query('''SELECT mean(value) FROM /network.throughput.*\|m/ WHERE "type" = 'virtual' AND time > now() - 5m GROUP BY "mac"''')
+    throughput = influx.query('''SELECT mean(value) FROM /network.throughput.*\|t/ WHERE "type" = 'virtual' AND time > now() - 5m GROUP BY "mac"''')
     if 'series' not in throughput.raw:
         print('network.throughput no data')
         return
     agg_throughput = _aggregate(throughput.raw['series'], 'mac')
 
-    packet = influx.query('''SELECT value FROM /network.packets.*\|m/ WHERE "type" = 'virtual'  AND time > now() - 5m GROUP BY "mac"''')
+    packet = influx.query('''SELECT value FROM /network.packets.*\|t/ WHERE "type" = 'virtual'  AND time > now() - 5m GROUP BY "mac"''')
     if 'series' not in packet.raw:
         print('network.packets no data')
         return
