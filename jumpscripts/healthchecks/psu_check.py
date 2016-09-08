@@ -67,10 +67,11 @@ Power Supply Inactive
                             results.append(dict(state='SKIPPED', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
                         else:
                             results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
-                    else:
-                        results.append(dict(state='OK', category=category, message="Power supply (%s) is OK" % id_))
+            if len(results) == 0:
+                results.append(dict(state='OK', category=category, message="Power supplies are OK"))
 
     return results
 
 if __name__ == '__main__':
-    print action()
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))
