@@ -93,7 +93,7 @@ Loss off packets is a big issue for tcp, which shows here
 
 Iperf3 can generate json with a swath of info; what you want :
 
-`end->sum->retransmits`
+`end->sum_sent->retransmits`
 
 
 ```
