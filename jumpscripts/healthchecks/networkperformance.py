@@ -92,12 +92,12 @@ class NetworkPerformance(object):
         if self._runingServer:
             self._runingServer.kill()
 
-    def getbandwidthState(self, lostpercent):
+    def getbandwidthState(self, retransmits):
         """
         """
-        if lostpercent > 5:
+        if retransmits > 1000:
             return 'ERROR'
-        elif lostpercent > 2:
+        elif retransmits > 500:
             return 'WARNING'
         return 'OK'
 
@@ -112,7 +112,7 @@ class NetworkPerformance(object):
                 j.logger.log('Installing iperf on %s' % ip, 1)
                 if not sshclient.command_check('iperf3'):
                     sshclient.run('apt-get install -y iperf3')
-                output = sshclient.run('iperf3 -c %s --format m -u -k 10000 -b 1000M -J' % self.backplaneNet.ip)
+                output = sshclient.run('iperf3 -c %s --format m -k 10000 -b 1G -J' % self.backplaneNet.ip)
                 try:
                     data = json.loads(output)
                 except:
@@ -122,10 +122,10 @@ class NetworkPerformance(object):
                     final.append(result)
                     continue
 
-                lostpercent = data['end']['sum']['lost_percent']
-                msg = "Lost packages between %s and %s was %.2f%%" % (self.backplaneNet.ip, ip, lostpercent)
+                retransmits = data['end']['sum_sent']['retransmits']
+                msg = "Retransmitted packages between %s and %s was %d" % (self.backplaneNet.ip, ip, retransmits)
                 result['message'] = msg
-                result['state'] = self.getbandwidthState(lostpercent)
+                result['state'] = self.getbandwidthState(retransmits)
                 if result['state'] != 'OK':
                     print(msg)
                     eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=1, type='OPERATIONS')
