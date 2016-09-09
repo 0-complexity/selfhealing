@@ -1,16 +1,13 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if amount of context switches per CPU is higher than expected.
+This healthcheck checks if amount of threads is higher than expected.
 
-Currently throws WARNING if more than 1M context switches and throws ERROR if more than 600k context switches
-
-TODO : check these values, specifically if amount of cores per CPU is growing
-
+Currently throws WARNING if more than 18K threads and throws ERROR if more than 20K threads
 """
 
 organization = "jumpscale"
-author = "deboeckj@codescalers.com"
+author = "christophe@greenitglobe.com"
 category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
@@ -31,33 +28,35 @@ def action():
 
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.CPU.contextswitch@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet('machine.process.threads@phys.{}.{}'.format(gid, nid))
 
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
 
     if stat is None:
+        level = 2
         result['state'] = 'WARNING'
-        result['message'] = 'CPU contextswitch is not collected yet'
+        result['message'] = 'Number of threads are not available'
         result['uid'] = result['message']
         return [result]
 
-    avgctx = stat.h_avg
-    result['message'] = 'CPU contextswitch value is: %.2f/s' % avgctx
+    avg_thread = int(stat.h_avg)
+    result['message'] = 'Number of thread is: %d' % avg_thread
     level = None
-    if avgctx > 1000000:
+
+    if avg_thread > 20000:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = 'CPU contextswitch value is too large'
+        result['uid'] = 'Number of thread is too large'
 
-    elif avgctx > 600000:
+    elif avg_thread > 18000:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = 'CPU contextswitch value is too large'
+        result['uid'] = 'Number of thread is too large'
 
     if level:
-        msg = 'CPU contextswitch is to high current value: %.2f/s' % avgctx
+        msg = 'Number of thread is to high current value: %d' % avg_thread
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid

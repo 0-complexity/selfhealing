@@ -1,19 +1,20 @@
 from JumpScale import j
-import sys
+import netaddr
 import math
 import random
+import json
 import re
 from fabric.network import NetworkError
 
 descr = """
-Tests bandwidth between storage nodes, volume drivers and itself (CPU Node)
+Tests bandwidth between storage nodes, volume drivers and itself
 
 Generates a warning if bandwidth is below 50% of the maximum speed
 Generates an error if bandwidth is below 10% of the maximum speed
 
 """
 organization = "cloudscalers"
-author = "hamdy.farag@codescalers.com"
+author = "deboeckj@greenitglobe.com"
 order = 1
 enable = False
 async = True
@@ -21,38 +22,31 @@ log = True
 queue = 'io'
 interval = (2 * j.application.whoAmI.nid) % 30
 period = "%s,%s * * * *" % (interval, interval + 30)
-roles = ['storagenode']
+roles = ['storagenode', 'storagedriver', 'cpunode']
 category = "monitor.healthcheck"
 
-class OpenvStorage():
+
+class NetworkPerformance(object):
     def __init__(self):
-        self._localIp = None
-        self._storagerouters = []
+        self._backplaneNet = None
         self._nic = None
         self._speed = None
         self._runingServer = None
+        self.nic = 'backplane1'
+        self._nodes = []
+        self.scl = j.clients.osis.getNamespace('system')
+
         # appened opverstorage to python path
-        sys.path.append('/opt/OpenvStorage')
-        j.logger.log('Installing iperf', 1)
-        j.system.platform.ubuntu.checkInstall('iperf', 'iperf')
-
+        j.system.platform.ubuntu.checkInstall('iperf3', 'iperf3')
 
     @property
-    def localIp(self):
-        if not self._localIp:
-            self.storageRouters
-        return self._localIp
-
-    @property
-    def nic(self):
-        if not self._nic:
-            for netinfo in j.system.net.getNetworkInfo():
-                if self.localIp in netinfo['ip']:
-                    self._nic = netinfo['name']
-                    break
-            else:
-                raise RuntimeError("Could not get local network card")
-        return self._nic
+    def backplaneNet(self):
+        if not self._backplaneNet:
+            ips = j.system.net.getIpAddress(self.nic)
+            if not ips:
+                return None
+            self._backplaneNet = netaddr.IPNetwork("{}/{}".format(ips[0][0], ips[0][1]))
+        return self._backplaneNet
 
     @property
     def speed(self):
@@ -73,81 +67,87 @@ class OpenvStorage():
         return self._speed
 
     @property
-    def storageRouters(self):
-        if not self._storagerouters:
-            from ovs.lib.storagerouter import StorageRouterList
-            storageips = []
-            for router in StorageRouterList.get_storagerouters():
-                if j.system.net.isIpLocal(router.ip):
-                    self._localIp = router.ip
-                else:
-                    storageips.append(router)
-            if not self._localIp:
-                firstip = next(iter(storageips), None)
-                if firstip:
-                    self._localIp = j.system.net.getReachableIpAddress(firstip, 22)
+    def nodes(self):
+        if not self._nodes:
+            nodeips = []
+            nodes = self.scl.node.search({'roles': {'$in': roles}})[1:]
+            for node in nodes:
+                for net in node['netaddr']:
+                    for ip in net['ip']:
+                        if ip in self.backplaneNet and ip != str(self.backplaneNet.ip):
+                            nodeips.append(ip)
 
-            if storageips:
-                self._storagerouters = random.sample(storageips, int(math.log(len(storageips)) + 1))
+            if nodeips:
+                self._nodes = random.sample(nodeips, int(math.log(len(nodeips)) + 1))
             else:
-                self._storagerouters = []
+                self._nodes = []
 
-        return self._storagerouters
+        return self._nodes
 
     def runIperfServer(self):
         j.logger.log('Running iperf server', 1)
-        self._runingServer = j.system.process.executeAsync('iperf', ['-s'])
+        self._runingServer = j.system.process.executeAsync('iperf3', ['-s'])
 
     def stopIperfServer(self):
         if self._runingServer:
             self._runingServer.kill()
 
-    def getbandwidthState(self, bandwidth):
+    def getbandwidthState(self, lostpercent):
         """
         """
-        bandwidth = bandwidth
-        if bandwidth < self.speed * 0.1:
+        if lostpercent > 5:
             return 'ERROR'
-        elif bandwidth < self.speed * 0.5:
+        elif lostpercent > 2:
             return 'WARNING'
         return 'OK'
 
     def getClusterBandwidths(self):
         final = []
-        for router in self.storageRouters:
+        for ip in self.nodes:
             result = {'category': 'Bandwidth Test'}
-            sshclient = j.remote.cuisine.connect(router.ip, 22)
+            sshclient = j.remote.cuisine.connect(ip, 22)
+            sshclient.fabric.api.env['abort_on_prompts'] = True
+            sshclient.fabric.api.env['abort_exception'] = RuntimeError
             try:
-                j.logger.log('Installing iperf on %s' % router.ip, 1)
-                if not sshclient.command_check('iperf'):
-                    sshclient.run('apt-get install iperf')
-                output = sshclient.run('iperf -c %s --format m -t 2 ' % self.localIp)
-                output = output.split(' ')
-                bandwidth = float(output[-2])
-                msg = "Bandwidth between %s and %s reached %s" % (self.localIp, router.ip, bandwidth)
+                j.logger.log('Installing iperf on %s' % ip, 1)
+                if not sshclient.command_check('iperf3'):
+                    sshclient.run('apt-get install -y iperf3')
+                output = sshclient.run('iperf3 -c %s --format m -u -k 10000 -b 1000M -J' % self.backplaneNet.ip)
+                try:
+                    data = json.loads(output)
+                except:
+                    result['message'] = 'Failed to parse json data from iperf'
+                    result['uid'] = result['message']
+                    result['state'] = 'ERROR'
+                    final.append(result)
+                    continue
+
+                lostpercent = data['end']['sum']['lost_percent']
+                msg = "Lost packages between %s and %s was %.2f%%" % (self.backplaneNet.ip, ip, lostpercent)
                 result['message'] = msg
-                result['state'] = self.getbandwidthState(bandwidth)
+                result['state'] = self.getbandwidthState(lostpercent)
                 if result['state'] != 'OK':
-                    print msg
+                    print(msg)
                     eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=1, type='OPERATIONS')
                     eco.process()
                 final.append(result)
             except NetworkError:
                 result['state'] = 'ERROR'
-                result['message'] = 'Failed to connect to %s. Status of storagerouter: %s' % (router.ip, router.status)
-                result['uid'] = 'Failed to connect to %s. Status of storagerouter: %s' % (router.ip, router.status)
+                result['message'] = 'Failed to connect to %s' % (ip)
+                result['uid'] = result['message']
                 final.append(result)
         if not final:
             return [{'message': 'Single node', 'state': 'OK', 'category': 'Bandwidth Test'}]
         return final
 
+
 def action():
-    ovs = OpenvStorage()
+    ovs = NetworkPerformance()
     ovs.runIperfServer()
     results = ovs.getClusterBandwidths()
     ovs.stopIperfServer()
     return results
 
 if __name__ == '__main__':
-    import json
-    print json.dumps(action(), sort_keys=True, indent=5)
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))

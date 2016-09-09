@@ -43,9 +43,9 @@ ovs-appctl bond/show
 Check if the existing bond is up
 
 ```
-# here we assume a bond of 2 NICs
+# here we assume a bond of minimum 2 NICs that need to be up
 a=(`ovs-appctl bond/show | awk '/slave .*:/&&/enabled/{split($2,a,":") ; print a[1]}'`)
-if [ ${#a[@]} -le 2 ] ; then
+if [ ${#a[@]} -lt 2 ] ; then
     echo "ALERT!! Bond b0Rk3d!!"
 fi
 ```

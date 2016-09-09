@@ -9,36 +9,56 @@ author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['node']
-period = 60  # 1min
+period = 60 * 5  # 5mins
 enable = True
 async = True
 queue = 'process'
 log = True
 
+
 def action():
+    results = []
+    cputempresults = []
+    disktempresults = []
     category = "Temperature"
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    import multiprocessing
     rcl = j.clients.redis.getByInstance('system')
-    labeled = sorted(glob.glob("/sys/class/hwmon/*/temp*_label")
-    for coreid in range(multiprocessing.cpu_count()):
-        key = "machine.CPU.temperature@phys.{gid}.{nodeid}.{coreid}".format(gid=gid, nid=nid, coreid=coreid)
-        statsclient = j.tools.aggregator.getClient(rcl, key)
-        stat = statsclient.statGet(key)
-        filelabel = stat.tags['filelabel']
+    statsclient = j.tools.aggregator.getClient(rcl, "{gid}_{nid}".format(gid=gid, nid=nid))
+
+    for stat in statsclient.statsByPrefix('machine.CPU.temperature@phys.{gid}.{nid}'.format(gid=gid, nid=nid)):
+        filelabel = stat.tagObject.tags['labelfile']
         label = open(filelabel).read()
         crit = int(open(filelabel.replace("_label", "_crit")).read())
         maxt = int(open(filelabel.replace("_label", "_max")).read())
         inputtemp = stat.m_avg
-        if stat > crit:
-            results.append(dict(state='ERROR', category=category, message="Temperature on {label} = {inputtemp} > critical {critical}".format(label=label, inputtemp=inputtemp, critical=crit)))
-        elif stat > maxt:
-            results.append(dict(state='WARNING', category=category, message="Temperature on {label} = {inputtemp} > max {maxt}".format(label=label, inputtemp=inputtemp, maxt=maxt)))
-        else:
-            results.append(dict(state='OK', category=category, message="Temperature on {label} = {inputtemp} OK".format(label=label, inputtemp=inputtemp)))
 
+        if inputtemp > crit:
+            cputempresults.append(dict(state='ERROR', category=category, message="Temperature on {label} = {inputtemp} > critical {critical}".format(label=label, inputtemp=inputtemp, critical=crit)))
+        elif inputtemp > maxt:
+            cputempresults.append(dict(state='WARNING', category=category, message="Temperature on {label} = {inputtemp} > max {maxt}".format(label=label, inputtemp=inputtemp, maxt=maxt)))
+
+    for stat in statsclient.statsByPrefix('machine.disk.temperature@phys.{gid}.{nid}'.format(gid=gid, nid=nid)):
+        key = stat.key
+        diskid = key.split(".")[-1]
+        disktemp = stat.m_avg
+        wtemp = 60
+        etemp = 70
+
+        if disktemp > etemp:
+            disktempresults.append(dict(state='ERROR', category=category, message="Temperature on disk {disk} = {disktemp}".format(disk=diskid, disktemp=disktemp)))
+        elif disktemp > wtemp:
+            disktempresults.append(dict(state='WARNING', category=category, message="Temperature on disk {disk} = {disktemp}".format(disk=diskid, disktemp=disktemp)))
+
+    if len(cputempresults) == 0:
+        cputempresults.append(dict(state='OK', category=category, message="CPU temperature is OK."))
+    if len(disktempresults) == 0:
+        disktempresults.append(dict(state='OK', category=category, message="Disks temperature is OK."))
+
+    results = cputempresults + disktempresults
     return results
 
+
 if __name__ == '__main__':
-    print action()
+    import yaml
+    print(yaml.dump(action(), default_flow_style=False))
