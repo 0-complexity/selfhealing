@@ -43,7 +43,7 @@ def action():
                 msg = 'node %s can reach node %s (%s)' % (current_node['name'], node['name'], ip)
                 results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
             except:
-                msg = 'node %s can reach node %s (%s)' % (current_node['name'], node['name'], ip)
+                msg = "node %s can't reach node %s (%s)" % (current_node['name'], node['name'], ip)
                 results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
 
     return results
