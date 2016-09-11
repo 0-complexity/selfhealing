@@ -13,7 +13,7 @@ period = 60  # 1min
 enable = True
 async = True
 queue = 'process'
-log = True
+log = False
 
 
 def action():
