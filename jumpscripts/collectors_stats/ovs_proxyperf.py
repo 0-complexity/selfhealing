@@ -1,10 +1,5 @@
 from JumpScale import j
-import time
-import json
-from ovs.extensions.plugins.albacli import AlbaCLI
-from ovs.dal.lists.servicetypelist import ServiceTypeList
-from ovs.dal.hybrids.servicetype import ServiceType
-from ovs.dal.lists.storagerouterlist import StorageRouterList
+import sys
 
 descr = """
 gather statistics about OVS proxy performance
@@ -130,6 +125,12 @@ def action():
     """
     Send OVS proxy performance statistics to DB
     """
+    sys.path.append('/opt/OpenvStorage')
+    from ovs.extensions.plugins.albacli import AlbaCLI
+    from ovs.dal.lists.servicetypelist import ServiceTypeList
+    from ovs.dal.hybrids.servicetype import ServiceType
+    from ovs.dal.lists.storagerouterlist import StorageRouterList
+
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 

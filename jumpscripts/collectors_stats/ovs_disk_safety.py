@@ -1,11 +1,5 @@
 from JumpScale import j
-import time
-import json
-from ovs.dal.lists.servicelist import ServiceList
-from ovs.dal.hybrids.service import Service
-from ovs.dal.hybrids.servicetype import ServiceType
-from ovs.dal.lists.albabackendlist import AlbaBackendList
-from ovs.extensions.plugins.albacli import AlbaCLI
+import sys
 
 descr = """
 gather statistics about disk safety
@@ -35,26 +29,19 @@ def format_tags(tags):
     return out.strip()
 
 
-def amIMaster():
-    gid = j.application.whoAmI.gid
-    nid = j.application.whoAmI.nid
-    ocl = j.clients.osis.getByInstance('main')
-    nodecl = j.clients.osis.getCategory(ocl, 'system', 'node')
-
-    nodes = nodecl.search({'roles': 'storagedriver'})[1:]
-    nodes = sorted(nodes, key=lambda k: k['id'])
-
-    if nodes[0]['gid'] != gid or nodes[0]['id'] != nid:
-        return False
-
-    return True
-
-
 def action():
     """
     Send disk safety for each vpool and the amount of namespaces with the lowest disk safety to DB
     """
-    if not amIMaster():
+    sys.path.append('/opt/OpenvStorage')
+    from ovs.dal.lists.servicelist import ServiceList
+    from ovs.dal.hybrids.service import Service
+    from ovs.dal.hybrids.servicetype import ServiceType
+    from ovs.dal.lists.albabackendlist import AlbaBackendList
+    from ovs.extensions.plugins.albacli import AlbaCLI
+    from ovs.extensions.generic.system import System
+
+    if System.get_my_storagerouter().node_type != 'MASTER':
         return {}
 
     rediscl = j.clients.redis.getByInstance('system')

@@ -1,8 +1,6 @@
 from JumpScale import j
-import time
-import json
-from ovs.dal.hybrids.albabackend import AlbaBackend
-from ovs.dal.lists.albabackendlist import AlbaBackendList
+import sys
+
 
 descr = """
 gather statistics about OVS backends
@@ -31,26 +29,16 @@ def format_tags(tags):
     return out.strip()
 
 
-def amIMaster():
-    gid = j.application.whoAmI.gid
-    nid = j.application.whoAmI.nid
-    ocl = j.clients.osis.getByInstance('main')
-    nodecl = j.clients.osis.getCategory(ocl, 'system', 'node')
-
-    nodes = nodecl.search({'roles': 'storagedriver'})[1:]
-    nodes = sorted(nodes, key=lambda k: k['id'])
-
-    if nodes[0]['gid'] != gid or nodes[0]['id'] != nid:
-        return False
-
-    return True
-
-
 def action():
     """
     Send OVS backend statistics to DB
     """
-    if not amIMaster():
+    sys.path.append('/opt/OpenvStorage')
+    from ovs.dal.hybrids.albabackend import AlbaBackend
+    from ovs.dal.lists.albabackendlist import AlbaBackendList
+    from ovs.extensions.generic.system import System
+
+    if System.get_my_storagerouter().node_type != 'MASTER':
         return {}
 
     rediscl = j.clients.redis.getByInstance('system')
