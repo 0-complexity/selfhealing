@@ -48,38 +48,37 @@ def action():
 
     abl = AlbaBackendList.get_albabackends()
     for ab in abl:
-        try:
-            gets = 0
-            puts = 0
-            for guid in ab.linked_backend_guids:
-                alba_backend = AlbaBackend(guid)
-                gets += alba_backend.statistics['multi_get']['n']
-                puts += alba_backend.statistics['apply']['n']
-            local_summary = ab.local_summary
-            size = local_summary['sizes']
-            devices = local_summary['devices']
+        gets = 0
+        puts = 0
+        for guid in ab.linked_backend_guids:
+            alba_backend = AlbaBackend(guid)
+            gets += alba_backend.statistics['multi_get']['n']
+            puts += alba_backend.statistics['apply']['n']
+        local_summary = ab.local_summary
+        size = local_summary['sizes']
+        devices = local_summary['devices']
 
-            now = j.base.time.getTimeEpoch()
+        now = j.base.time.getTimeEpoch()
 
-            tags = {
-                'backend_name': ab.name,
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
-            }
-            result = {
-                'gets': gets,
-                'puts': puts,
-                'free': float(size['size'] - size['used']),
-                'used': float(size['used']),
-                'green': int(devices['green']),
-                'orange': int(devices['orange']),
-                'red': int(devices['red'])
-            }
-            for key, value in result.iteritems():
-                key = "ovs.backend.%s@%s" % (key, ab.name)
-                aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+        tags = {
+            'backend_name': ab.name,
+            'gid': j.application.whoAmI.gid,
+            'nid': j.application.whoAmI.nid,
+        }
+        result = {
+            'gets': gets,
+            'puts': puts,
+            'free': float(size['size'] - size['used']),
+            'used': float(size['used']),
+            'green': int(devices['green']),
+            'orange': int(devices['orange']),
+            'red': int(devices['red'])
+        }
+        for key, value in result.iteritems():
+            key = "ovs.backend.%s@%s" % (key, ab.name)
+            aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
 
-            all_results[ab.name] = result
+        all_results[ab.name] = result
 
     return all_results
 
