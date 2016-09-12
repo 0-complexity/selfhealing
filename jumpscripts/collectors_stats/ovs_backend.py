@@ -62,7 +62,7 @@ def action():
             now = j.base.time.getTimeEpoch()
 
             tags = {
-                'backend_name': ab.name
+                'backend_name': ab.name,
                 'gid': j.application.whoAmI.gid,
                 'nid': j.application.whoAmI.nid,
             }
