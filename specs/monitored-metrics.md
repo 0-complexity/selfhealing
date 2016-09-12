@@ -25,6 +25,119 @@
     - machine.temperature [°C] [PHYS]
     - machine.process.threads [#] [PHYS]
 
+**OVS metrics**
+- Vdisk
+    - ovs.vdisk.4k_operations
+    - ovs.vdisk.4k_read_operations
+    - ovs.vdisk.4k_write_operations
+    - ovs.vdisk.backend_data_read
+    - ovs.vdisk.backend_data_written
+    - ovs.vdisk.backend_read_operations
+    - ovs.vdisk.backend_write_operations
+    - ovs.vdisk.cache_hits
+    - ovs.vdisk.cache_misses
+    - ovs.vdisk.cluster_cache_hits
+    - ovs.vdisk.cluster_cache_misses
+    - ovs.vdisk.data_read
+    - ovs.vdisk.data_transferred
+    - ovs.vdisk.data_written
+    - ovs.vdisk.metadata_store_hits
+    - ovs.vdisk.metadata_store_misses
+    - ovs.vdisk.operations
+    - ovs.vdisk.read_operations
+    - ovs.vdisk.sco_cache_hits
+    - ovs.vdisk.sco_cache_misses
+    - ovs.vdisk.stored
+    - ovs.vdisk.timestamp
+    - ovs.vdisk.write_operations
+
+- VPool
+    - ovs.vpool.4k_operations
+    - ovs.vpool.4k_read_operations
+    - ovs.vpool.4k_write_operations
+    - ovs.vpool.backend_data_read
+    - ovs.vpool.backend_data_written
+    - ovs.vpool.backend_read_operations
+    - ovs.vpool.backend_write_operations
+    - ovs.vpool.cache_hits
+    - ovs.vpool.cache_misses
+    - ovs.vpool.cluster_cache_hits
+    - ovs.vpool.cluster_cache_misses
+    - ovs.vpool.data_read
+    - ovs.vpool.data_transferred
+    - ovs.vpool.data_written
+    - ovs.vpool.metadata_store_hits
+    - ovs.vpool.metadata_store_misses
+    - ovs.vpool.operations
+    - ovs.vpool.read_operations
+    - ovs.vpool.sco_cache_hits
+    - ovs.vpool.sco_cache_misses
+    - ovs.vpool.stored
+    - ovs.vpool.timestamp
+    - ovs.vpool.write_operations
+
+- ASD
+    - ovs.asd.GetDiskUsage
+    - ovs.asd.disk_usage
+    - ovs.asd.Statistics
+    - ovs.asd.capacity
+    - ovs.asd.creation
+    - ovs.asd.period
+    - ovs.asd.Capabilities
+    - ovs.asd.Range
+    - ovs.asd.PartialGet
+    - ovs.asd.Apply
+    - ovs.asd.MultiGet
+
+- backend
+    - ovs.backend.gets
+    - ovs.backend.puts
+    - ovs.backend.free
+    - ovs.backend.used
+    - ovs.backend.green
+    - ovs.backend.orange
+    - ovs.backend.red
+
+- disk lost
+    - ovs.disk_lost.total_objects
+    - ovs.disk_lost.objects
+
+- disk safety
+    - ovs.disk_safety.total_objects
+    - ovs.disk_safety.objects
+
+- bucket
+    - ovs.bucket.total_objects
+    - ovs.bucket.objects
+
+- alba-proxy
+    - ovs.proxy.download_totaltime
+    - ovs.proxy.download_exp_totaltime
+    - ovs.proxy.download_avg
+    - ovs.proxy.download_exp_avg
+    - ovs.proxy.download_number
+    - ovs.proxy.upload_totaltime
+    - ovs.proxy.upload_exp_totaltime
+    - ovs.proxy.upload_avg
+    - ovs.proxy.upload_exp_avg
+    - ovs.proxy.upload_number
+    - ovs.proxy.partial_read_time_totaltime
+    - ovs.proxy.partial_read_time_exp_totaltime
+    - ovs.proxy.partial_read_time_avg
+    - ovs.proxy.partial_read_time_exp_avg
+    - ovs.proxy.partial_read_time_number
+    - ovs.proxy.partial_read_size_totaltime
+    - ovs.proxy.partial_read_size_exp_totaltime
+    - ovs.proxy.partial_read_size_avg
+    - ovs.proxy.partial_read_size_exp_avg
+    - ovs.proxy.partial_read_size_number
+    - ovs.proxy.fragment_cache_hits
+    - ovs.proxy.fragment_cache_misses
+    - ovs.proxy.manifest_cached
+    - ovs.proxy.manifest_from_nsm
+    - ovs.proxy.manifest_stale
+
+
 # Disk
 
 - disk.iops.read [#] [PHYS,VIRT]
