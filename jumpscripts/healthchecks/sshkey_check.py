@@ -19,32 +19,86 @@ enable = True
 async = True
 log = True
 queue = 'process'
-roles = ['storagedriver',]
+roles = ['cpunode', 'storagenode', 'storagedriver',]
 
 
 def action():
+    gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     ocl = j.clients.osis.getByInstance('main')
     ncl = j.clients.osis.getCategory(ocl, 'system', 'node')
-    current_node = ncl.search({'roles': {'$in': ['storagedriver']}, 'id': nid})[1]
-    nodes = ncl.search({'roles': {'$in': ['storagedriver']}, 'id':{'$ne': nid}})[1:]
+    current_node = ncl.search({'roles': {'$in': roles}, 'id': nid})[1]
+    nodes = ncl.search({'roles': {'$in': roles}, 'active': True, 'gid': gid, 'id': {'$ne': nid}})[1:]
     results = []
+    category = 'ovs_healthcheck'
 
-    result = dict()
-    result['state'] = 'OK'
-    result['category'] = 'ovs_healthcheck'
+    # make sure we actually have ssh key
+    if not j.system.fs.exists('/root/.ssh/id_rsa'):
+        j.system.platform.ubuntu.generateLocalSSHKeyPair(passphrase='', type='rsa', overwrite=True, path='/root/.ssh/id_rsa')
+    if not j.system.fs.exists('/root/.ssh/id_rsa.pub'):
+        j.system.process.execute('ssh-keygen -y -f /root/.ssh/id_rsa > /root/.ssh/id_rsa.pub')
 
+    # update public keys in the db
+    current_node['publickeys'] = []
+    for path in j.system.fs.listFilesInDir('/root/.ssh/', filter='*.pub'):
+        public_key = j.system.fs.fileGetContents(path)
+        if public_key not in current_node['publickeys']:
+            current_node['publickeys'].append(public_key)
+
+    # update the hostkey in the db
+    if j.system.fs.exists('/etc/ssh/ssh_host_rsa_key.pub'):
+        current_node['hostkey'] = j.system.fs.fileGetContents('/etc/ssh/ssh_host_rsa_key.pub')
+    else:
+        msg = "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
+        results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+    # save node to db
+    ncl.set(current_node)
+
+    if j.system.fs.exists('/root/.ssh/authorized_keys'):
+        authorized_keys = j.system.fs.fileGetContents('/root/.ssh/authorized_keys')
+    else:
+        authorized_keys = ''
+        j.system.fs.writeFile('/root/.ssh/authorized_keys', authorized_keys)
+
+    if j.system.fs.exists('/root/.ssh/known_hosts'):
+        known_hosts = j.system.fs.fileGetContents('/root/.ssh/known_hosts')
+    else:
+        known_hosts = ''
+        j.system.fs.writeFile('/root/.ssh/known_hosts', known_hosts)
+
+    know_hosts = known_hosts.splitlines()
+    authorized_keys = authorized_keys.splitlines()
+
+    changes = {
+        'public': False,
+        'host': False
+    }
     for node in nodes:
-        for ip in node['ipaddr']:
-            con = j.remote.cuisine.connect(addr=ip, port=22, login='root')
-            try:
-                print 'test connection to %s' % ip
-                con.run('ls /')
-                msg = 'node %s can reach node %s (%s)' % (current_node['name'], node['name'], ip)
-                results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
-            except:
-                msg = "node %s can't reach node %s (%s)" % (current_node['name'], node['name'], ip)
-                results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+        if len(node['publickeys']) <= 0:
+            msg = "node %s doesn't have keys from node %s" % (current_node['name'], node['name'])
+            results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+        else:
+            for key in node['publickeys']:
+                if key not in authorized_keys:
+                    authorized_keys.append(key)
+                    changes['public'] = True
+            msg = "node %s have keys from node %s" % (current_node['name'], node['name'])
+            results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+
+        if node['hostkey'] == '' and node['hostkey'] not in know_hosts:
+            msg = "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
+            results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+        else:
+            if node['hostkey'] not in know_hosts:
+                know_hosts.append(node['hostkey'])
+                changes['host'] = True
+            msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
+            results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+
+    if changes['public'] is True:
+        j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
+    if changes['host'] is True:
+        j.system.fs.writeFile('/root/.ssh/known_hosts', '\n'.join(known_hosts))
 
     return results
 
