@@ -41,13 +41,13 @@ def action():
     # update public keys in the db
     current_node['publickeys'] = []
     for path in j.system.fs.listFilesInDir('/root/.ssh/', filter='*.pub'):
-        public_key = j.system.fs.fileGetContents(path)
+        public_key = j.system.fs.fileGetContents(path).strip()
         if public_key not in current_node['publickeys']:
             current_node['publickeys'].append(public_key)
 
     # update the hostkey in the db
     if j.system.fs.exists('/etc/ssh/ssh_host_rsa_key.pub'):
-        current_node['hostkey'] = j.system.fs.fileGetContents('/etc/ssh/ssh_host_rsa_key.pub')
+        current_node['hostkey'] = j.system.fs.fileGetContents('/etc/ssh/ssh_host_rsa_key.pub').strip()
     else:
         msg = "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
         results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
@@ -79,18 +79,19 @@ def action():
             results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
         else:
             for key in node['publickeys']:
+                key = key.strip()
                 if key not in authorized_keys:
                     authorized_keys.append(key)
                     changes['public'] = True
             msg = "node %s have keys from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
 
-        if node['hostkey'] == '' and node['hostkey'] not in known_hosts:
+        if node['hostkey'].strip() == '' and node['hostkey'].strip() not in known_hosts:
             msg = "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
         else:
-            if node['hostkey'] not in known_hosts:
-                known_hosts.append(node['hostkey'])
+            if node['hostkey'].strip() not in known_hosts:
+                known_hosts.append(node['hostkey'].strip())
                 changes['host'] = True
             msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
