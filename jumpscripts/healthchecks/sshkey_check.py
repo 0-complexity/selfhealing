@@ -66,7 +66,7 @@ def action():
         known_hosts = ''
         j.system.fs.writeFile('/root/.ssh/known_hosts', known_hosts)
 
-    know_hosts = known_hosts.splitlines()
+    known_hosts = known_hosts.splitlines()
     authorized_keys = authorized_keys.splitlines()
 
     changes = {
@@ -85,12 +85,12 @@ def action():
             msg = "node %s have keys from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
 
-        if node['hostkey'] == '' and node['hostkey'] not in know_hosts:
+        if node['hostkey'] == '' and node['hostkey'] not in known_hosts:
             msg = "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
         else:
-            if node['hostkey'] not in know_hosts:
-                know_hosts.append(node['hostkey'])
+            if node['hostkey'] not in known_hosts:
+                known_hosts.append(node['hostkey'])
                 changes['host'] = True
             msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
