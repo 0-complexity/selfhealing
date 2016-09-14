@@ -40,13 +40,6 @@ def action():
     if System.get_my_storagerouter().node_type != 'MASTER':
         return {}
 
-    ocl = j.clients.osis.getByInstance('main')
-    nodecl = j.clients.osis.getCategory(ocl, 'system', 'node')
-    nodes = nodecl.search({'roles': 'storagedriver'})[1:]
-    nodes = sorted(nodes, key=lambda k: k['id'])
-    if nodes[0]['gid'] != gid or nodes[0]['id'] != nid:
-        return {}
-
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
