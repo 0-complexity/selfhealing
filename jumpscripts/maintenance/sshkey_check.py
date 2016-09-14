@@ -1,14 +1,12 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if all the storage node can ssh to each others.
-
-It throws error when a node is unreachable from another node.
+This script checks if all the nodes have the sshkey from the other nodes authorized.
 """
 
 organization = "jumpscale"
 author = "christophe@greenitglobe.com"
-category = "monitor.healthcheck"
+category = "monitor.maintenance"
 license = "bsd"
 version = "1.0"
 period = 60  # always in sec
@@ -49,8 +47,6 @@ def action():
     ncl = j.clients.osis.getCategory(ocl, 'system', 'node')
     current_node = ncl.search({'roles': {'$in': roles}, 'id': nid})[1]
     nodes = ncl.search({'roles': {'$in': roles}, 'active': True, 'gid': gid, 'id': {'$ne': nid}})[1:]
-    results = []
-    category = 'ovs_healthcheck'
 
     # make sure we actually have ssh key
     if not j.system.fs.exists('/root/.ssh/id_rsa'):
@@ -71,8 +67,7 @@ def action():
         key2 = key.split(' ')[:-1]
         current_node['hostkey'] = ' '.join(key2)
     else:
-        msg = "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
-        results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+        print "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
     # save node to db
     ncl.set(current_node)
 
@@ -98,8 +93,7 @@ def action():
     for node in nodes:
         # deal with public keys
         if len(node['publickeys']) <= 0:
-            msg = "node %s doesn't have keys from node %s" % (current_node['name'], node['name'])
-            results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+            print "node %s doesn't have keys from node %s" % (current_node['name'], node['name'])
         else:
             for key in node['publickeys']:
                 key = key.strip()
@@ -107,14 +101,12 @@ def action():
                     authorized_keys.append(key)
                     changes['public'] = True
 
-            msg = "node %s have keys from node %s" % (current_node['name'], node['name'])
-            results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+            print "node %s have keys from node %s" % (current_node['name'], node['name'])
 
         # deal with host keys
         hostkey = node['hostkey'].strip()
         if hostkey == '' and hostkey not in known_hosts:
-            msg = "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
-            results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
+            print "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
         else:
             for nic in ['em1', 'backplane1']:
                 try:
@@ -124,8 +116,7 @@ def action():
                         known_hosts.append(entry)
                         changes['host'] = True
 
-                        msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
-                        results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+                        print "node %s have host key from node %s" % (current_node['name'], node['name'])
                 except:
                     continue
 
@@ -134,7 +125,5 @@ def action():
     if changes['host'] is True:
         j.system.fs.writeFile('/root/.ssh/known_hosts', '\n'.join(known_hosts))
 
-    return results
-
 if __name__ == '__main__':
-    print(action())
+    action()
