@@ -29,6 +29,10 @@ def format_tags(tags):
 
 
 def get_backends_and_proxy_ports(hostname):
+    from ovs.dal.lists.storagerouterlist import StorageRouterList
+    from ovs.dal.lists.servicetypelist import ServiceTypeList
+    from ovs.dal.hybrids.servicetype import ServiceType
+
     sr = StorageRouterList.get_by_name(hostname)
     st = ServiceTypeList.get_by_name(ServiceType.SERVICE_TYPES.ALBA_PROXY)
     proxies = {}
@@ -45,6 +49,8 @@ def get_backends_and_proxy_ports(hostname):
 
 
 def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorcl):
+    from ovs.extensions.plugins.albacli import AlbaCLI
+
     try:
         output = AlbaCLI.run(command='proxy-statistics', host=ip, port=port, to_json=True)['ns_stats']
     except Exception:
@@ -126,10 +132,6 @@ def action():
     Send OVS proxy performance statistics to DB
     """
     sys.path.append('/opt/OpenvStorage')
-    from ovs.extensions.plugins.albacli import AlbaCLI
-    from ovs.dal.lists.servicetypelist import ServiceTypeList
-    from ovs.dal.hybrids.servicetype import ServiceType
-    from ovs.dal.lists.storagerouterlist import StorageRouterList
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
