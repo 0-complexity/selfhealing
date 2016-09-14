@@ -21,6 +21,26 @@ log = True
 queue = 'process'
 roles = ['cpunode', 'storagenode', 'storagedriver',]
 
+def cleanup_list(l):
+    """
+    remove emtpy elememt from list, dedupe items and strip;
+    """
+    s = set(l)
+    if '' in s:
+        s.remove('')
+    l = list(s)
+    for i, val in enumerate(l):
+        l[i] = l[i].strip()
+    return l
+
+def get_ip_from_nic(node, nic_name):
+    for nic in node['netaddr']:
+        if nic['name'] == nic_name:
+            if len(nic['ip']) >= 1:
+                return nic['ip'][0]
+    raise RuntimeError("not ip found for nic %s" % nic_name)
+
+
 
 def action():
     gid = j.application.whoAmI.gid
@@ -47,7 +67,9 @@ def action():
 
     # update the hostkey in the db
     if j.system.fs.exists('/etc/ssh/ssh_host_rsa_key.pub'):
-        current_node['hostkey'] = j.system.fs.fileGetContents('/etc/ssh/ssh_host_rsa_key.pub').strip()
+        key = j.system.fs.fileGetContents('/etc/ssh/ssh_host_rsa_key.pub')
+        key2 = key.split(' ')[:-1]
+        current_node['hostkey'] = ' '.join(key2)
     else:
         msg = "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
         results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
@@ -66,14 +88,15 @@ def action():
         known_hosts = ''
         j.system.fs.writeFile('/root/.ssh/known_hosts', known_hosts)
 
-    known_hosts = known_hosts.splitlines()
-    authorized_keys = authorized_keys.splitlines()
+    known_hosts = cleanup_list(known_hosts.splitlines())
+    authorized_keys = cleanup_list(authorized_keys.splitlines())
 
     changes = {
         'public': False,
         'host': False
     }
     for node in nodes:
+        # deal with public keys
         if len(node['publickeys']) <= 0:
             msg = "node %s doesn't have keys from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
@@ -83,18 +106,28 @@ def action():
                 if key not in authorized_keys:
                     authorized_keys.append(key)
                     changes['public'] = True
+
             msg = "node %s have keys from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
 
-        if node['hostkey'].strip() == '' and node['hostkey'].strip() not in known_hosts:
+        # deal with host keys
+        hostkey = node['hostkey'].strip()
+        if hostkey == '' and hostkey not in known_hosts:
             msg = "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
             results.append({'state': 'ERROR', 'category': category, 'message': msg, 'uid': msg})
         else:
-            if node['hostkey'].strip() not in known_hosts:
-                known_hosts.append(node['hostkey'].strip())
-                changes['host'] = True
-            msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
-            results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+            for nic in ['em1', 'backplane1']:
+                try:
+                    ip = get_ip_from_nic(node, nic)
+                    entry = '%s %s' % (ip, hostkey)
+                    if entry not in known_hosts:
+                        known_hosts.append(entry)
+                        changes['host'] = True
+
+                        msg = "node %s have host key from node %s" % (current_node['name'], node['name'])
+                        results.append({'state': 'OK', 'category': category, 'message': msg, 'uid': msg})
+                except:
+                    continue
 
     if changes['public'] is True:
         j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
