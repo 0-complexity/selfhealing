@@ -19,7 +19,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = ['storagerouter']
+roles = ['storagedriver']
 
 
 def pop_realtime_info(points):
