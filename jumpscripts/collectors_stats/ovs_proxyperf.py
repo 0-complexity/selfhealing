@@ -93,7 +93,7 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
     }
 
     if len(output) == 0:
-        return fields
+        return (proxy_id, fields)
 
     try:
         for namespace in output:
