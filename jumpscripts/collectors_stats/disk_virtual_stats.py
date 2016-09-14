@@ -1,5 +1,4 @@
 from JumpScale import j
-import time
 
 descr = """
 gather statistics about virtual disks
@@ -20,51 +19,38 @@ log = False
 
 roles = ['cpunode']
 
+
 def action():
     from CloudscalerLibcloud.utils.libvirtutil import LibvirtUtil
-    import urlparse
+    import libvirt
 
     connection = LibvirtUtil()
     dcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "disk")
-    scl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "stack")
     vmcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "vmachine")
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
-    # search stackid of the node where we execute this script
-    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
-    domains = connection.list_domains()
+    domains = connection.connection.listAllDomains(libvirt.VIR_CONNECT_LIST_DOMAINS_RUNNING)
 
     all_results = {}
     for domain in domains:
-        vm = next(iter(vmcl.search({'referenceId': domain['id']})[1:]), None)
+        vm = next(iter(vmcl.search({'referenceId': domain.UUIDString()})[1:]), None)
         if vm is None:
             continue
 
-        domain = connection.get_domain(domain['id'])
-        domaindisks = list(connection.get_domain_disks(domain['XMLDesc']))
-
-        # TODO move get_domain_disk into LibvirtUtil
-        def get_domain_disk(name):
-            name = name.strip('/')
-            for disk in domaindisks:
-                source = disk.find('source')
-                if source is not None:
-                    if source.attrib['name'].strip('/') == name:
-                        target = disk.find('target')
-                        return target.attrib['dev']
+        domaindisks = list(connection.get_domain_disks(domain))
 
         # get all the disks attached to a vm
         disks = dcl.search({'id': {'$in': vm['disks']}})[1:]
 
         # get statistics for each disks
         for disk in disks:
-            parsed_url = urlparse.urlparse(disk['referenceId'])
-            dev = get_domain_disk(parsed_url.path)
+            dev = connection.get_domain_disk(disk['referenceId'], domaindisks)
+            if not dev:
+                continue
 
-            libvirt_domain = connection._get_domain(domain['id'])
-            stats = libvirt_domain.blockStats(dev)
+            stats = domain.blockStats(dev)
             now = j.base.time.getTimeEpoch()
             read_count, read_bytes, write_count, write_bytes, _ = stats
 
@@ -85,8 +71,7 @@ def action():
     return {'results': all_results, 'errors': []}
 
 if __name__ == '__main__':
-    import JumpScale.grid.osis
     j.core.osis.client = j.clients.osis.getByInstance('main')
     rt = action()
     import yaml
-    print yaml.dump(rt['results'])
+    print(yaml.safe_dump(rt['results'], default_flow_style=False))
