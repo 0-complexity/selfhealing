@@ -31,6 +31,23 @@ def getContentKey(obj):
     dd = j.code.object2json(obj, True, ignoreKeys=["guid", "id", "sguid", "moddate", 'lastcheck'], ignoreUnderscoreKeys=True)
     return j.tools.hash.md5_string(str(dd))
 
+def get_edge_url(disk):
+    source = disk.find('source')
+    protocol = source.attrib.get('protocol')
+    name = source.attrib.get('name')
+    host = source.find('host')
+    hostname = host.attrib.get('name')
+    hostport = host.attrib.get('port')
+    transport = host.attrib.get('transport', 'tcp')
+    url = "{protocol}+{transport}://{hostname}:{port}/{name}".format(
+        protocol=protocol,
+        transport=transport,
+        hostname=hostname,
+        port=hostport,
+        name=name,
+    )
+    return url
+
 
 def action():
     syscl = j.clients.osis.getNamespace('system')
@@ -90,25 +107,27 @@ def action():
                 if disk.attrib['device'] != 'disk':
                     continue
                 diskattrib = disk.find('source').attrib
-                path = diskattrib.get('dev', diskattrib.get('file'))
+                if disk.attrib['type'] == 'network':
+                    path = get_edge_url(disk)
+                else:
+                    path = diskattrib.get('dev', diskattrib.get('file'))
                 vdisk = syscl.vdisk.new()
                 ckeyOld = rediscl.hget('vdisks', path)
                 vdisk.path = path
                 vdisk.type = disk.find('driver').attrib['type']
                 vdisk.devicename = disk.find('target').attrib['dev']
                 vdisk.machineid = machine.guid
-                vdisk.active = j.system.fs.exists(path)
-                if vdisk.active:
-                    try:
-                        diskinfo = j.system.platform.qemu_img.info(path)
-                        vdisk.size = diskinfo['virtual size']
-                        vdisk.sizeondisk = diskinfo['disk size']
-                        vdisk.backingpath = diskinfo.get('backing file', '')
-                    except Exception:
-                        # failed to get disk information
-                        vdisk.size = -1
-                        vdisk.sizeondisk = -1
-                        vdisk.backingpath = ''
+                try:
+                    diskinfo = j.system.platform.qemu_img.info(path)
+                    vdisk.size = diskinfo['virtual size']
+                    vdisk.sizeondisk = diskinfo['disk size']
+                    vdisk.backingpath = diskinfo.get('backing file', '')
+                except Exception:
+                    # failed to get disk information
+                    vdisk.size = -1
+                    vdisk.sizeondisk = -1
+                    vdisk.backingpath = ''
+                    vdisk.active = False
 
                 if ckeyOld != vdisk.getContentKey():
                     #  obj changed
