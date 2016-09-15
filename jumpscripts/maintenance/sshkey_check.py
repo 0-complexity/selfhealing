@@ -17,7 +17,8 @@ enable = True
 async = True
 log = True
 queue = 'process'
-roles = ['cpunode', 'storagenode', 'storagedriver',]
+roles = ['cpunode', 'storagenode', 'storagedriver', ]
+
 
 def cleanup_list(l):
     """
@@ -30,14 +31,6 @@ def cleanup_list(l):
     for i, val in enumerate(l):
         l[i] = l[i].strip()
     return l
-
-def get_ip_from_nic(node, nic_name):
-    for nic in node['netaddr']:
-        if nic['name'] == nic_name:
-            if len(nic['ip']) >= 1:
-                return nic['ip'][0]
-    raise RuntimeError("not ip found for nic %s" % nic_name)
-
 
 
 def action():
@@ -108,17 +101,16 @@ def action():
         if hostkey == '' and hostkey not in known_hosts:
             print "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
         else:
-            for nic in ['em1', 'backplane1']:
-                try:
-                    ip = get_ip_from_nic(node, nic)
-                    entry = '%s %s' % (ip, hostkey)
+            for net in node['netaddr']:
+                if net['name'] in ['lo', 'gw_mgmt', 'vxbakcend']:
+                    continue
+                for ip in net['ip']:
+                    entry '{} {}'.format(net['name'], ip)
                     if entry not in known_hosts:
                         known_hosts.append(entry)
                         changes['host'] = True
 
                         print "node %s have host key from node %s" % (current_node['name'], node['name'])
-                except:
-                    continue
 
     if changes['public'] is True:
         j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
