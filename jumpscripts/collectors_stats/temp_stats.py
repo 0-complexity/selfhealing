@@ -32,7 +32,7 @@ def action():
             inputtemp = int(open(f.replace("_label", "_input")).read())
             key = "machine.CPU.temperature@phys.{gid}.{nid}.{coreid}".format(gid=gid, nid=nid, coreid=coreid)
             tags = 'gid:%d nid:%d labelfile:%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, f)
-            value = inputtemp
+            value = inputtemp / 1000  # inputtemp is in millidegree Celsius
             now = j.base.time.getTimeEpoch()
             aggregatorcl.measure(key, tags, value, timestamp=now)
 
