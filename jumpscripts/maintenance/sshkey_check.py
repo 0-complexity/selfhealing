@@ -15,7 +15,7 @@ startatboot = True
 order = 1
 enable = True
 async = True
-log = True
+log = False
 queue = 'process'
 roles = ['cpunode', 'storagenode', 'storagedriver', ]
 
