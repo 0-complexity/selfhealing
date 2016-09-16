@@ -35,7 +35,7 @@ To make sure that only 1 process can do this check simultaniously this process s
 
 ## G8 provisioning limits
 
-| TOTAL HOST MEMORY | G8.minimum-reserved-host-os-memory [MB] |
+| TOTAL HOST MEMORY | G8.minimum-reserved-host-os-memory [GB] |
 | ----: | ---- |
 | # <= 64 | 1 |
 | 64 < # <= 196 | 2 |
