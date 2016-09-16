@@ -47,8 +47,8 @@ def action():
             packets_sent = int(j.system.fs.fileGetContents(path + '/tx_packets'))
             packets_recv = int(j.system.fs.fileGetContents(path + '/rx_packets'))
 
-            result['network.throughput.outgoing'] = int(round(bytes_sent / 1024.0 * 1024, 0))
-            result['network.throughput.incoming'] = int(round(bytes_recv / 1024.0 * 1024, 0))
+            result['network.throughput.outgoing'] = int(round(bytes_sent / (1024.0 * 1024), 0))
+            result['network.throughput.incoming'] = int(round(bytes_recv / (1024.0 * 1024), 0))
             result['network.packets.tx'] = packets_sent
             result['network.packets.rx'] = packets_recv
 

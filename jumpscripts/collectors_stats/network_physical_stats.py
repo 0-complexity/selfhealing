@@ -39,8 +39,8 @@ def action():
 
         result = dict()
         bytes_sent, bytes_recv, packets_sent, packets_recv, errin, errout, dropin, dropout = stat
-        result['network.throughput.outgoing'] = int(round(bytes_sent / 1024.0 * 1024, 0))
-        result['network.throughput.incoming'] = int(round(bytes_recv / 1024.0 * 1024, 0))
+        result['network.throughput.outgoing'] = int(round(bytes_sent / (1024.0 * 1024), 0))
+        result['network.throughput.incoming'] = int(round(bytes_recv / (1024.0 * 1024), 0))
         result['network.packets.tx'] = packets_sent
         result['network.packets.rx'] = packets_recv
 
