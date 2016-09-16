@@ -105,7 +105,7 @@ def action():
                 if net['name'] in ['lo', 'gw_mgmt', 'vxbakcend']:
                     continue
                 for ip in net['ip']:
-                    entry '{} {}'.format(net['name'], ip)
+                    entry = '{} {}'.format(net['name'], ip)
                     if entry not in known_hosts:
                         known_hosts.append(entry)
                         changes['host'] = True
