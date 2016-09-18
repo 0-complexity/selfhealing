@@ -2,7 +2,7 @@
 
 # Introduction
 This specifications explains how we aggregate `account` consumption over multiple physical locations.
-Since a cloudspace is pound to a single physical location `gid`, an account can have multiple spaces over different locations and we 
+Since a cloudspace is bound to a single physical location `gid`, an account can have multiple spaces over different locations and we 
 need to aggregate the account conusmption of resources.
 
 To accomplish this, we need to collect consumption per cloudspace per location (hourly) and push it to a single up stream destination 
