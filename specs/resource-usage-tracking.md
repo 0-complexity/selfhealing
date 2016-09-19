@@ -1,4 +1,4 @@
-> Work in progress specs
+> Under review
 
 # Introduction
 This specifications explains how we aggregate `account` consumption over multiple physical locations.
