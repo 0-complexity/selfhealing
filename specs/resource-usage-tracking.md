@@ -19,9 +19,8 @@ To accomplish this, we need to collect consumption per cloudspace per location (
 ## Controller aggregation
 All controllers now have a js8 with jsagent78 running, this will make it easy to schedule and execute jumpscripts on the controller node.
 - A jumpscript should be scheduled (hourly) to do the aggregation per account for this `grid id` (physical location)
-- Data collection of the space should be retrieved from influxdb since that is the only location that has historical usage data on the system
- - Query influx to retrieve the last hourly data
- - Jo suggests we retrieve the data directly from redis, but this means that the jumpscript has to find and try get the data from every redis instance on the grid. 
+- Data collection of the space should be retrieved from redis (hourly sample)
+ - Since redis is available on almost each node, the code must use same logic to discover all redis instances available as used by the `InfluxDumper`.
 
 For each cloudspace we need to create the following file
 ```
