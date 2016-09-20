@@ -120,7 +120,7 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
 
         for key, value in fields.iteritems():
             key = "ovs.proxy.%s@%s" % (key, proxy_id)
-            aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+            aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
     except Exception:
         raise
 

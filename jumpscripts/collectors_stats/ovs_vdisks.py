@@ -88,7 +88,7 @@ def action():
         vpool_name = VPool(vdisk.vpool_guid).name
 
         for key, value in metrics.iteritems():
-            key = "ovs.vdisk.%s@%s" % (key, volume_id)
+            stat_key = "ovs.vdisk.%s@%s" % (key, volume_id)
             tags = {
                 'gid': j.application.whoAmI.gid,
                 'nid': j.application.whoAmI.nid,
@@ -98,7 +98,10 @@ def action():
                 'vpool_name': vpool_name,
                 'failover_mode': vdisk.info['failover_mode']
             }
-            aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+            if key == 'failover_mode_status':
+                aggregatorcl.measure(stat_key, format_tags(tags), value, timestamp=now)
+            else:
+                aggregatorcl.measureDiff(stat_key, format_tags(tags), value, timestamp=now)
 
         all_results[volume_id] = metrics
 

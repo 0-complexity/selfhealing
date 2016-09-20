@@ -70,7 +70,7 @@ def action():
                     'alba_id': ab.alba_id,
                     'long_id': asd,
                 }
-                aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+                aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
             all_results[ab.alba_id] = result
 
