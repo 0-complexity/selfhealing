@@ -101,16 +101,18 @@ def action():
         if hostkey == '' and hostkey not in known_hosts:
             print "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
         else:
+            nodeips = []
             for net in node['netaddr']:
-                if net['name'] in ['lo', 'gw_mgmt', 'vxbakcend']:
+                if net['name'] in ['lo', 'gw_mgmt', 'vxbackend']:
                     continue
                 for ip in net['ip']:
-                    entry = '{} {}'.format(net['name'], ip)
-                    if entry not in known_hosts:
-                        known_hosts.append(entry)
-                        changes['host'] = True
+                    nodeips.append(ip)
+            entry = '{} {}'.format(','.join(nodeips), node['hostkey'])
+            if entry not in known_hosts:
+                known_hosts.append(entry)
+                changes['host'] = True
 
-                        print "node %s have host key from node %s" % (current_node['name'], node['name'])
+                print "node %s have host key from node %s" % (current_node['name'], node['name'])
 
     if changes['public'] is True:
         j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
