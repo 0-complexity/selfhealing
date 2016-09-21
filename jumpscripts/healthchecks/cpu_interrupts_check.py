@@ -6,6 +6,7 @@ This healthcheck checks if amount of interrupts is higher than expected.
 Currently throws WARNING if more than 8K interrupts and throws ERROR if more than 10K interrupts
 """
 
+roles = ['node']
 organization = "jumpscale"
 author = "christophe@greenitglobe.com"
 category = "monitor.healthcheck"
@@ -43,18 +44,19 @@ def action():
     avg_inter = int(stat.h_avg)
     result['message'] = 'Number of interrupts value is: %d/s' % avg_inter
     level = None
-    if avg_inter > 10000:
+    if avg_inter > 198000:
         level = 1
         result['state'] = 'ERROR'
         result['uid'] = 'Number of interrupts value is too large'
 
-    elif avg_inter > 80000:
+    elif avg_inter > 180000:
         level = 2
         result['state'] = 'WARNING'
         result['uid'] = 'Number of interrupts value is too large'
 
     if level:
-        msg = 'Number of interrupts is to high current value: %d/s' % avg_inter
+        msg = 'Number of interrupts is too high, current value: %d/s' % avg_inter
+        result['message'] = msg
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
