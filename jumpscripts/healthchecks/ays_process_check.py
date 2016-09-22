@@ -16,12 +16,12 @@ order = 1
 enable = True
 async = True
 log = True
-queue ='process'
-roles = []
+queue = 'process'
+roles = ['node']
 
 
 def action():
-    results =list()
+    results = list()
     for ays in j.atyourservice.findServices():
         if not ays.getProcessDicts():
                 continue
@@ -37,8 +37,8 @@ def action():
             result['uid'] = message
             result['category'] = 'AYS Process'
         results.append(result)
-            
+
     return results
-         
+
 if __name__ == '__main__':
     action()
