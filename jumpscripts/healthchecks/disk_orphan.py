@@ -79,13 +79,9 @@ def action():
                                             'message': DISK_FOUND % fullpath,
                                             'uid': fullpath
                                         })
-        if not files:
-            results.append({
-                                'state': 'WARNING',
-                                'category': 'Orphanage',
-                                'message': EMPTY_FOLDER % folder,
-                                'uid': folder
-                            })
+
+        if not files and not folder.endswith('/volumes'):
+            os.rmdir(folder)
 
     for store in disks_paths():
         os.path.walk(store, process, None)
