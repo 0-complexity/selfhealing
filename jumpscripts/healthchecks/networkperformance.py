@@ -95,9 +95,9 @@ class NetworkPerformance(object):
     def getbandwidthState(self, retransmits):
         """
         """
-        if retransmits > 1000:
+        if retransmits > 10000:
             return 'ERROR'
-        elif retransmits > 500:
+        elif retransmits > 5000:
             return 'WARNING'
         return 'OK'
 
