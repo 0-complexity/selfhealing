@@ -64,7 +64,7 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
 
     # Stage 1: Delete rotated logfiles
     r = re.compile(".*\.\d+(\.gz)?$")
-    for logfile in (lf for lf in logfiles if r.match(lf)):
+    for logfile in [lf for lf in logfiles if r.match(lf)]:
         j.logger.log('rm "{}"'.format(logfile), 1)
         try:
             j.do.delete(logfile, force=True)
