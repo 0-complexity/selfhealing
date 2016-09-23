@@ -45,28 +45,19 @@ def action():
         else:
             return '%s %s' % (disk.path, disk.model)
 
-    def getLogsDisks(disks):
-        """Return a list of disks that might have logs written to it"""
-        disks = sorted(disks, key=lambda d: d.mountpoint)
-        disks = filter(lambda d: d.mountpoint.rstrip('/') in ['', '/opt', '/var'], disks)
-        if len(disks) > 1:
-            disks = disks[1:]
-        return disks
-
-    logsdisks = getLogsDisks(disks)
-
     results = list()
     for disk in filter(diskfilter, disks):
         result = {'category': 'Disks'}
         result['path'] = disk.path
-        checkusage = not (disk.mountpoint and j.system.fs.exists(j.system.fs.joinPaths(disk.mountpoint, '.dontreportusage')))
+        checkusage = not (disk.mountpoint and
+                          j.system.fs.exists(j.system.fs.joinPaths(disk.mountpoint, '.dontreportusage')))
         result['state'] = 'OK'
         result['message'] = disktoStr(disk)
         if disk.free and disk.size:
             freepercent = (disk.free / float(disk.size)) * 100
-            if checkusage and disk in logsdisks and (freepercent < 20):
+            if checkusage and (freepercent < 20):
                 jumpscript = j.clients.redisworker.getJumpscriptFromName('0-complexity', 'logs_truncate')
-                j.clients.redisworker.execJumpscript(jumpscript=jumpscript, mountpoint=disk.mountpoint)
+                j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
             if checkusage and (freepercent < 10):
                 j.errorconditionhandler.raiseOperationalWarning(result['message'], 'monitoring')
                 result['state'] = 'WARNING'
