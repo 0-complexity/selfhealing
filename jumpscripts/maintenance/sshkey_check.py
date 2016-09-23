@@ -36,9 +36,8 @@ def cleanup_list(l):
 def action():
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    ocl = j.clients.osis.getByInstance('main')
-    ncl = j.clients.osis.getCategory(ocl, 'system', 'node')
-    current_node = ncl.search({'roles': {'$in': roles}, 'id': nid})[1]
+    ncl = j.clients.osis.getNamespace('system').node
+    current_node = ncl.get(nid).dump()
     nodes = ncl.search({'roles': {'$in': roles}, 'active': True, 'gid': gid, 'id': {'$ne': nid}})[1:]
 
     # make sure we actually have ssh key
@@ -107,7 +106,7 @@ def action():
                     continue
                 for ip in net['ip']:
                     nodeips.append(ip)
-            entry = '{} {}'.format(','.join(nodeips), node['hostkey'])
+            entry = '{} {}'.format(','.join(sorted(nodeips)), node['hostkey'])
             if entry not in known_hosts:
                 known_hosts.append(entry)
                 changes['host'] = True
@@ -115,8 +114,12 @@ def action():
                 print "node %s have host key from node %s" % (current_node['name'], node['name'])
 
     if changes['public'] is True:
+        print 'Writing authorized_keys'
+        authorized_keys.append('')
         j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
     if changes['host'] is True:
+        print 'Writing known_hosts'
+        known_hosts.append('')
         j.system.fs.writeFile('/root/.ssh/known_hosts', '\n'.join(known_hosts))
 
 if __name__ == '__main__':
