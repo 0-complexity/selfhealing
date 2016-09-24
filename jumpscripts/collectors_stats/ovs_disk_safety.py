@@ -135,7 +135,7 @@ def action():
             }
             for k, value in result.iteritems():
                 key = 'ovs.disk_lost.%s@%s.%s' % (k, ab.name, disk_lost)
-                aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+                aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
             all_results['disk_lost']["%s.%s" % (ab.name, disk_lost)] = result
 
