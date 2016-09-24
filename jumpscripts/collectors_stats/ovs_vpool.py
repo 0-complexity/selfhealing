@@ -74,7 +74,7 @@ def action():
                 'nid': j.application.whoAmI.nid,
                 'vpool_name': vpool_name,
             }
-            aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
+            aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
         all_results[vpool_name] = metrics
 
