@@ -76,7 +76,7 @@ def action():
         }
         for key, value in result.iteritems():
             stat_key = "ovs.backend.%s@%s" % (key, ab.name)
-            if key in ['gets', 'puts', 'free', 'used']:
+            if key in ['gets', 'puts']:
                 aggregatorcl.measureDiff(stat_key, format_tags(tags), value, timestamp=now)
             else:
                 aggregatorcl.measure(stat_key, format_tags(tags), value, timestamp=now)
