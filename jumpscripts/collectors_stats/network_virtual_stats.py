@@ -42,10 +42,15 @@ def action():
             result = {}
 
             now = j.base.time.getTimeEpoch()
-            bytes_sent = int(j.system.fs.fileGetContents(path + '/tx_bytes'))
-            bytes_recv = int(j.system.fs.fileGetContents(path + '/rx_bytes'))
-            packets_sent = int(j.system.fs.fileGetContents(path + '/tx_packets'))
-            packets_recv = int(j.system.fs.fileGetContents(path + '/rx_packets'))
+            try:
+                bytes_sent = int(j.system.fs.fileGetContents(path + '/tx_bytes'))
+                bytes_recv = int(j.system.fs.fileGetContents(path + '/rx_bytes'))
+                packets_sent = int(j.system.fs.fileGetContents(path + '/tx_packets'))
+                packets_recv = int(j.system.fs.fileGetContents(path + '/rx_packets'))
+            except IOError as e:
+                if e.errno == 2:
+                    continue  # file does not exist (anymore)
+                raise
 
             result['network.throughput.outgoing'] = int(round(bytes_sent / (1024.0 * 1024), 0))
             result['network.throughput.incoming'] = int(round(bytes_recv / (1024.0 * 1024), 0))
