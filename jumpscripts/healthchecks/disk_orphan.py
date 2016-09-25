@@ -17,7 +17,7 @@ roles = ['storagedriver']
 queue = 'process'
 
 
-def action():
+def action(delete=False):
     import os
     import glob
     from CloudscalerLibcloud import openvstorage
@@ -38,8 +38,8 @@ def action():
     def process(_, folder, files):
         # Predefined messages
         DISK_FOUND = 'Found orphan disk %s'
+        NETWORK_FOUND = 'Found orphan network disk %s'
         DISK_FOUND_CLOUD = 'Found orphan cloud-init %s'
-        EMPTY_FOLDER = 'Found empty folder %s'
 
         # Ignore templates and archive files
         if 'templates' in files:
@@ -53,31 +53,30 @@ def action():
                 continue
 
             fullpath = os.path.join(folder, file_)
+            msg = None
             if file_.endswith('.raw'):
                 if 'routeros' in file_:
                     networkid = int(os.path.basename(folder), 16)
                     if networkid not in activenetworks:
-                        results.append({
-                                            'state': 'WARNING',
-                                            'category': 'Orphanage',
-                                            'message': DISK_FOUND % fullpath,
-                                            'uid': fullpath
-                                        })
-                elif file_.startswith('cloud-init') and len(files) == 1:
-                    results.append({
-                                        'state': 'WARNING',
-                                        'category': 'Orphanage',
-                                        'message': DISK_FOUND_CLOUD % fullpath,
-                                        'uid': fullpath
-                                    })
+                        msg = NETWORK_FOUND
+                elif file_.startswith('cloud-init'):
+                    if len(files) == 1:
+                        msg = DISK_FOUND_CLOUD
+                    else:
+                        continue
                 else:
                     diskstatus = diskmap.get(fullpath, 'DESTROYED')
                     if diskstatus == 'DESTROYED':
-                        results.append({
-                                            'state': 'WARNING',
-                                            'category': 'Orphanage',
-                                            'message': DISK_FOUND % fullpath,
-                                            'uid': fullpath
+                        msg = DISK_FOUND
+                if msg is not None:
+                    print('Orphan disk %s' % fullpath)
+                    if delete is True:
+                        os.remove(fullpath)
+                    else:
+                        results.append({'state': 'WARNING',
+                                        'category': 'Orphanage',
+                                        'message': msg % fullpath,
+                                        'uid': fullpath
                                         })
 
         if not files and not folder.endswith('/volumes'):
@@ -89,5 +88,9 @@ def action():
     return results
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--delete', default=False, action='store_true')
+    options = parser.parse_args()
     j.core.osis.client = j.clients.osis.getByInstance('main')
-    print action()
+    action(options.delete)
