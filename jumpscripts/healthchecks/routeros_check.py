@@ -33,7 +33,8 @@ def action():
             if not ok:
                 return dict(state='ERROR', category=category, message="Couldn't ping 8.8.8.8 {vfwid} {csname}".format(vfwid=vfwid, csname=c['name']))
             return None
-        except:
+        except Exception as e:
+            print("Failed to connect to {vfwid} {csname} error {err}".format(vfwid=vfwid, csname=c['name'], err=e))
             return dict(state='ERROR', category=category, message="RouterOS died on {vfwid} {csname}".format(vfwid=vfwid, csname=c['name']))
 
     pool = Pool(10)
