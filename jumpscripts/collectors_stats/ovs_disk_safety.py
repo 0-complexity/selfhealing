@@ -131,7 +131,7 @@ def action():
             }
             result = {
                 'total_objects': total_objects,
-                'objects': objects
+                'objects': 0
             }
             for k, value in result.iteritems():
                 key = 'ovs.disk_lost.%s@%s.%s' % (k, ab.name, disk_lost)
@@ -167,7 +167,7 @@ def action():
             }
             result = {
                 'total_objects': total_objects,
-                'objects': objects
+                'objects': 0
             }
             for k, value in result.iteritems():
                 key = 'ovs.disk_safety.%s@%s.%s' % (k, ab.name, disk_safety)
