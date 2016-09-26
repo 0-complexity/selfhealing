@@ -32,13 +32,13 @@ def action():
                 state = 'ERROR'
             if state is not None:
                 msg = "To many open file descriptors for {} with PID {} {}/{}".format(proc.cmdline(), proc.pid, count, soft)
-                results.append({'state': state, 'msg': msg, 'category': category, 'uid': msg})
+                results.append({'state': state, 'message': msg, 'category': category, 'uid': msg})
         except psutil.NoSuchProcess:
             # process exited just carry on like it never existed
             pass
     if len(results) == 0:
         msg = 'Open filedescriptors are all OK'
-        results.append({'state': 'OK', 'msg': 'msg', 'category': category})
+        results.append({'state': 'OK', 'message': msg, 'category': category})
     return results
 
 if __name__ == '__main__':
