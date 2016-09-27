@@ -49,6 +49,7 @@ def action():
     for ab in abl:
         for asd, result in ab.asd_statistics.iteritems():
             now = j.base.time.getTimeEpoch()
+            measurement_key = "%s/%s" % (ab.alba_id, asd)
             result = {
                 'capacity': float(result['capacity']),
                 'creation': float(result['creation']),
@@ -62,7 +63,7 @@ def action():
             }
 
             for key, value in result.iteritems():
-                key = "ovs.asd.%s@%s" % (key, ab.alba_id)
+                key = "ovs.asd.%s@%s" % (key, measurement_key)
                 tags = {
                     'gid': j.application.whoAmI.gid,
                     'nid': j.application.whoAmI.nid,
@@ -72,7 +73,7 @@ def action():
                 }
                 aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
-            all_results[ab.alba_id] = result
+            all_results[measurement_key] = result
 
     return all_results
 
