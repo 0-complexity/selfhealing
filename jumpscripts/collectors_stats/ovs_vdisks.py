@@ -68,6 +68,9 @@ def action():
         now = j.base.time.getTimeEpoch()
 
         volume_id = vdisk.volume_id
+        if volume_id is None:
+            continue
+
         disk_name = vdisk.name
         failover_mode = vdisk.info.get('failover_mode')
 
