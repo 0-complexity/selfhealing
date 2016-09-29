@@ -12,12 +12,13 @@ author = "deboeckj@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['cpunode']
-period = 60 * 30 # 30min
+period = 60 * 30  # 30min
 timeout = 60 * 5
 enable = True
 async = True
 queue = 'io'
 log = True
+
 
 def action():
     import time
@@ -40,21 +41,23 @@ def action():
     imageId = images[0]['id']
 
     with ccl.account.lock(ACCOUNTNAME):
-        accounts = ccl.account.search({'name': ACCOUNTNAME, 'status': 'CONFIRMED'})[1:]
+        accounts = ccl.account.search({'name': ACCOUNTNAME, 'status': {'$ne': 'DESTROYED'}})[1:]
         if not accounts:
             j.console.echo('Creating Account', log=True)
             accountId = pcl.actors.cloudbroker.account.create(ACCOUNTNAME, 'admin', None)
         else:
+            if account['status'] != 'ENABLED':
+                return [{'message': "Skipping deployment test account is not enabled.", 'category': category, 'state': "SKIPPED"}]
+
             j.console.echo('Found Account', log=True)
             accountId = accounts[0]['id']
-
 
     lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
     with ccl.cloudspace.lock(lockname, timeout=120):
         cloudspaces = ccl.cloudspace.search({'accountId': accountId, 'name': CLOUDSPACENAME,
                                              'gid': j.application.whoAmI.gid,
                                              'status': {'$in': ['VIRTUAL', 'DEPLOYED']}
-                                            })[1:]
+                                             })[1:]
         if not cloudspaces:
             j.console.echo('Creating CloudSpace', log=True)
             cloudspaceId = pcl.actors.cloudbroker.cloudspace.create(accountId, loc, CLOUDSPACENAME, 'admin')
@@ -72,7 +75,6 @@ def action():
     diskSize = min(size['disks'])
     timestamp = time.ctime()
 
-
     name = '%s on %s' % (timestamp, stack['name'])
     j.console.echo('Deleting vms older then 24h', log=True)
     vms = ccl.vmachine.search({'stackId': stack['id'],
@@ -84,7 +86,7 @@ def action():
             if time.time() - vm['creationTime'] > 3600 * 24:
                 j.console.echo('Deleting %s' % vm['name'], log=True)
                 pcl.actors.cloudapi.machines.delete(vm['id'])
-        except Exception, e:
+        except Exception as e:
             j.console.echo('Failed to delete vm %s' % e, log=True)
     vms = ccl.vmachine.search({'stackId': stack['id'], 'cloudspaceId': cloudspace['id'], 'status': 'RUNNING'})[1:]
     if vms:
@@ -94,8 +96,8 @@ def action():
     else:
         j.console.echo('Deploying VM', log=True)
         vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
-                                                 imageId=imageId, sizeId=sizeId,
-                                                 disksize=diskSize, stackid=stack['id'])
+                                                                  imageId=imageId, sizeId=sizeId,
+                                                                  disksize=diskSize, stackid=stack['id'])
         vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
     now = time.time()
     status = 'OK'
@@ -134,7 +136,6 @@ def action():
             def runtests():
                 status = 'OK'
                 j.console.echo('Connecting over ssh %s:%s' % (publicip, publicport), log=True)
-                print account
                 connection = j.remote.cuisine.connect(publicip, publicport, account['password'], account['login'])
                 connection.user(account['login'])
                 connection.fabric.api.env['abort_on_prompts'] = True
@@ -147,8 +148,8 @@ def action():
                     try:
                         output = connection.run("rm -f 500mb.dd; dd if=/dev/zero of=500mb.dd bs=4k count=128k")
                         break
-                    except Exception, error:
-                        print "Retrying, Failed to run dd command. Login error? %s" % error
+                    except Exception as error:
+                        print("Retrying, Failed to run dd command. Login error? %s" % error)
                         time.sleep(5)
                 else:
                     status = "ERROR"
@@ -175,7 +176,7 @@ def action():
                         status = 'WARNING'
                         uid = 'Measured write speed on disk was so fast on Node %s' % (stack['name'])
                     return status, msg, uid
-                except Exception, e:
+                except Exception as e:
                     status = 'ERROR'
                     uid = 'Failed to parse dd speed %s' % (stack['name'])
                     msg = "Failed to parse dd speed %s, failed with %s" % (output, e)
