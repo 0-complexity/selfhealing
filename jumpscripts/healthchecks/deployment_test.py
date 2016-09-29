@@ -46,11 +46,12 @@ def action():
             j.console.echo('Creating Account', log=True)
             accountId = pcl.actors.cloudbroker.account.create(ACCOUNTNAME, 'admin', None)
         else:
-            if account['status'] != 'ENABLED':
+            account = accounts[0]
+            if account['status'] != 'CONFIRMED':
                 return [{'message': "Skipping deployment test account is not enabled.", 'category': category, 'state': "SKIPPED"}]
 
             j.console.echo('Found Account', log=True)
-            accountId = accounts[0]['id']
+            accountId = account['id']
 
     lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
     with ccl.cloudspace.lock(lockname, timeout=120):
@@ -194,4 +195,5 @@ def action():
     return [{'message': msg, 'uid': uid, 'category': category, 'state': status}]
 
 if __name__ == '__main__':
-    print action()
+    import yaml
+    print(yaml.safe_dump(action(), default_flow_style=False))
