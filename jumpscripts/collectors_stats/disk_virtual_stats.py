@@ -57,8 +57,8 @@ def action():
             result = {}
             result['disk.iops.read'] = read_count
             result['disk.iops.write'] = write_count
-            result['disk.throughput.read'] = int(round(read_bytes / 1024 * 1024, 0))
-            result['disk.throughput.write'] = int(round(write_bytes / 1024 * 1024, 0))
+            result['disk.throughput.read'] = int(round(read_bytes / 1024, 0))  # IN KB
+            result['disk.throughput.write'] = int(round(write_bytes / 1024, 0))  # IN KB
 
             all_results["%s_%s" % (vm['id'], dev)] = result
 

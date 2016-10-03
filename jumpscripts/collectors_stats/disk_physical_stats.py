@@ -59,8 +59,8 @@ def action():
 
             results['kbytes_read'] = int(round(read_bytes / 1024, 0))
             results['kbytes_write'] = int(round(write_bytes / 1024, 0))
-            results['MB_read'] = int(round(read_bytes / 1024 * 1024, 0))
-            results['MB_write'] = int(round(write_bytes / 1024 * 1024, 0))
+            results['MB_read'] = int(round(read_bytes / (1024 * 1024), 0))
+            results['MB_write'] = int(round(write_bytes / (1024 * 1024), 0))
             results['space_free_mb'] = int(round(disk.free))
             results['space_used_mb'] = int(round(disk.size - disk.free))
             results['space_percent'] = int(round((float(disk.size - disk.free) / float(disk.size)), 2))

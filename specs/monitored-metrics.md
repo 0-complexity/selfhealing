@@ -142,8 +142,8 @@
 
 - disk.iops.read [#] [PHYS,VIRT]
 - disk.iops.write [#] [PHYS,VIRT]
-- disk.throughput.read [MB] [PHYS,VIRT]
-- disk.throughput.write [MB] [PHYS,VIRT]
+- disk.throughput.read [KB] [PHYS,VIRT]
+- disk.throughput.write [KB] [PHYS,VIRT]
 - disk.temperature [°C] [PHYS]
 
 Use smartctl -A /dev/sda | awk '/Temp/{print $10}', make sure smartmontools are installed
