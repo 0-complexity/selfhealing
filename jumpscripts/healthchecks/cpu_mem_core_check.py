@@ -1,7 +1,9 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if memory and CPU usage on average over 1hr per CPU is higher than expected.
+Checks memory and CPU usage/load. If average per hour is higher than expected an error condition is thrown.
+
+if memory and CPU usage on average over 1 h per CPU is higher than expected.
 
 For both memory and CPU usage throws WARNING if more than 80% used and throws ERROR if more than 95% used
 
@@ -36,7 +38,7 @@ def action():
         memoryresult = {}
         memoryresult['state'] = 'WARNING'
         memoryresult['category'] = category
-        memoryresult['message'] = 'CPU contextswitch is not collected yet'
+        memoryresult['message'] = 'Average memory load is not collected yet'
         memoryresult['uid'] = memoryresult['message']
     else:
         totalram = psutil.phymem_usage().total
@@ -53,7 +55,7 @@ def action():
         cpuresult = {}
         cpuresult['state'] = 'WARNING'
         cpuresult['category'] = category
-        cpuresult['message'] = 'CPU percent is not collected yet'
+        cpuresult['message'] = 'Average CPU load is not collected yet'
         cpuresult['uid'] = cpuresult['message']
     else:
         cpuavg = cpupercent / float(count)
@@ -66,19 +68,19 @@ def get_results(type_, percent):
     level = None
     result = dict()
     result['state'] = 'OK'
-    result['message'] = r'%s load -> last hour avergage is: %.2f%%' % (type_.upper(), percent)
+    result['message'] = r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent)
     result['category'] = 'System Load'
     if percent > 95:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
+        result['uid'] = r'Average %s load during last hour was too high' % (type_.upper())
     elif percent > 80:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = r'%s load -> last hour avergage is too high' % (type_.upper())
+        result['uid'] = r'Avergage %s load during last hour was too high' % (type_.upper())
     if level:
         #  500_6_cpu.promile
-        msg = '%s load -> above treshhold avgvalue last hour avergage is: %.2f%%' % (type_.upper(), percent)
+        msg = 'Avergage %s load during last hour was above treshhold value: %.2f%%' % (type_.upper(), percent)
         result['message'] = msg
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = j.application.whoAmI.nid
