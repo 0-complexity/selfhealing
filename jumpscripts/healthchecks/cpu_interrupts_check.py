@@ -1,9 +1,13 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if amount of interrupts is higher than expected.
+Checks the number of interrupts per second. If higher than expected an error condition is thrown.
 
-Currently throws WARNING if more than 8K interrupts and throws ERROR if more than 10K interrupts
+Currently throws:
+- WARNING if more than 8K interrupts/s
+- ERROR if more than 10K interrupts/s
+
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 roles = ['node']
@@ -37,25 +41,25 @@ def action():
 
     if stat is None:
         result['state'] = 'WARNING'
-        result['message'] = 'Number of interrupts is not collected yet'
+        result['message'] = 'Number of interrupts per second is not collected yet'
         result['uid'] = result['message']
         return [result]
 
     avg_inter = int(stat.h_avg)
-    result['message'] = 'Number of interrupts value is: %d/s' % avg_inter
+    result['message'] = 'Number of interrupts per second is: %d/s' % avg_inter
     level = None
     if avg_inter > 198000:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = 'Number of interrupts value is too large'
+        result['uid'] = 'Number of interrupts per second is too high'
 
     elif avg_inter > 180000:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = 'Number of interrupts value is too large'
+        result['uid'] = 'Number of interrupts per second is too high'
 
     if level:
-        msg = 'Number of interrupts is too high, current value: %d/s' % avg_inter
+        msg = 'Number of interrupts per second is too high: %d/s' % avg_inter
         result['message'] = msg
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
