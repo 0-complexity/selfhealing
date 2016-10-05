@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Collects the fans functionality of a node using ipmitool.
+Checks the fans of a node using IPMItool.
 """
 
 organization = 'cloudscalers'
