@@ -2,7 +2,8 @@ from JumpScale import j
 import re
 
 descr = """
-Monitor if a network bond (if there is one) has both (or more) interfaces properly active.
+Monitors if a network bond (if there is one) has both (or more) interfaces properly active.
+Problems are reported in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
