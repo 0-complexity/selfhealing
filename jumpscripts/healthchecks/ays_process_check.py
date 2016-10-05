@@ -3,8 +3,8 @@ from JumpScale import j
 
 descr = """
 Checks if all AYS processes are running.
-Result will be shown in the "AYS Process" section of the Grid Portal / Status Overview / Node Status page.
 Throws an error condition for each process that is not running.
+Result will be shown in the "AYS Process" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = "jumpscale"

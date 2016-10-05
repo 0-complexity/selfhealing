@@ -1,7 +1,8 @@
 from JumpScale import j
 
 descr = """
-Checks databases' status on Master 
+Checks status of MongoDB and InfluxDB databases on Master. If not running an error condition is thrown.
+Result will be shown in the "Databases" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = "jumpscale"
@@ -26,16 +27,16 @@ def action():
     status = osiscl.getStatus()
     results = list()
     if status['mongodb'] == False :
-        j.errorconditionhandler.raiseOperationalCritical('mongodb status -> halted', 'monitoring', die=False)
-        results.append({'message': 'mongodb status -> halted', 'uid': 'mongodb status -> halted', 'state': 'HALTED', 'category': 'Databases'})
+        j.errorconditionhandler.raiseOperationalCritical('MongoDB halted', 'monitoring', die=False)
+        results.append({'message': 'MongoDB halted', 'uid': 'MongoDB halted', 'state': 'HALTED', 'category': 'Databases'})
     else:
-        results.append({'message': 'mongodb status -> running', 'state': 'OK', 'category': 'Databases'})
+        results.append({'message': 'MongoDB running', 'state': 'OK', 'category': 'Databases'})
 
     if status['influxdb'] == False :
-        j.errorconditionhandler.raiseOperationalCritical('influxdb status -> halted', 'monitoring', die=False)
-        results.append({'message': 'influxdb status -> halted', 'uid': 'influxdb status -> halted', 'state': 'HALTED', 'category': 'Databases'})
+        j.errorconditionhandler.raiseOperationalCritical('InfluxDB halted', 'monitoring', die=False)
+        results.append({'message': 'InfluxDB halted', 'uid': 'InfluxDB halted', 'state': 'HALTED', 'category': 'Databases'})
     else:
-        results.append({'message': 'influxdb status -> running', 'state': 'OK', 'category': 'Databases'})
+        results.append({'message': 'InfluxDB is running', 'state': 'OK', 'category': 'Databases'})
     return results
 
 if __name__ == "__main__":

@@ -1,12 +1,11 @@
 from JumpScale import j
 
 descr = """
-Checks memory and CPU usage/load. If average per hour is higher than expected an error condition is thrown.
+Checks average memory and CPU usage/load. If average per hour is higher than expected an error condition is thrown.
 
-if memory and CPU usage on average over 1 h per CPU is higher than expected.
+For both memory and CPU usage throws WARNING if more than 80% used and throws ERROR if more than 95% used.
 
-For both memory and CPU usage throws WARNING if more than 80% used and throws ERROR if more than 95% used
-
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = "jumpscale"
