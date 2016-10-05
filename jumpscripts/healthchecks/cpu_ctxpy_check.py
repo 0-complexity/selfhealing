@@ -1,12 +1,15 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if amount of context switches per CPU is higher than expected.
+Checks the number of CPU context switches per second. If higher than expected an error condition is thrown.
 
-Currently throws WARNING if more than 1M context switches and throws ERROR if more than 600k context switches
+Currently throws:
+- WARNING if more than 1M context switches/s
+- ERROR if more than 600k context switches/s
+
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 
 TODO : check these values, specifically if amount of cores per CPU is growing
-
 """
 
 organization = "jumpscale"
@@ -39,25 +42,25 @@ def action():
 
     if stat is None:
         result['state'] = 'WARNING'
-        result['message'] = 'CPU contextswitch is not collected yet'
+        result['message'] = 'CPU context switch is not collected yet'
         result['uid'] = result['message']
         return [result]
 
     avgctx = stat.h_avg
-    result['message'] = 'CPU contextswitch value is: %.2f/s' % avgctx
+    result['message'] = 'CPU context switch value is: %.2f/s' % avgctx
     level = None
     if avgctx > 1000000:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = 'CPU contextswitch value is too large'
+        result['uid'] = 'CPU context switch value is too high'
 
     elif avgctx > 600000:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = 'CPU contextswitch value is too large'
+        result['uid'] = 'CPU context switch value is too high'
 
     if level:
-        msg = 'CPU contextswitch is to high current value: %.2f/s' % avgctx
+        msg = 'Number of CPU context switches per second is too high, current value: %.2f/s' % avgctx
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
