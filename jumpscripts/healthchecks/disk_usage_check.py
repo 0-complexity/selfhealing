@@ -1,11 +1,11 @@
 from JumpScale import j
 
 descr = """
-Checks status of all physical disks and partitions on all nodes by checking free disk space on mount points
+Checks status of all physical disks and partitions on all nodes, reporting back the free disk space on mount points.
+
 (except if / of mount point contains .dontreportusage - which is needed as an exception for read and write cache for OVS)
 
-Throws WARNING per mount point if >90% used, throws ERROR per mount point if >95% used
-
+Throws WARNING per mount point if >90% used, throws ERROR per mount point if >95% used.
 """
 
 organization = "jumpscale"
@@ -41,7 +41,7 @@ def action():
         if disk.mountpoint:
             freesize, freeunits = j.tools.units.bytes.converToBestUnit(disk.free, 'M')
             size = j.tools.units.bytes.toSize(disk.size, 'M', freeunits)
-            return "%s on %s %.02f/%.02f %siB free" % (disk.path, disk.mountpoint, freesize, size, freeunits)
+            return "%s on %s %.02f of %.02f %siB free" % (disk.path, disk.mountpoint, freesize, size, freeunits)
         else:
             return '%s %s' % (disk.path, disk.model)
 
