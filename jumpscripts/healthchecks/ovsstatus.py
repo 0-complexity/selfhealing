@@ -1,9 +1,8 @@
 from JumpScale import j
 descr = """
-Checks every defined period if all OVS processes still run
-
-Shows WARNING if process not running anymore
-
+Checks every predefined period (default 60 seconds) if all OVS processes are still run. 
+Result will be shown in the "OVS Services" section of the Grid Portal / Status Overview / Node Status page.
+Shows WARNING if process not running anymore.
 """
 
 organization = 'cloudscalers'
