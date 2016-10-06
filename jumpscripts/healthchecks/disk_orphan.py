@@ -19,6 +19,7 @@ queue = 'process'
 def action(delete=False):
     import os
     import glob
+    import time
     from CloudscalerLibcloud import openvstorage
     cbcl = j.clients.osis.getNamespace('cloudbroker', j.core.osis.client)
     vcl = j.clients.osis.getNamespace('vfw', j.core.osis.client)
@@ -60,7 +61,12 @@ def action(delete=False):
                         msg = NETWORK_FOUND
                 elif file_.startswith('cloud-init'):
                     if len(files) == 1:
-                        msg = DISK_FOUND_CLOUD
+                        stat = os.stat(fullpath)
+                        # check if file is older then 5min (might be basevolume is not created yet)
+                        if stat.st_ctime < time.time() - 300:
+                            msg = DISK_FOUND_CLOUD
+                        else:
+                            continue
                     else:
                         continue
                 else:
