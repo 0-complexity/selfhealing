@@ -1,6 +1,6 @@
 descr = """
-This healthcheck calls the standard OpenVStorage healthcheck.  This can be found on : https://github.com/openvstorage/openvstorage-health-check
-
+Calls the standard Open vStorage health checks, see: https://github.com/openvstorage/openvstorage-health-check
+Result will be shown in the "OpenvStorage" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
