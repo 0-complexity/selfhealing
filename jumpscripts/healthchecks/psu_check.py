@@ -1,7 +1,8 @@
 from JumpScale import j
 
 descr = """
-Checks the power redundancy of a node using ipmitool.
+Checks the power redundancy of a node using IPMItool.
+Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
