@@ -4,6 +4,7 @@ import netaddr
 
 descr = """
 Checks the status of the available public IPs.
+Result will be shown in the "Network" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
