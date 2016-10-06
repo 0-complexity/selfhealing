@@ -1,7 +1,8 @@
 from JumpScale import j
 
 descr = """
-Check on open filescriptors
+Checks the number of open file descriptors for each process.
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'greenitglobe'
@@ -37,7 +38,7 @@ def action():
             # process exited just carry on like it never existed
             pass
     if len(results) == 0:
-        msg = 'Open filedescriptors are all OK'
+        msg = 'Open file descriptors are all OK'
         results.append({'state': 'OK', 'message': msg, 'category': category})
     return results
 
