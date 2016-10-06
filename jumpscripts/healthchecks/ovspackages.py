@@ -1,6 +1,6 @@
 from JumpScale import j
 descr = """
-get ovs packages
+Get OVS packages.
 """
 
 organization = 'cloudscalers'
@@ -27,7 +27,7 @@ def action():
             ovsresults[pkg.name] = version
 
     return ovsresults
-    
+
 
 if __name__ == '__main__':
     print action()
