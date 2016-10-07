@@ -2,8 +2,7 @@ from JumpScale import j
 import sys
 
 descr = """
-gather statistics about disk safety
-Send disk safety for each vpool and the amount of namespaces with the lowest disk safety to DB
+Gathers statistics about disk safety and sends this disk safety statistics for each vpool and the amount of namespaces with the lowest disk safety to the database.
 """
 
 organization = "jumpscale"
