@@ -2,7 +2,7 @@ from JumpScale import j
 import JumpScale.baselib.redis
 
 descr = """
-Monitors if WORKERS on regular basis report to the agent for new tasks.
+Monitors the workers, checking if they report back on regular basis report to their agent for new tasks.
 
 Throws ERROR if WORKERS waits longer than expected:
 For Default queue > 2 mins
