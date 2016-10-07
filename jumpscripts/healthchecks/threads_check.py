@@ -1,9 +1,13 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if amount of threads is higher than expected.
+Checks the number of threads, and throw an error if higher than expected.
 
-Currently throws WARNING if more than 18K threads and throws ERROR if more than 20K threads
+Currently throws
+- WARNING if more than 18K threads
+- ERROR if more than 20K threads
+
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = "jumpscale"
@@ -37,26 +41,26 @@ def action():
     if stat is None:
         level = 2
         result['state'] = 'WARNING'
-        result['message'] = 'Number of threads are not available'
+        result['message'] = 'Number of threads is not available'
         result['uid'] = result['message']
         return [result]
 
     avg_thread = int(stat.h_avg)
-    result['message'] = 'Number of thread is: %d' % avg_thread
+    result['message'] = 'Number of threads is: %d' % avg_thread
     level = None
 
     if avg_thread > 20000:
         level = 1
         result['state'] = 'ERROR'
-        result['uid'] = 'Number of thread is too large'
+        result['uid'] = 'Number of threads is too high'
 
     elif avg_thread > 18000:
         level = 2
         result['state'] = 'WARNING'
-        result['uid'] = 'Number of thread is too large'
+        result['uid'] = 'Number of threads is too high'
 
     if level:
-        msg = 'Number of thread is to high current value: %d' % avg_thread
+        msg = 'Number of threads is too high: %d' % avg_thread
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
