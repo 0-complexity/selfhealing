@@ -3,7 +3,7 @@ import json
 import sys
 
 descr = """
-gather statistics about VDisks
+Gathers statistics about the virtual disks.
 """
 
 organization = "jumpscale"
