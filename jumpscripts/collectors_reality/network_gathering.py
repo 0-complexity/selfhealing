@@ -2,7 +2,7 @@ from JumpScale import j
 import psutil
 
 descr = """
-Gathers information about the NICs, vizualizated in the Grid Portal: Grid Node > NICS > NIC Details page.
+Gathers information about the NICs, visualized in the Grid Portal: Grid Node > NICS > NIC Details page.
 """
 
 organization = "jumpscale"

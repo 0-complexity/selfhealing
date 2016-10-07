@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Gathers statistics about all virtual machines, vizualizated in the Grid Portal.
+Gathers statistics about all virtual machines, visualized in the Grid Portal.
 """
 
 organization = "jumpscale"
