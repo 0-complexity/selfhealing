@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-gather statistics about virtual disks
+Gathers statistics (iops.read, iops.write, throughput.read, throughput.write) about virtual disks.
 """
 
 organization = "jumpscale"
