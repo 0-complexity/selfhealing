@@ -3,7 +3,7 @@ import re
 
 
 descr = """
-gather statistics about cpu utilisation of virtual machines
+Gathers statistics about CPU utilization on the virtual machines.
 """
 
 organization = "jumpscale"
