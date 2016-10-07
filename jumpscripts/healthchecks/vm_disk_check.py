@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Checks vmachine disk(s)
+Checks the disks of the virtual machines.
 """
 
 organization = 'jumpscale'
