@@ -1,8 +1,8 @@
 from JumpScale import j
 
 descr = """
-Checks whether Virtual Firewall (Router OS for one Cloudspace) can reach its default gateway (public / private external IP@)
-
+Checks whether Virtual Firewall (Router OS for one cloud space) can reach its default gateway (public / private external IP@)
+Result will be shown... WHERE?
 """
 
 organization = 'cloudscalers'
@@ -50,7 +50,7 @@ def action():
                 if j.system.net.tcpPortConnectionTest(vfw.host, 8728, 7):
                     routeros = j.clients.routeros.get(vfw.host, vfw.username, vfw.password)
                 else:
-                    result[cloudspaceid] = 'Could not connect to routeros %s' % vfw.host
+                    result[cloudspaceid] = 'Could not connect to RouterOS %s' % vfw.host
                     return
             except Exception, e:
                 result[cloudspaceid] = str(e)
@@ -66,9 +66,8 @@ def action():
         processCloudSpace(cloudspace)
     if result:
         body = """
-Some VFW have connections issues please investigate
-
-"""
+        Some virtual firewalls ()VFW have connection issues, please investigate
+        """
         for cloudspaceid, message in result.iteritems():
             cloudspace = cloudspaces[cloudspaceid]
             body += "* CloudspaceId: %(id)s NetworkId: %(networkId)s PUBIP: %(publicipaddress)s\n" % cloudspace
