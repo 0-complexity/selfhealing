@@ -1,11 +1,10 @@
 from JumpScale import j
 descr = """
-Checks the status of each stack.
+Checks the status of each stack (CPU node).
 
-A stack equals a CPU node.
+ERROR state is automatically attributed to a stack by OpenvCloud - this is done if a specific action cannot be executed anymore on the CPU Node.
 
-ERROR state is automatically attributed to a stack by OpenVCloud - this is done if a specific action cannot be executed anymore on the CPU Node.
-
+Result will be shown in the "Stack Status" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
@@ -32,8 +31,8 @@ def action():
                 ]
     stack = stacks[0]
     if stack['status'] == 'ERROR':
-        return [{'message': 'Node is in error status',
-                 'uid': 'Node is in error status',
+        return [{'message': 'Node is in error state',
+                 'uid': 'Node is in error state',
                  'category': category,
                  'state': 'ERROR'}
                 ]
