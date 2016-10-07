@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Checks the temperature on the system.
+Checks the (CPU/disk) temperature of the system.
 """
 
 organization = 'cloudscalers'
