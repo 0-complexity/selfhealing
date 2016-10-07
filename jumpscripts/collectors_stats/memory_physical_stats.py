@@ -3,7 +3,7 @@ import re
 
 
 descr = """
-gather statistics about system
+Gathers statistics about the memory of the physical machines.
 """
 
 organization = "jumpscale"

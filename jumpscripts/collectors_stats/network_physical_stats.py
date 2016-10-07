@@ -2,7 +2,11 @@ from JumpScale import j
 import psutil
 
 descr = """
-gather network statistics for physical device
+Gathers following network statistics from the physical machines:
+- network.throughput.outgoing
+- network.throughput.incoming
+- network.packets.tx
+- network.packets.rx
 """
 
 organization = "jumpscale"
