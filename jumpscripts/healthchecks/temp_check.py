@@ -1,7 +1,8 @@
 from JumpScale import j
 
 descr = """
-Checks the temperature on the system.
+Checks the CPU + disk temperature of the system.
+Result will be shown in the "Temperature" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = 'cloudscalers'
