@@ -2,7 +2,7 @@ from JumpScale import j
 import time
 
 descr = """
-gather statistics about physical disks
+Gather statistics about the physical disks.
 """
 
 organization = "jumpscale"
