@@ -2,7 +2,7 @@ from JumpScale import j
 import sys
 
 descr = """
-gather statistics about OVS ASD
+Gather statistics about Open vStorage ASD.
 """
 
 organization = "jumpscale"
