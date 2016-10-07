@@ -1,7 +1,11 @@
 from JumpScale import j
 
 descr = """
-gather network statistics for virtual machines
+Gathers following network statistics from the virtual machines:
+  - network.throughput.outgoing
+  - network.throughput.incoming
+  - network.packets.tx
+  - network.packets.rx
 """
 
 organization = "jumpscale"
