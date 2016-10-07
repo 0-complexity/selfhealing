@@ -2,8 +2,7 @@ from JumpScale import j
 import psutil
 
 descr = """
-gather statistics about nic's
-is send to grid manager only
+Gathers information about the NICs, vizualizated in the Grid Portal: Grid Node > NICS > NIC Details page.
 """
 
 organization = "jumpscale"
@@ -27,7 +26,7 @@ def action():
     pattern = None
     if j.application.config.exists('nic.pattern'):
         pattern = j.application.config.getStr('nic.pattern')
-    
+
     for netitem in netinfo:
         name = netitem['name']
         if pattern and j.codetools.regex.match(pattern,name) == False:
