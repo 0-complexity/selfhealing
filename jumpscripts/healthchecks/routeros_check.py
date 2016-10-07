@@ -4,6 +4,7 @@ from gevent.pool import Pool
 
 descr = """
 Checks the status of RouterOS.
+Result will be shown in the "Network" section of the Grid Portal / Status Overview / Node Status page.
 """
 organization = 'greenitglobe'
 author = "thabeta@codescalers.com"

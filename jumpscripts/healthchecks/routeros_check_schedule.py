@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Scheduler that runs on master to check for dead routeros devices.
+Scheduler that runs on master to check for dead RouterOS devices.
 
 """
 
