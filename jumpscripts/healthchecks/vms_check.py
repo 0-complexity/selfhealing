@@ -2,7 +2,7 @@ from JumpScale import j
 import time
 
 descr = """
-Check vmachines status
+Check status of virtual machine.
 """
 
 organization = 'jumpscale'
@@ -68,7 +68,7 @@ def action(gid=None):
             if vm['status'] == 'RUNNING':
                 ipaddress = vm['nics'][0]['ipAddress']
                 if ipaddress == 'Undefined':
-                    print 'Retreiving vm from portal %(id)s' % vm
+                    print 'Retreiving VM from portal %(id)s' % vm
                     vmdata = portalclient.cloudapi.machines.get(vm['id'])
                     ipaddress = vmdata['interfaces'][0]['ipAddress']
                 if ipaddress != 'Undefined' and vfw:
