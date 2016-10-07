@@ -3,7 +3,14 @@ import re
 
 
 descr = """
-gather statistics about system cpu for physical
+Gathers following CPU statistics from physical machines:
+- CPU time
+- CPU percent
+- Number of threads
+- Number of context switches
+- Number of interrupts
+
+Statistics are writen to Redis.
 """
 
 organization = "jumpscale"
