@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Checks whether vmachine is pingable
+Checks whether virtual machine is pingable.
 """
 
 organization = 'jumpscale'
