@@ -1,9 +1,13 @@
 from JumpScale import j
 
 descr = """
-This healthcheck checks if the amount of swap used by the system is higher than expected.
+Checks the amount of swap used by the system, and throws an error if higher than expected.
 
-Currently throws WARNING if more than 1GB interrupts  and throws ERROR if more than 2GB interrupts
+Currently throws:
+- WARNING if more than 1 GB
+- ERROR if more than 2 GB
+
+Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
 
 organization = "jumpscale"
@@ -56,7 +60,7 @@ def action():
         result['uid'] = 'Swap used value is too large'
 
     if level:
-        msg = 'Swap used is to high current value: %.2fMB' % avg_swap_used
+        msg = 'Swap used is too high: %.2fMB' % avg_swap_used
         eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
         eco.nid = nid
         eco.gid = gid
