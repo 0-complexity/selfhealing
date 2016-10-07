@@ -2,7 +2,7 @@ from JumpScale import j
 import sys
 
 descr = """
-Gather statistics about Open vStorage proxy performance.
+Gathers statistics about Open vStorage proxy performance.
 """
 
 organization = "jumpscale"
