@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Checks whether Virtual Firewall (Router OS for one cloud space) can reach its default gateway (public / private external IP@)
+Checks whether virtual firewall (RouterOS of cloud space) can reach its default gateway (public / private external IP@)
 Result will be shown... WHERE?
 """
 
@@ -66,7 +66,7 @@ def action():
         processCloudSpace(cloudspace)
     if result:
         body = """
-        Some virtual firewalls ()VFW have connection issues, please investigate
+        Some virtual firewalls (VFW) have connection issues, please investigate
         """
         for cloudspaceid, message in result.iteritems():
             cloudspace = cloudspaces[cloudspaceid]
