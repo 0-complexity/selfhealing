@@ -3,7 +3,7 @@ import json
 import sys
 
 descr = """
-gather statistics about VPools
+Gathers statistics about the vPools.
 """
 
 organization = "jumpscale"
