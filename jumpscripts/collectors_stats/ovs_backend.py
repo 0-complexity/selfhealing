@@ -3,7 +3,7 @@ import sys
 
 
 descr = """
-gather statistics about OVS backends
+Gathers statistics about the Open vStorage backends.
 """
 
 organization = "jumpscale"
