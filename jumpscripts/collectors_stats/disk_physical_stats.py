@@ -2,7 +2,18 @@ from JumpScale import j
 import time
 
 descr = """
-Gathers statistics about the physical disks.
+Gathers following statistics about the physical disks:
+- time_read
+- time_write
+- count_read
+- count_write
+- kbytes_read
+- kbytes_write
+- MB_read
+- MB_write
+- space_free_mb
+- space_used_mb
+- space_percent
 """
 
 organization = "jumpscale"
