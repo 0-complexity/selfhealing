@@ -6,17 +6,16 @@
 #### roles: ['cpunode']
 #### descr: 
 ```
-Checks the status of each stack.
+Checks the status of each stack (CPU node).
 
-A stack equals a CPU node.
+ERROR state is automatically attributed to a stack by OpenvCloud - this is done if a specific action cannot be executed anymore on the CPU Node.
 
-ERROR state is automatically attributed to a stack by OpenVCloud - this is done if a specific action cannot be executed anymore on the CPU Node.
-
+Result will be shown in the "Stack Status" section of the Grid Portal / Status Overview / Node Status page.
 
 ```
 #### author: deboeckj@codescalers.com
 #### queue: io
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/healthchecks/stackstatus.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/stackstatus.py
 #### version: 1.0
 #### async: True
 #### organization: cloudscalers

@@ -5,14 +5,14 @@
 #### enable: True
 #### descr: 
 ```
-gather statistics about system
+Gathers statistics about the memory of the physical machines.
 
 ```
 #### license: bsd
 #### author: kristof@incubaid.com
 #### period: 60
 #### queue: process
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/collectors_stats/memory_physical_stats.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/memory_physical_stats.py
 #### version: 1.0
 #### roles: []
 #### async: True

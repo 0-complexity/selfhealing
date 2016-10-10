@@ -1,19 +1,19 @@
 
-# JumpScript: psu_check.py
+# JumpScript: raid_check.py
         
 #### category: monitor.healthcheck
 #### enable: True
 #### roles: ['node']
 #### descr: 
 ```
-Checks the power redundancy of a node using IPMItool.
+Checks whether all configured RAID devices are still healthy.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 
 ```
-#### author: thabeta@codescalers.com
+#### author: deboeckj@greenitglobe.com
 #### period: 60
 #### queue: process
-#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/psu_check.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/raid_check.py
 #### version: 1.0
 #### async: True
 #### organization: cloudscalers

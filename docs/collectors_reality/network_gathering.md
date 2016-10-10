@@ -5,14 +5,14 @@
 #### enable: True
 #### descr: 
 ```
-gather statistics about system
+Gathers information about the NICs, visualized in the Grid Portal: Grid Node > NICS > NIC Details page.
 
 ```
 #### license: bsd
 #### author: kristof@incubaid.com
 #### period: 300
 #### queue: process
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/collectors_reality/network_gathering.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_reality/network_gathering.py
 #### version: 1.0
 #### roles: []
 #### async: True

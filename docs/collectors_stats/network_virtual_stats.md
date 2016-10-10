@@ -5,14 +5,18 @@
 #### enable: True
 #### descr: 
 ```
-gather network statistics for virtual machines
+Gathers following network statistics from the virtual machines:
+  - network.throughput.outgoing
+  - network.throughput.incoming
+  - network.packets.tx
+  - network.packets.rx
 
 ```
 #### license: bsd
 #### author: deboeckj@codescalers.com
 #### period: 60
 #### queue: process
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/collectors_stats/network_virtual_stats.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/network_virtual_stats.py
 #### version: 1.0
 #### roles: ['cpunode']
 #### async: True

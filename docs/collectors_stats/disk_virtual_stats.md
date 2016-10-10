@@ -5,14 +5,14 @@
 #### enable: True
 #### descr: 
 ```
-gather statistics about virtual disks
+Gathers statistics (iops.read, iops.write, throughput.read, throughput.write) about virtual disks.
 
 ```
 #### license: bsd
 #### author: christophe@greenitglobe.com
-#### period: 300
+#### period: 60
 #### queue: process
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/collectors_stats/disk_virtual_stats.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/disk_virtual_stats.py
 #### version: 1.0
 #### roles: ['cpunode']
 #### async: True

@@ -6,16 +6,14 @@
 #### roles: ['cpunode']
 #### descr: 
 ```
-Tests every period if test VM exists and if exists it test write speed.
-Every 24hrs, test VM is recreated
-
-Generates warning if write speed is lower than 50 MiB / second
-
+Tests every predefined period (default 30 minutes) whether test VM exists and if exists it tests write speed. Every 24hrs, test VM is recreated.
+Result will be shown in the "Deployment Test" section of the Grid Portal / Status Overview / Node Status page.
+Generates warning if write speed is lower than 50 MiB / second.
 
 ```
 #### author: deboeckj@codescalers.com
 #### queue: io
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/healthchecks/deployment_test.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/deployment_test.py
 #### version: 1.0
 #### async: True
 #### organization: cloudscalers

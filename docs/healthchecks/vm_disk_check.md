@@ -6,11 +6,11 @@
 #### name: vm_disk_check
 #### descr: 
 ```
-Checks vmachine disk(s)
+Checks the disks of the virtual machines.
 
 ```
 #### author: zains@codescalers.com
-#### scriptname: /opt/code/github/selfhealing/jumpscripts/healthchecks/vm_disk_check.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/vm_disk_check.py
 #### version: 1.0
 #### async: True
 #### organization: jumpscale
