@@ -29,16 +29,39 @@ $var/resourcetracking/$accountid/$year/$month/$day/$hour.bin
 Where the data is a `LIST` of capnp structurs defined as following:
 
 ```go
+struct CS {
+  vms = [VM]
+}
+```
+
+Network struct spec:
+```go
+struct Nic {
+  id  // id of interface
+  tx 
+  rx
+}
+```
+
+Disc struct spec:
+```go
+struct Disc {
+  id // id of disc
+  iops_max // max(5m avg)
+  iops // 60m
+}
+```
+
+VM struct spec:
+```go
 struct VM {
+  id
+  type // vm / routeros
   mem
-  size
+  vpcus
   cpu_minutes
-  iops 
-  struct Network {
-    tx 
-    rx
-  }
-  // extra meta (space id, vm id, etc...)
+  networks = [Nic]
+  discs = [Disc]
 }
 ```
 
