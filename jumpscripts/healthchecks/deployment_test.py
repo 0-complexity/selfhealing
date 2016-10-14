@@ -121,21 +121,21 @@ def action():
             while publicport in publicports:
                 publicport += 1
             j.console.echo('Creating portforward', log=True)
-            pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['publicipaddress'], publicport, vmachineId, 22, 'tcp')
+            pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['externalnetworkip'], publicport, vmachineId, 22, 'tcp')
 
-        publicip = str(netaddr.IPNetwork(cloudspace['publicipaddress']).ip)
+        externalip = str(netaddr.IPNetwork(cloudspace['externalnetworkip']).ip)
         account = vmachine['accounts'][0]
-        j.console.echo('Waiting for public connection', log=True)
-        if not j.system.net.waitConnectionTest(publicip, publicport, 60):
-            j.console.echo('Failed to get public connection %s:%s' % (publicip, publicport), log=True)
+        j.console.echo('Waiting for externalip connection', log=True)
+        if not j.system.net.waitConnectionTest(externalip, publicport, 60):
+            j.console.echo('Failed to get public connection %s:%s' % (externalip, publicport), log=True)
             status = 'ERROR'
             msg = 'Could not connect to VM over public interface'
             uid = 'Could not connect to VM over public interface'
         else:
             def runtests():
                 status = 'OK'
-                j.console.echo('Connecting over ssh %s:%s' % (publicip, publicport), log=True)
-                connection = j.remote.cuisine.connect(publicip, publicport, account['password'], account['login'])
+                j.console.echo('Connecting over ssh %s:%s' % (externalip, publicport), log=True)
+                connection = j.remote.cuisine.connect(externalip, publicport, account['password'], account['login'])
                 connection.user(account['login'])
                 connection.fabric.api.env['abort_on_prompts'] = True
                 connection.fabric.api.env['abort_exception'] = RuntimeError
@@ -143,7 +143,7 @@ def action():
 
                 j.console.echo('Running dd', log=True)
                 error = ''
-                for x in xrange(5):
+                for x in range(5):
                     try:
                         output = connection.run("rm -f 500mb.dd; dd if=/dev/zero of=500mb.dd bs=4k count=128k")
                         break
