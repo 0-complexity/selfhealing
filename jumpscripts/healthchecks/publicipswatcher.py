@@ -29,7 +29,6 @@ def action():
         gid = pool['gid']
         ips = pool['ips']
         ips_count = len(ips)
-        poolid = pool['id']
         usedips_count = ccl.cloudspace.count({'gid': gid, 'status': 'DEPLOYED'})
         for vm in ccl.vmachine.search({'nics.type': 'PUBLIC', 'status': {'$nin': ['ERROR', 'DESTROYED']}})[1:]:
             for nic in vm['nics']:
@@ -41,17 +40,17 @@ def action():
         percent = (float(usedips_count) / (usedips_count + ips_count)) * 100
         if percent > 95:
             results.append(dict(state='ERROR', category=category,
-                                message="Used External IPs on {poolid} passed the dangerous threshold. ({percent:.0f}%)"
-                                .format(poolid=poolid, percent=percent)))
+                                message="Used External IPs on {name} passed the dangerous threshold. ({percent:.0f}%)"
+                                .format(name=pool['name'], percent=percent)))
         elif percent > 80:
             results.append(dict(state='WARNING', category=category,
-                                message="Used External IPs on {poolid} passed the critical threshold. ({percent:.0f}%)"
-                                .format(poolid=poolid, percent=percent)))
+                                message="Used External IPs on {name} passed the critical threshold. ({percent:.0f}%)"
+                                .format(name=pool['name'], percent=percent)))
 
         else:
             results.append(dict(state='OK', category=category,
-                                message="Used External IPs on {poolid} ({percent:.0f}%)"
-                                .format(poolid=poolid, percent=percent)))
+                                message="Used External IPs on {name} ({percent:.0f}%)"
+                                .format(name=pool['name'], percent=percent)))
 
     return results
 
