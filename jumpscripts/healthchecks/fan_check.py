@@ -21,7 +21,7 @@ def action():
     category = "Hardware"
     results = []
     rc, out = j.system.process.execute("""ipmitool sdr type "Fan" """, dieOnNonZeroExitCode=False)
-    if rc != 127:  # 127 is command not found
+    if rc == 127:  # 127 is command not found
         if out:
             # SAMPLE:
             # root@du-conv-3-01:~# ipmitool sdr type "Fan"
@@ -39,8 +39,10 @@ def action():
                     results.append(dict(state='WARNING', category=category, message="Fan %s has problem (%s)" % (id_, message)))
             if len(results) == 0:
                 results.append(dict(state='OK', category=category, message="All fans are OK"))
+    else:
+        results.append(dict(state='SKIPPED', category=category, message="NO fan information available"))
 
     return results
 
 if __name__ == '__main__':
-    print action()
+    print(action())
