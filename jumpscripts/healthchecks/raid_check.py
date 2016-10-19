@@ -22,7 +22,12 @@ def action():
     category = "Hardware"
     results = []
 
-    stats = mdstat.parse()
+    try:
+        stats = mdstat.parse()
+    except IOError as e:
+        if e.errno == 2:
+            return []
+
     for name, device in stats['devices'].iteritems():
         faultydisks = []
         if device['active']:

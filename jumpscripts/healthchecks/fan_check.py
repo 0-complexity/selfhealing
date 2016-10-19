@@ -21,7 +21,7 @@ def action():
     category = "Hardware"
     results = []
     rc, out = j.system.process.execute("""ipmitool sdr type "Fan" """, dieOnNonZeroExitCode=False)
-    if rc == 127:  # 127 is command not found
+    if rc == 0:  # 127 is command not found
         if out:
             # SAMPLE:
             # root@du-conv-3-01:~# ipmitool sdr type "Fan"
