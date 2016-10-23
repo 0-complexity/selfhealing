@@ -10,7 +10,7 @@ category = "monitor.healthcheck"
 roles = ['storagedriver']
 period = 60 * 30  # 30min
 timeout = 60 * 5
-enable = False
+enable = True
 async = True
 queue = 'io'
 log = True
@@ -34,19 +34,19 @@ def action():
 
     module = ''
 
-    def failure(self, msg, unattended_mode_name, unattended_print_mode=True):
-        results.append({'message': msg, 'uid': unattended_mode_name, 'category': module, 'state': 'ERROR'})
+    def failure(self, msg, test_name=None):
+        results.append({'message': msg, 'uid': test_name, 'category': module, 'state': 'ERROR'})
 
-    def success(self, msg, unattended_mode_name, unattended_print_mode=True):
-        results.append({'message': msg, 'uid': unattended_mode_name, 'category': module, 'state': 'OK'})
+    def success(self, msg, test_name=None):
+        results.append({'message': msg, 'uid': test_name, 'category': module, 'state': 'OK'})
 
-    def warning(self, msg, unattended_mode_name, unattended_print_mode=True):
-        results.append({'message': msg, 'uid': unattended_mode_name, 'category': module, 'state': 'WARNING'})
+    def warning(self, msg, test_name=None):
+        results.append({'message': msg, 'uid': test_name, 'category': module, 'state': 'WARNING'})
 
     HCLogHandler.failure = failure
     HCLogHandler.success = success
     HCLogHandler.warning = warning
-
+    logger = HCLogHandler(print_progress=False)
     results = []
 
     alba = AlbaHealthCheck()
@@ -66,24 +66,24 @@ def action():
         """
         Checks all critical components of Open vStorage
         """
-        ovs.get_local_settings()
-        ovs.check_ovs_workers()
-        ovs.check_ovs_packages()
-        ovs.check_required_ports()
-        ovs.get_zombied_and_dead_processes()
-        ovs.check_required_dirs()
-        ovs.check_size_of_log_files()
-        ovs.check_if_dns_resolves()
-        ovs.check_model_consistency()
-        ovs.check_for_halted_volumes()
-        ovs.check_filedrivers()
-        ovs.check_volumedrivers()
+        ovs.get_local_settings(logger)
+        ovs.check_ovs_workers(logger)
+        ovs.check_ovs_packages(logger)
+        ovs.check_required_ports(logger)
+        ovs.get_zombied_and_dead_processes(logger)
+        ovs.check_required_dirs(logger)
+        ovs.check_size_of_log_files(logger)
+        ovs.check_if_dns_resolves(logger)
+        ovs.check_model_consistency(logger)
+        ovs.check_for_halted_volumes(logger)
+        ovs.check_filedrivers(logger)
+        ovs.check_volumedrivers(logger)
 
     def check_alba():
         """
         Checks all critical components of Alba
         """
-        alba.check_alba()
+        alba.check_alba(logger)
 
     module = 'OpenvStorage'
     check_openvstorage()
