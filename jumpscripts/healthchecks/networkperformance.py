@@ -7,10 +7,11 @@ import re
 from fabric.network import NetworkError
 
 descr = """
-Tests bandwidth between storage nodes, volume drivers and itself.
+Tests bandwidth between storage nodes, volume drivers and itself
 
-Generates a warning if bandwidth is below 50% of the maximum speed.
-Generates an error if bandwidth is below 10% of the maximum speed.
+Generates a warning if bandwidth is below 50% of the maximum speed
+Generates an error if bandwidth is below 10% of the maximum speed
+
 """
 organization = "cloudscalers"
 author = "deboeckj@greenitglobe.com"
