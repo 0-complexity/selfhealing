@@ -16,86 +16,81 @@ roles = ['storagedriver']
 queue = 'process'
 
 
-def action(delete=False):
-    import os
-    import glob
+def action():
     import time
-    from CloudscalerLibcloud import openvstorage
+    import json
+    import urlparse
+    treshold = time.time() - 3600 * 24 * 7
+
+    scl = j.clients.osis.getNamespace('system')
     cbcl = j.clients.osis.getNamespace('cloudbroker', j.core.osis.client)
+    ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
+    ovscl = j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
+    DISK_FOUND = 'Found orphan disk %s'
+
+    def get_devices(deviceurl):
+        devices = []
+        url = urlparse.urlparse(deviceurl.rsplit('@', 1)[0])
+        device = url.path + '.raw'
+        devices.append(device)
+        if 'bootdisk' in device:
+            devices.append(device.replace('bootdisk', 'cloud-init'))
+        return devices
+
+    def get_network_devices(networks):
+        disks = {}
+        for network in networks:
+            # /mnt/vmstor/routeros/00ca/routeros-small-00ca.raw
+            devicename = '/routeros/{0:04x}/routeros-small-{0:04x}.raw'.format(network['id'])
+            disks[devicename] = 'DEPLOYED'
+        return disks
+
     vcl = j.clients.osis.getNamespace('vfw', j.core.osis.client)
     disks = cbcl.disk.search({'$fields': ['status', 'referenceId']}, size=0)[1:]
     # Map referenceIds and statuses
-    diskmap = {openvstorage.getPath(disk['referenceId']): disk['status'] for disk in disks}
+    diskmap = {}
+    for disk in disks:
+        for device in get_devices(disk['referenceId']):
+            diskmap[device] = disk['status']
     networks = vcl.virtualfirewall.search({'$fields': ['id'], '$query': {'gid': j.application.whoAmI.gid}}, size=0)[1:]
-    activenetworks = [network['id'] for network in networks]
+    diskmap.update(get_network_devices(networks))
+
     results = []
 
-    def disks_paths():
-        result = glob.glob('/mnt/data*/volumes')
-        result.append('/mnt/vmstor')
-        return result
-
-    def process(_, folder, files):
-        # Predefined messages
-        DISK_FOUND = 'Found orphan disk %s'
-        NETWORK_FOUND = 'Found orphan network disk %s'
-        DISK_FOUND_CLOUD = 'Found orphan cloud-init %s'
-
-        # Ignore templates and archive files
-        if 'templates' in files:
-            files.remove('templates')
-        if 'archive' in files:
-            files.remove('archive')
-
-        for file_ in files:
-            # Ignore ovs-healthcheck-test* files
-            if file_.startswith('ovs-healthcheck-test'):
+    for disk in ovscl.get('/vdisks', params={'contents': 'devicename'})['data']:
+        devicename = disk['devicename']
+        if devicename.startswith('/templates'):
+            continue
+        elif devicename.startswith('/archive'):
+            continue
+        elif diskmap.get(disk['devicename'], 'DESTROYED') == 'DESTROYED':
+            disk = ovscl.get('/vdisks/{}'.format(disk['guid']))
+            deletedisk = False
+            snapshottime = 0
+            for snapshot in disk['snapshots']:
+                if snapshot['label'] == 'orphan':
+                    snapshottime = int(snapshot['timestamp'])
+                    if snapshottime < treshold:
+                        deletedisk = True
+                    break
+            if deletedisk:
+                print('Deleting {}'.format(disk['devicename']))
+                ovscl.delete('/vdisks/{}'.format(disk['guid']))
                 continue
-
-            fullpath = os.path.join(folder, file_)
-            msg = None
-            if file_.endswith('.raw'):
-                if 'routeros' in file_:
-                    networkid = int(os.path.basename(folder), 16)
-                    if networkid not in activenetworks:
-                        msg = NETWORK_FOUND
-                elif file_.startswith('cloud-init'):
-                    if len(files) == 1:
-                        stat = os.stat(fullpath)
-                        # check if file is older then 5min (might be basevolume is not created yet)
-                        if stat.st_ctime < time.time() - 300:
-                            msg = DISK_FOUND_CLOUD
-                        else:
-                            continue
-                    else:
-                        continue
-                else:
-                    diskstatus = diskmap.get(fullpath, 'DESTROYED')
-                    if diskstatus == 'DESTROYED':
-                        msg = DISK_FOUND
-                if msg is not None:
-                    print('Orphan disk %s' % fullpath)
-                    if delete is True:
-                        os.remove(fullpath)
-                    else:
-                        results.append({'state': 'WARNING',
-                                        'category': 'Orphanage',
-                                        'message': msg % fullpath,
-                                        'uid': fullpath
-                                        })
-
-        if not files and not folder.endswith('/volumes'):
-            os.rmdir(folder)
-
-    for store in disks_paths():
-        os.path.walk(store, process, None)
+            elif snapshottime == 0:
+                print('Adding snapshot marker')
+                snapshottime = int(time.time())
+                params = dict(name='orphan', timestamp=snapshottime, sticky=True)
+                ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
+            results.append({'state': 'WARNING',
+                            'category': 'Orphanage',
+                            'message': DISK_FOUND % disk['devicename'],
+                            'uid': disk['devicename']
+                            })
 
     return results
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--delete', default=False, action='store_true')
-    options = parser.parse_args()
     j.core.osis.client = j.clients.osis.getByInstance('main')
-    action(options.delete)
+    import yaml
+    print(yaml.safe_dump(action(), default_flow_style=False))

@@ -11,11 +11,12 @@ name = 'vm_orphan'
 author = "deboeckj@codescalers.com"
 version = "1.0"
 
-period = 3600 # 1 hrs
+period = 3600  # 1 hrs
 enable = True
 async = True
-roles = ['cpunode',]
+roles = ['cpunode']
 queue = 'process'
+
 
 def action():
     import libvirt
@@ -28,7 +29,7 @@ def action():
     if not stacks:
         return result  # not registered as a stack
     vms = cbcl.vmachine.search({'stackId': stacks[0]['id'], 'status': {'$ne': 'DESTROYED'}})[1:]
-    vmsbyguid = { vm['referenceId']: vm for vm in vms }
+    vmsbyguid = {vm['referenceId']: vm for vm in vms}
     con = libvirt.open()
     networkorphan = "Found orphan network %s"
     networkwrongloc = "Found network %s which should be at node %s"
