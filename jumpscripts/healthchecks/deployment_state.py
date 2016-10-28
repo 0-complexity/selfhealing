@@ -28,7 +28,7 @@ def action():
                 job = next(iter(scl.job.search({"guid": vfw.deployment_jobguid})[1:]), None)
 
                 # time out if bigger than 5 min , start self heal
-                if job is None or (j.base.time.getTimeEpoch() - job["createTime"]) > 300:
+                if job is None or (j.base.time.getTimeEpoch() - job["timeCreate"]) > 300:
                     redeploy = True
             else:
                 redeploy = True
