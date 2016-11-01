@@ -19,7 +19,7 @@ queue = 'process'
 roles = []
 enable = True
 period = 600
-
+roles = ['node']
 log = True
 
 

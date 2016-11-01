@@ -11,12 +11,9 @@ author = "zains@codescalers.com"
 license = "bsd"
 version = "1.0"
 category = "monitor.healthcheck"
-
 async = True
-roles = []
-
+roles = ['node']
 period = 600
-
 log = True
 
 def action():

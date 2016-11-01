@@ -21,6 +21,7 @@ startatboot = True
 order = 1
 enable = True
 async = True
+roles = ['node']
 log = True
 queue = 'process'
 
