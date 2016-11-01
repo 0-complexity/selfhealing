@@ -34,7 +34,7 @@ def action():
             if state is not None:
                 msg = "To many open file descriptors for {} with PID {} {}/{}".format(proc.cmdline(), proc.pid, count, soft)
                 results.append({'state': state, 'message': msg, 'category': category, 'uid': msg})
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             # process exited just carry on like it never existed
             pass
     if len(results) == 0:
