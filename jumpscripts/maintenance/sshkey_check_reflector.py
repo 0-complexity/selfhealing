@@ -34,10 +34,18 @@ def cleanup_list(l):
 
 
 def action():
+    import pwd
+    import os
+    guest = pwd.getpwnam('guest')
     nid = j.application.whoAmI.nid
     ncl = j.clients.osis.getNamespace('system').node
     current_node = ncl.get(nid).dump()
     roles = ['cpunode', 'storagenode', 'storagedriver', ]
+    authorizedfile = os.path.join(guest.pw_dir, '.ssh', 'authorized_keys')
+
+    def set_permissions():
+        os.chmod(authorizedfile, 0o600)
+        os.chown(authorizedfile, guest.pw_uid, guest.pw_gid)
 
     nodes = ncl.search({'roles': {'$in': roles}, 'active': True})[1:]
 
@@ -51,11 +59,12 @@ def action():
     # save node to db
     ncl.set(current_node)
 
-    if j.system.fs.exists('/home/guest/.ssh/authorized_keys'):
-        authorized_keys = j.system.fs.fileGetContents('/home/guest/.ssh/authorized_keys')
+    if j.system.fs.exists(authorizedfile):
+        authorized_keys = j.system.fs.fileGetContents(authorizedfile)
     else:
         authorized_keys = ''
-        j.system.fs.writeFile('/home/guest/.ssh/authorized_keys', authorized_keys)
+        j.system.fs.writeFile(authorizedfile, authorized_keys)
+        set_permissions()
 
     authorized_keys = cleanup_list(authorized_keys.splitlines())
     authlen = len(authorized_keys)
@@ -80,7 +89,8 @@ def action():
     if changes['public'] is True or authlen != len(authorized_keys):
         print 'Writing authorized_keys'
         authorized_keys.append('')
-        j.system.fs.writeFile('/home/guest/.ssh/authorized_keys', '\n'.join(authorized_keys))
+        j.system.fs.writeFile(authorizedfile, '\n'.join(authorized_keys))
+        set_permissions()
 
 if __name__ == '__main__':
     action()
