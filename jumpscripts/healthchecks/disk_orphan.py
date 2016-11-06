@@ -20,13 +20,14 @@ def action():
     import time
     import json
     import urlparse
-    treshold = time.time() - 3600 * 24 * 7
+    deltatime = 3600 * 24 * 7
+    treshold = time.time() - deltatime
 
     scl = j.clients.osis.getNamespace('system')
     cbcl = j.clients.osis.getNamespace('cloudbroker', j.core.osis.client)
     ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
     ovscl = j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
-    DISK_FOUND = 'Found orphan disk %s'
+    DISK_FOUND = 'Deleting disk %s at %s'
 
     def get_devices(deviceurl):
         devices = []
@@ -84,7 +85,7 @@ def action():
                 ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
             results.append({'state': 'WARNING',
                             'category': 'Orphanage',
-                            'message': DISK_FOUND % disk['devicename'],
+                            'message': DISK_FOUND % (disk['devicename'], "{{ts: %s}}" % (snapshottime + deltatime)),
                             'uid': disk['devicename']
                             })
 
