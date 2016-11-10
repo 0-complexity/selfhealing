@@ -20,10 +20,10 @@ def action():
     ovsresults = list()
     ovscmds = {'OK': 'initctl list | grep ovs | grep start/running | sort',
                'HALTED': 'initctl list | grep ovs | grep -v start/running | sort'}
-    for service, enabled in j.system.platform.ubuntu.listServices().iteritems():
+    for service, enabled in sorted(j.system.platform.ubuntu.listServices().iteritems()):
         if service.startswith('ovs') or service.startswith('alba') or service.startswith('arakoon'):
             if enabled == 'enabled':
-                state = 'RUNNING' if j.system.platform.ubuntu.statusService(service) else 'HALTED'
+                state = 'OK' if j.system.platform.ubuntu.statusService(service) else 'ERROR'
                 ovsresults.append({'message': service, 'uid': service, 'category': 'OVS Services', 'state': state})
 
     return ovsresults
