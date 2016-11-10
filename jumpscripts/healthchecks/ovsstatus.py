@@ -1,6 +1,6 @@
 from JumpScale import j
 descr = """
-Checks every predefined period (default 60 seconds) if all OVS processes are still run. 
+Checks every predefined period (default 60 seconds) if all OVS processes are still run.
 Result will be shown in the "OVS Services" section of the Grid Portal / Status Overview / Node Status page.
 Shows WARNING if process not running anymore.
 """
@@ -20,20 +20,15 @@ def action():
     ovsresults = list()
     ovscmds = {'OK': 'initctl list | grep ovs | grep start/running | sort',
                'HALTED': 'initctl list | grep ovs | grep -v start/running | sort'}
-    for state, cmd in ovscmds.items():
-        exitcode, results = j.system.process.execute(cmd, outputToStdout=True)
-        if exitcode == 0:
-            for result in results.splitlines():
-                msg = result.split(' ')[0]
-                ovsresults.append({'message': msg, 'uid': msg, 'category': 'OVS Services', 'state': state})
-                if state != 'OK':
-                    msg += "is in state %s" % state
-                    j.errorconditionhandler.raiseOperationalCritical(msg, 'monitoring', die=False)
-        else:
-            ovsresults.append({'message': '', 'category': 'OVS Services', 'state': 'UNKNOWN'})
+    for service, enabled in j.system.platform.ubuntu.listServices().iteritems():
+        if service.startswith('ovs') or service.startswith('alba') or service.startswith('arakoon'):
+            if enabled == 'enabled':
+                state = 'RUNNING' if j.system.platform.ubuntu.statusService(service) else 'HALTED'
+                ovsresults.append({'message': service, 'uid': service, 'category': 'OVS Services', 'state': state})
 
     return ovsresults
 
 
 if __name__ == '__main__':
-    print action()
+    import yaml
+    print(yaml.safe_dump(action(), default_flow_style=False))
