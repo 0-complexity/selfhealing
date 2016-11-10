@@ -33,51 +33,64 @@ roles = []
 
 
 def action():
-    import JumpScale.lib.diskmanager
     import psutil
 
     dcl = j.clients.osis.getCategory(j.core.osis.client, "system", "disk")
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
-    disks = j.system.platform.diskmanager.partitionsFind(mounted=True, prefix='', minsize=0, maxsize=None)
-
+    partitions = psutil.disk_partitions()
     # disk counters
     counters = psutil.disk_io_counters(True)
     now = j.base.time.getTimeEpoch()
     all_results = {}
 
-    for disk in disks:
+    def get_partition(path):
+        for partition in partitions:
+            if path in partition.device:
+                return partition
 
+    for path, counter in counters.iteritems():
+        if path.startswith('ram'):
+            continue  # skip ram devices
         results = {'time_read': 0, 'time_write': 0, 'count_read': 0, 'count_write': 0,
                    'kbytes_read': 0, 'kbytes_write': 0,
                    'MB_read': 0, 'MB_write': 0,
                    'space_free_mb': 0, 'space_used_mb': 0, 'space_percent': 0}
-        path = disk.path.replace("/dev/", "")
 
         odisk = dcl.new()
         oldkey = rediscl.hget('disks', path)
         odisk.nid = j.application.whoAmI.nid
         odisk.gid = j.application.whoAmI.gid
 
-        if path in counters:
-            counter = counters[path]
-            read_count, write_count, read_bytes, write_bytes, read_time, write_time = counter
-            results['time_read'] = read_time
-            results['time_write'] = write_time
-            results['count_read'] = read_count
-            results['count_write'] = write_count
+        counter = counters[path]
+        read_count, write_count, read_bytes, write_bytes, read_time, write_time = counter
+        results['time_read'] = read_time
+        results['time_write'] = write_time
+        results['count_read'] = read_count
+        results['count_write'] = write_count
 
-            results['kbytes_read'] = int(round(read_bytes / 1024, 0))
-            results['kbytes_write'] = int(round(write_bytes / 1024, 0))
-            results['MB_read'] = int(round(read_bytes / (1024 * 1024), 0))
-            results['MB_write'] = int(round(write_bytes / (1024 * 1024), 0))
-            results['space_free_mb'] = int(round(disk.free))
-            results['space_used_mb'] = int(round(disk.size - disk.free))
-            results['space_percent'] = int(round((float(disk.size - disk.free) / float(disk.size)), 2))
+        results['kbytes_read'] = int(round(read_bytes / 1024, 0))
+        results['kbytes_write'] = int(round(write_bytes / 1024, 0))
+        results['MB_read'] = int(round(read_bytes / (1024 * 1024), 0))
+        results['MB_write'] = int(round(write_bytes / (1024 * 1024), 0))
+        partition = get_partition(path)
+        if partition is not None:
+            usage = psutil.disk_usage(partition.mountpoint)
+            results['space_free_mb'] = int(round(usage.free / (1024 ** 2)))
+            results['space_used_mb'] = int(round(usage.used / (1024 ** 2)))
+            results['space_percent'] = int(round((float(usage.used) / float(usage.total)), 2))
+            odisk.free = results['space_free_mb']
+            odisk.size = int(usage.total / 1024 ** 2)
+            odisk.path = partition.device
+            odisk.mountpoint = partition.mountpoint
+            odisk.fs = partition.fstype
+            odisk.mounted = True
+        else:
+            odisk.path = j.system.fs.joinPaths('/dev', path)
+            odisk.mounted = False
 
-        for key, value in disk.__dict__.iteritems():
-            odisk.__dict__[key] = value
+
 
         ckey = odisk.getContentKey()
         if ckey != oldkey:
@@ -119,4 +132,4 @@ if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')
     rt = action()
     import yaml
-    print yaml.dump(rt['results'])
+    print(yaml.safe_dump(rt['results'], default_flow_style=False))

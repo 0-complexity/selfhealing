@@ -24,37 +24,37 @@ log = True
 
 
 def action():
-    import JumpScale.lib.diskmanager
+    import psutil
     result = dict()
     pattern = None
 
     if j.application.config.exists('gridmonitoring.disk.pattern'):
         pattern = j.application.config.getStr('gridmonitoring.disk.pattern')
 
-    disks = j.system.platform.diskmanager.partitionsFind(
-        mounted=True, prefix='', minsize=0, maxsize=None)
+    def diskfilter(partition):
+        return not (pattern and j.codetools.regex.match(pattern, disk.device))
 
-    def diskfilter(disk):
-        return not (pattern and j.codetools.regex.match(pattern, disk.path))
-
-    def disktoStr(disk):
-        if disk.mountpoint:
-            freesize, freeunits = j.tools.units.bytes.converToBestUnit(disk.free, 'M')
-            size = j.tools.units.bytes.toSize(disk.size, 'M', freeunits)
-            return "%s on %s %.02f of %.02f %siB free" % (disk.path, disk.mountpoint, freesize, size, freeunits)
+    def disktoStr(partition, usage):
+        if partition.mountpoint:
+            freesize, freeunits = j.tools.units.bytes.converToBestUnit(usage.free)
+            size = j.tools.units.bytes.toSize(usage.total, '', freeunits)
+            return "%s on %s %.02f/%.02f %siB free" % (partition.device, partition.mountpoint, freesize, size, freeunits)
         else:
-            return '%s %s' % (disk.path, disk.model)
+            return '%s %s' % (disk.device, disk.model)
 
     results = list()
-    for disk in filter(diskfilter, disks):
+    for partition in filter(diskfilter, psutil.disk_partitions()):
         result = {'category': 'Disks'}
-        result['path'] = disk.path
-        checkusage = not (disk.mountpoint and
-                          j.system.fs.exists(j.system.fs.joinPaths(disk.mountpoint, '.dontreportusage')))
+        result['path'] = j.system.fs.getBaseName(partition.device)
+        checkusage = not (partition.mountpoint and
+                          j.system.fs.exists(j.system.fs.joinPaths(partition.mountpoint, '.dontreportusage')))
         result['state'] = 'OK'
-        result['message'] = disktoStr(disk)
-        if disk.free and disk.size:
-            freepercent = (disk.free / float(disk.size)) * 100
+        usage = None
+        if partition.mountpoint:
+            usage = psutil.disk_usage(partition.mountpoint)
+        result['message'] = disktoStr(partition, usage)
+        if usage is not None:
+            freepercent = (usage.free / float(usage.total)) * 100
             if checkusage and (freepercent < 20):
                 jumpscript = j.clients.redisworker.getJumpscriptFromName('0-complexity', 'logs_truncate')
                 j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
@@ -74,4 +74,5 @@ def action():
     return results
 
 if __name__ == "__main__":
-    print action()
+    import yaml
+    print(yaml.safe_dump(action(), default_flow_style=False))
