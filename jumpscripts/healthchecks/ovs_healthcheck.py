@@ -29,6 +29,7 @@ def action():
     sys.path.insert(0, '/opt/OpenvStorage')
     from ovs.extensions.healthcheck.openvstorage.openvstoragecluster_health_check import OpenvStorageHealthCheck
     from ovs.extensions.healthcheck.arakoon.arakooncluster_health_check import ArakoonHealthCheck
+    from ovs.extensions.healthcheck.volumedriver.volumedriver_health_check import VolumedriverHealthCheck
     from ovs.extensions.healthcheck.alba.alba_health_check import AlbaHealthCheck
     from ovs.log.healthcheck_logHandler import HCLogHandler
 
@@ -55,6 +56,8 @@ def action():
     arakoon.module = "Arakoon Module"
     ovs = OpenvStorageHealthCheck()
     ovs.module = "OVS Module"
+    volumedriver = VolumedriverHealthCheck()
+    volumedriver.module = "Volumedriver Module"
 
     def check_arakoon():
         """
@@ -78,6 +81,10 @@ def action():
         ovs.check_for_halted_volumes(logger)
         ovs.check_filedrivers(logger)
 
+    def check_volumedriver():
+        volumedriver.check_dtl(logger)
+        volumedriver.check_volumedrivers(logger)
+
     def check_alba():
         """
         Checks all critical components of Alba
@@ -88,6 +95,8 @@ def action():
     check_openvstorage()
     module = 'Arakoon'
     # check_arakoon()
+    module = 'Volumedrver'
+    check_volumedriver()
     module = 'Alba'
     check_alba()
     return results
