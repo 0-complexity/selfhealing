@@ -33,7 +33,9 @@ def action():
     if stack['status'] != 'ENABLED':
         return [{'message': 'Disabling test stack is not enabled', 'uid': 'Disabling test stack is not enabled', 'category': category, 'state': 'SKIPPED'}]
 
-    images = ccl.image.search({'name': 'Ubuntu 16.04 x64', 'id': {'$in': stack['images']}})[1:]
+    images = []
+    if 'images' in stack:
+        images = ccl.image.search({'name': 'Ubuntu 16.04 x64', 'id': {'$in': stack['images']}})[1:]
     if not images:
         return [{'message': "Image not available (yet)", 'category': category, 'state': "SKIPPED"}]
     imageId = images[0]['id']
@@ -121,7 +123,8 @@ def action():
             while publicport in publicports:
                 publicport += 1
             j.console.echo('Creating portforward', log=True)
-            pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['externalnetworkip'], publicport, vmachineId, 22, 'tcp')
+            pcl.actors.cloudapi.portforwarding.create(
+                cloudspace['id'], cloudspace['externalnetworkip'], publicport, vmachineId, 22, 'tcp')
 
         externalip = str(netaddr.IPNetwork(cloudspace['externalnetworkip']).ip)
         account = vmachine['accounts'][0]
@@ -167,7 +170,8 @@ def action():
                     return status, msg, uid
 
                 try:
-                    match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$', output, re.MULTILINE).group('speed').split()
+                    match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$',
+                                      output, re.MULTILINE).group('speed').split()
                     speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
                     msg = 'Measured write speed on disk was %sMB/s on Node %s' % (speed, stack['name'])
                     j.console.echo(msg, log=True)
@@ -183,7 +187,8 @@ def action():
 
             status, msg, uid = runtests()
         if status != 'OK':
-            eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=1, type='OPERATIONS')
+            eco = j.errorconditionhandler.getErrorConditionObject(
+                msg=msg, category='monitoring', level=1, type='OPERATIONS')
             eco.process()
     except:
         j.console.echo('Deleting test vm', log=True)
