@@ -77,7 +77,6 @@ def action():
         ovs.check_model_consistency(logger)
         ovs.check_for_halted_volumes(logger)
         ovs.check_filedrivers(logger)
-        ovs.check_volumedrivers(logger)
 
     def check_alba():
         """

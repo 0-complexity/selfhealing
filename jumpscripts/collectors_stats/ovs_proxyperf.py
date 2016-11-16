@@ -43,7 +43,7 @@ def get_backends_and_proxy_ports(hostname):
                 proxies[vpool.name] = {
                     'port': service.ports[0],
                     'ip': storagedriver.storage_ip,
-                    'backend_name': vpool.metadata['backend']['name']
+                    'backend_name': vpool.metadata['backend']['backend_info']['name']
                 }
     return proxies
 
