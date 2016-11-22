@@ -77,7 +77,6 @@ def action():
     timestamp = time.ctime()
 
     name = '%s on %s' % (timestamp, stack['name'])
-    j.console.echo('Deleting vms older then 24h', log=True)
     vms = ccl.vmachine.search({'stackId': stack['id'],
                                'cloudspaceId': cloudspace['id'],
                                'status': {'$nin': ['ERROR', 'DESTROYED']}
@@ -98,7 +97,8 @@ def action():
         j.console.echo('Deploying VM', log=True)
         vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
                                                                   imageId=imageId, sizeId=sizeId,
-                                                                  disksize=diskSize, stackid=stack['id'])
+                                                                  disksize=diskSize, stackid=stack['id'],
+                                                                  datadisks=[10])
         vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
     now = time.time()
     status = 'OK'
@@ -148,7 +148,7 @@ def action():
                 error = ''
                 for x in range(5):
                     try:
-                        output = connection.run("rm -f 500mb.dd; dd if=/dev/zero of=500mb.dd bs=4k count=128k")
+                        output = connection.sudo("dd if=/dev/zero of=/dev/vdb bs=4k count=128k")
                         break
                     except Exception as error:
                         print("Retrying, Failed to run dd command. Login error? %s" % error)
