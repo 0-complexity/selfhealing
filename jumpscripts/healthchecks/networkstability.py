@@ -2,9 +2,6 @@ from JumpScale import j
 import netaddr
 import math
 import random
-import json
-import re
-from fabric.network import NetworkError
 
 descr = """
 Tests network between cpu and storage nodes
