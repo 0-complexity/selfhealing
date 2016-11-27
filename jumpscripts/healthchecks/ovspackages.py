@@ -12,19 +12,12 @@ async = True
 queue = 'process'
 log = True
 
+
 def action():
-    import apt
-
     ovsresults = {}
-    caches = apt.Cache()
-    ovspackages = [cache for cache in caches if cache.name.startswith('openvstorage')]
-    if 'alba' in caches:
-        ovspackages.append(caches['alba'])
-
-    for pkg in ovspackages:
-        if pkg.is_installed:
-            version = pkg.installed.version
-            ovsresults[pkg.name] = version
+    for package in j.system.platform.ubuntu.getInstalledPackages():
+        if 'alba' in package.name or 'openvstorage' in package.name:
+            ovsresults[package.name] = package.version
 
     return ovsresults
 
