@@ -37,10 +37,14 @@ def action():
         elif cs['status'] == 'VIRTUAL' and now - cs['creationTime'] > 300:
             redeploy = True
         if redeploy:
+            if ccl.account.search({'id': cs['accountId'], 'status': 'CONFIRMED'})[0] != 1:
+                j.console.warning('Could not find confirmed account for cloudspace {id} {name}'.format(**cs))
+                continue
             if cs['status'] == 'DEPLOYING':
                 ccl.cloudspace.updateSearch({'id': cs['id']}, {'$set': {'status': 'VIRTUAL'}})
             pcl = j.clients.portal.getByInstance('cloudbroker')
             try:
+                j.console.info('Deploying cloudspace {id} {name}'.format(**cs))
                 pcl.actors.cloudapi.cloudspaces.deploy(cs["id"])
             except Exception as e:
                 j.errorconditionhandler.processPythonExceptionObject(e)
