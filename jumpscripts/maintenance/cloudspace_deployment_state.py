@@ -40,4 +40,11 @@ def action():
             if cs['status'] == 'DEPLOYING':
                 ccl.cloudspace.updateSearch({'id': cs['id']}, {'$set': {'status': 'VIRTUAL'}})
             pcl = j.clients.portal.getByInstance('cloudbroker')
-            pcl.actors.cloudapi.cloudspaces.deploy(cs["id"])
+            try:
+                pcl.actors.cloudapi.cloudspaces.deploy(cs["id"])
+            except Exception as e:
+                j.errorconditionhandler.processPythonExceptionObject(e)
+
+
+if __name__ == '__main__':
+    action()
