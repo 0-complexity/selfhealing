@@ -7,6 +7,11 @@ import re
 descr = """
 Tests network between cpu and storage nodes
 Make sure all types of network can reach eachother
+Ping nodes for 10 times
+When less then 90% produce a warning
+When less then 70% procede an error
+When timings are more then 10ms produce a warning
+When timings are more then 100ms produce am error
 
 """
 organization = "cloudscalers"
@@ -44,7 +49,7 @@ def ping(ip):
         status = 'WARNING'
     elif avg > 100:
         statsu = 'ERROR'
-    msg = 'Pingtest to {} finished with {}% and average of {} ms'.format(ip, percent, pingresults['avg'])
+    msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, pingresults['avg'])
     return {'message': msg, 'state': status, 'category': 'Network'}
 
 
