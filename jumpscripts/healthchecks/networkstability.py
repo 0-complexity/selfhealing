@@ -2,6 +2,7 @@ from JumpScale import j
 import netaddr
 import math
 import random
+import re
 
 descr = """
 Tests network between cpu and storage nodes
@@ -29,9 +30,22 @@ def updateNetwork(node, networks):
             networks.setdefault(net, []).append(ip)
     return networks
 
-
 def ping(ip):
-    return j.system.net.pingMachine(ip, 5), ip
+    pingresults = j.system.net.ping(ip)
+    status = 'OK'
+    percent = pingresults['percent']
+    avg = pingresults['avg']
+    msg = 'Pingtest to {} successfull'.format(ip)
+    if percent < 70:
+        status = 'ERROR'
+    elif status < 90:
+        status = 'WARNING'
+    if avg > 10:
+        status = 'WARNING'
+    elif avg > 100:
+        statsu = 'ERROR'
+    msg = 'Pingtest to {} finished with {}% and average of {} ms'.format(ip, percent, pingresults['avg'])
+    return {'message': msg, 'state': status, 'category': 'Network'}
 
 
 def action():
@@ -56,13 +70,9 @@ def action():
                 pinglist = random.sample(iplist, int(math.log(len(iplist)) + 1))
                 pool = Pool(len(pinglist))
                 failures = []
-                for result, ip in pool.map(ping, pinglist):
-                    if not result:
-                        failures.append(ip)
-                if failures:
-                    netresults.append({'message': 'Failed to reach {} from {}'.format(','.join(failures), myip), 'state': 'ERROR', 'category': 'Network'})
-                else:
-                    netresults.append({'message': 'Network {} ({}) reachable'.format(mynet, netinfo['name']), 'state': 'OK', 'category': 'Network'})
+                status = 'OK'
+                for result in pool.map(ping, pinglist):
+                    netresults.append(result)
             else:
                 netresults.append({'message': 'Found IP {} ({}) in strange network'.format(myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
             results.extend(netresults)
