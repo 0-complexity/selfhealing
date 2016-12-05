@@ -13,8 +13,10 @@ version = "1.0"
 category = "monitor.healthcheck"
 async = True
 roles = ['node']
+queue = 'process'
 period = 600
 log = True
+
 
 def action():
     import JumpScale.baselib.redis

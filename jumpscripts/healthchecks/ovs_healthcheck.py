@@ -12,7 +12,7 @@ period = 60 * 30  # 30min
 timeout = 60 * 5
 enable = True
 async = True
-queue = 'io'
+queue = 'process'
 log = True
 
 LOG_TYPES = {0: 'ERROR',  # FAILURE

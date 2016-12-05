@@ -18,6 +18,7 @@ version = "1.0"
 category = "monitor.healthcheck"
 async = True
 roles = ['node']
+queue = 'process'
 period = 600
 log = True
 
@@ -39,7 +40,6 @@ def action():
             j.errorconditionhandler.raiseOperationalCritical(result['message'], 'monitoring', die=False)
             result['state'] = 'ERROR'
             result['uid'] = '*%s is inactive' % (queue.upper())
-
 
         results.append(result)
     return results

@@ -9,11 +9,12 @@ name = 'vm_ping'
 author = "zains@codescalers.com"
 version = "1.0"
 category = "monitor.vms"
-
+queue = 'process'
 enable = False
 async = True
 log = False
-roles = ['fw',]
+roles = ['fw', ]
+
 
 def action(vm_ip_address, vm_cloudspace_id):
     import JumpScale.grid.osis

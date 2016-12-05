@@ -11,7 +11,7 @@ period = 60 * 10  # 10min
 timeout = 60 * 5
 enable = True
 async = True
-queue = 'io'
+queue = 'process'
 log = True
 
 

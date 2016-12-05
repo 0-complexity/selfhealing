@@ -12,12 +12,13 @@ author = "deboeckj@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['cpunode']
-period = 60 * 5 # 30min
+period = 60 * 5  # 30min
 timeout = 60 * 1
 enable = True
 async = True
-queue = 'io'
+queue = 'process'
 log = True
+
 
 def action():
     ccl = j.clients.osis.getNamespace('cloudbroker')

@@ -19,7 +19,7 @@ order = 1
 enable = False
 async = True
 log = True
-queue = 'io'
+queue = 'process'
 interval = (2 * j.application.whoAmI.nid) % 30
 period = "%s,%s * * * *" % (interval, interval + 30)
 roles = ['storagenode', 'storagedriver', 'cpunode']
@@ -27,6 +27,7 @@ category = "monitor.healthcheck"
 
 
 class NetworkPerformance(object):
+
     def __init__(self):
         self._backplaneNet = None
         self._nic = None
@@ -128,7 +129,8 @@ class NetworkPerformance(object):
                 result['state'] = self.getbandwidthState(retransmits)
                 if result['state'] != 'OK':
                     print(msg)
-                    eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=1, type='OPERATIONS')
+                    eco = j.errorconditionhandler.getErrorConditionObject(
+                        msg=msg, category='monitoring', level=1, type='OPERATIONS')
                     eco.process()
                 final.append(result)
             except NetworkError:

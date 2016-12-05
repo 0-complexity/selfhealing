@@ -9,10 +9,11 @@ name = 'vm_disk_check'
 author = "zains@codescalers.com"
 version = "1.0"
 category = "monitor.vms"
-
 enable = True
+queue = 'process'
 async = True
 log = False
+
 
 def action(diskpaths):
     import sys
