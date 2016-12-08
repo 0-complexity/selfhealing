@@ -35,6 +35,7 @@ def updateNetwork(node, networks):
             networks.setdefault(net, []).append(ip)
     return networks
 
+
 def ping(ip):
     pingresults = j.system.net.ping(ip)
     status = 'OK'
@@ -48,8 +49,8 @@ def ping(ip):
     if avg > 10:
         status = 'WARNING'
     elif avg > 100:
-        statsu = 'ERROR'
-    msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, pingresults['avg'])
+        status = 'ERROR'
+    msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, pingresults.get('avg', 'NA'))
     return {'message': msg, 'state': status, 'category': 'Network'}
 
 
