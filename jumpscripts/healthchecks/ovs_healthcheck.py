@@ -1,3 +1,4 @@
+from JumpScale import j
 descr = """
 Calls the standard Open vStorage health checks, see: https://github.com/openvstorage/openvstorage-health-check
 Result will be shown in the "OpenvStorage" section of the Grid Portal / Status Overview / Node Status page.
@@ -8,6 +9,8 @@ author = "foudaa@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['storagedriver']
+interval = (2 * j.application.whoAmI.nid) % 30
+period = "%s,%s * * * *" % (interval, interval + 30)
 period = 60 * 30  # 30min
 timeout = 60 * 5
 enable = True

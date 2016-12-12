@@ -10,19 +10,15 @@ name = 'vms_check'
 author = "zains@codescalers.com"
 version = "1.0"
 category = "monitor.vms"
-
-period = 3600 * 2 # 2 hrs
+queue = 'process'
+period = 3600 * 2  # 2 hrs
 enable = False
 async = True
-roles = ['master',]
+roles = ['master', ]
 log = False
 
+
 def action(gid=None):
-    import JumpScale.grid.osis
-    import JumpScale.portal
-    import JumpScale.lib.routeros
-    import JumpScale.baselib.redis
-    import JumpScale.grid.agentcontroller
     import ujson as json
 
     rediscl = j.clients.redis.getByInstance('system')
@@ -73,12 +69,14 @@ def action(gid=None):
                     ipaddress = vmdata['interfaces'][0]['ipAddress']
                 if ipaddress != 'Undefined' and vfw:
                     args = {'vm_ip_address': ipaddress, 'vm_cloudspace_id': cloudspace['id']}
-                    job = accl.scheduleCmd(vfw.gid, vfw.nid, 'jumpscale', 'vm_ping', args=args, queue='default', log=False, timeout=5, wait=True)
+                    job = accl.scheduleCmd(vfw.gid, vfw.nid, 'jumpscale', 'vm_ping', args=args,
+                                           queue='default', log=False, timeout=5, wait=True)
                     ping_jobs[vm['id']] = job
 
             if vm['status'] and cpu_node_id:
-                diskpaths = [ disk['referenceId'] for disk in cbcl.disk.search({'id': {'$in': vm['disks']}})[1:] ]
-                job = accl.scheduleCmd(gid, cpu_node_id, 'jumpscale', 'vm_disk_check', args={'diskpaths': diskpaths}, queue='default', log=False, timeout=5, wait=True)
+                diskpaths = [disk['referenceId'] for disk in cbcl.disk.search({'id': {'$in': vm['disks']}})[1:]]
+                job = accl.scheduleCmd(gid, cpu_node_id, 'jumpscale', 'vm_disk_check', args={
+                                       'diskpaths': diskpaths}, queue='default', log=False, timeout=5, wait=True)
                 disk_check_jobs[vm['id']] = job
     time.sleep(5)
     for idx, (vm_id, job) in enumerate(ping_jobs.iteritems()):
