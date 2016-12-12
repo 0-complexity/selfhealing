@@ -5,20 +5,19 @@ descr = """
 Gathers statistics about disk safety and sends this disk safety statistics for each vpool and the amount of namespaces with the lowest disk safety to the database.
 """
 
-organization = "jumpscale"
+organization = "greenitglobe"
 author = "christophe@greenitglobe.com"
 license = "bsd"
 version = "1.0"
 category = "disk.monitoring"
-period = 60  # always in sec
-timeout = period * 0.2
+timeout = 60
 order = 1
 enable = True
 async = True
 queue = 'process'
 log = False
 
-roles = ['storagedriver']
+roles = ['storagemaster']
 
 
 def format_tags(tags):
@@ -38,11 +37,7 @@ def action():
     from ovs.dal.hybrids.servicetype import ServiceType
     from ovs.dal.lists.albabackendlist import AlbaBackendList
     from ovs.extensions.plugins.albacli import AlbaCLI
-    from ovs.extensions.generic.system import System
     import ast
-
-    if System.get_my_storagerouter().node_type != 'MASTER':
-        return {}
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
@@ -53,7 +48,6 @@ def action():
         'bucket': {},
     }
 
-    points = []
     abms = []
 
     for service in ServiceList.get_services():
@@ -77,7 +71,7 @@ def action():
 
         try:
             presets = AlbaCLI.run('list-presets', config=config, to_json=True)
-        except Exception as ex:
+        except Exception:
             continue
 
         max_lost_disks = 0
@@ -218,7 +212,6 @@ def action():
                     'policy': used_policy,
                     'gid': j.application.whoAmI.gid,
                     'nid': j.application.whoAmI.nid,
-                    'disk_safety': bucket_result['disk_safety']
                 }
                 stat_result = {
                     'total_objects': total_objects,
@@ -231,6 +224,7 @@ def action():
                 all_results['bucket']["%s.%s" % (ab.name, bucket_count)] = result
 
     return all_results
+
 
 if __name__ == '__main__':
     result = action()

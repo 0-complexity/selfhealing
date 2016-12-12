@@ -6,20 +6,19 @@ descr = """
 Gathers statistics about the virtual disks.
 """
 
-organization = "jumpscale"
+organization = "greenitglobe"
 author = "christophe@greenitglobe.com"
 license = "bsd"
 version = "1.0"
 category = "disk.monitoring"
-period = 150  # always in sec
-timeout = period * 0.8
+timeout = 60
 order = 1
 enable = True
 async = True
 queue = 'process'
 log = False
 
-roles = ['storagedriver']
+roles = ['storagemaster']
 
 
 def pop_realtime_info(points):
@@ -46,10 +45,6 @@ def action():
     from ovs.dal.lists.vdisklist import VDiskList
     from ovs.dal.hybrids.vpool import VPool
     from ovs.dal.hybrids.storagerouter import StorageRouter
-    from ovs.extensions.generic.system import System
-
-    if System.get_my_storagerouter().node_type != 'MASTER':
-        return {}
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
@@ -59,8 +54,6 @@ def action():
     vdisks = VDiskList.get_vdisks()
     if len(vdisks) == 0:
         return all_results
-
-    points = []
 
     for vdisk in vdisks:
 

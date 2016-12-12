@@ -6,20 +6,19 @@ descr = """
 Gathers statistics about the vPools.
 """
 
-organization = "jumpscale"
+organization = "greenitglobe"
 author = "christophe@greenitglobe.com"
 license = "bsd"
 version = "1.0"
 category = "disk.monitoring"
-period = 60  # always in sec
-timeout = period * 0.2
+timeout = 60
 order = 1
 enable = True
 async = True
 queue = 'process'
 log = False
 
-roles = ['storagedriver']
+roles = ['storagemaster']
 
 
 def pop_realtime_info(points):
@@ -44,10 +43,6 @@ def action():
     """
     sys.path.append('/opt/OpenvStorage')
     from ovs.dal.lists.vpoollist import VPoolList
-    from ovs.extensions.generic.system import System
-
-    if System.get_my_storagerouter().node_type != 'MASTER':
-        return {}
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
@@ -56,7 +51,6 @@ def action():
 
     vpools = VPoolList.get_vpools()
     if len(vpools) == 0:
-        StatsmonkeyController._logger.info("No vpools found")
         return
 
     for vpool in vpools:

@@ -12,20 +12,18 @@ version = "1.0"
 
 enable = True
 async = True
-period = 15*60  # 15mins.
-roles = ['master']
+period = 15 * 60  # 15mins.
+roles = ['controller']
 queue = 'process'
 
 
 def action():
     acl = j.clients.agentcontroller.get()
-    ccl = j.clients.osis.getNamespace('cloudbroker')
     results = []
 
-    for location in ccl.location.search({})[1:]:
-        job = acl.executeJumpscript('greenitglobe', 'routeros_check', role='cpunode', gid=location['gid'])
-        if job['state'] == 'OK':
-            results.extend(job['result'])
+    job = acl.executeJumpscript('greenitglobe', 'routeros_check', role='cpunode', gid=j.application.whoAmI.gid)
+    if job['state'] == 'OK':
+        results.extend(job['result'])
     if not results:
         results.append({'state': 'OK', 'category': 'Network', 'message': 'All RouterOS devices are OK.'})
     return results

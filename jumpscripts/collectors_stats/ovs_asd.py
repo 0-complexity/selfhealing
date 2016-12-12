@@ -5,20 +5,19 @@ descr = """
 Gather statistics about Open vStorage ASD.
 """
 
-organization = "jumpscale"
+organization = "greenitglobe"
 author = "christophe@greenitglobe.com"
 license = "bsd"
 version = "1.0"
 category = "disk.monitoring"
-period = 60  # always in sec
-timeout = period * 0.2
+timeout = 60
 order = 1
 enable = True
 async = True
 queue = 'process'
 log = False
 
-roles = ['storagedriver']
+roles = ['storagemaster']
 
 
 def format_tags(tags):
@@ -33,12 +32,7 @@ def action():
     Send OVS asd statistics to DB
     """
     sys.path.append('/opt/OpenvStorage')
-    from ovs.dal.hybrids.albabackend import AlbaBackend
     from ovs.dal.lists.albabackendlist import AlbaBackendList
-    from ovs.extensions.generic.system import System
-
-    if System.get_my_storagerouter().node_type != 'MASTER':
-        return {}
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
