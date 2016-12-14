@@ -13,6 +13,7 @@ async = True
 period = 60  # 1 hrs
 roles = ['controller', ]
 queue = 'process'
+log = False
 
 
 def action():
