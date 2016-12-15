@@ -2,7 +2,6 @@ from JumpScale import j
 import netaddr
 import math
 import random
-import re
 
 descr = """
 Tests network between cpu and storage nodes
@@ -40,7 +39,7 @@ def ping(ip):
     pingresults = j.system.net.ping(ip)
     status = 'OK'
     percent = pingresults['percent']
-    avg = pingresults['avg']
+    avg = pingresults.get('avg', -1)
     msg = 'Pingtest to {} successfull'.format(ip)
     if percent < 70:
         status = 'ERROR'
@@ -50,7 +49,7 @@ def ping(ip):
         status = 'WARNING'
     elif avg > 100:
         status = 'ERROR'
-    msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, pingresults.get('avg', 'NA'))
+    msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, avg if avg != -1 else 'NA')
     return {'message': msg, 'state': status, 'category': 'Network'}
 
 
@@ -75,12 +74,11 @@ def action():
 
                 pinglist = random.sample(iplist, int(math.log(len(iplist)) + 1))
                 pool = Pool(len(pinglist))
-                failures = []
-                status = 'OK'
                 for result in pool.map(ping, pinglist):
                     netresults.append(result)
             else:
-                netresults.append({'message': 'Found IP {} ({}) in strange network'.format(myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
+                netresults.append({'message': 'Found IP {} ({}) in strange network'.format(
+                    myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
             results.extend(netresults)
 
     return results
