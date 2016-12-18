@@ -50,10 +50,19 @@ def action():
                         messages.append(networkorphan % networkid)
             elif domain.UUIDString() not in vmsbyguid:
                 vm = next(iter(cbcl.vmachine.search({"referenceId": domain.UUIDString()})[1:]), None)
-                if vm:
-                    messages.append(vmwrongloc % (domain.name(), vm['stackId']))
-                else:
+                if vm and vm['status'] == 'DESTROYED':
+                    try:
+                        j.console.warning('Destroying domain {}'.format(domain.name()))
+                        if domain.ID() != -1:
+                            domain.destroy()
+                        domain.undefine()
+                    except libvirt.libvirtError:
+                        pass
                     messages.append(vmorphan % (domain.name()))
+                elif not vm:
+                    messages.append(vmorphan % (domain.name()))
+                else:
+                    messages.append(vmwrongloc % (domain.name(), vm['stackId']))
     finally:
         con.close()
 
