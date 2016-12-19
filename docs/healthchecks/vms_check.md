@@ -10,6 +10,7 @@ Check status of virtual machine.
 
 ```
 #### author: zains@codescalers.com
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/vms_check.py
 #### version: 1.0
 #### roles: ['master']

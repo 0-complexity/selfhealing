@@ -18,7 +18,7 @@ Throws WARNING per mount point if >90% used, throws ERROR per mount point if >95
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/disk_usage_check.py
 #### version: 1.0
-#### roles: []
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

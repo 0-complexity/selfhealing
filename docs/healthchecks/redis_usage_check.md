@@ -6,10 +6,11 @@
 #### license: bsd
 #### author: zains@codescalers.com
 #### period: 600
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/redis_usage_check.py
 #### version: 1.0
 #### async: True
-#### roles: []
+#### roles: ['node']
 #### descr: 
 ```
 Checks Redis server status.

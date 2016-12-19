@@ -10,6 +10,7 @@ Checks whether virtual machine is pingable.
 
 ```
 #### author: zains@codescalers.com
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/vm_ping.py
 #### version: 1.0
 #### roles: ['fw']

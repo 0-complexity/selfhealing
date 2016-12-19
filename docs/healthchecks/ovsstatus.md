@@ -6,7 +6,7 @@
 #### roles: ['storagenode']
 #### descr: 
 ```
-Checks every predefined period (default 60 seconds) if all OVS processes are still run. 
+Checks every predefined period (default 60 seconds) if all OVS processes are still run.
 Result will be shown in the "OVS Services" section of the Grid Portal / Status Overview / Node Status page.
 Shows WARNING if process not running anymore.
 

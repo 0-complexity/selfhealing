@@ -2,7 +2,7 @@
 # JumpScript: ovs_healthcheck.py
         
 #### category: monitor.healthcheck
-#### enable: False
+#### enable: True
 #### roles: ['storagedriver']
 #### descr: 
 ```
@@ -11,7 +11,7 @@ Result will be shown in the "OpenvStorage" section of the Grid Portal / Status O
 
 ```
 #### author: foudaa@codescalers.com
-#### queue: io
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/ovs_healthcheck.py
 #### version: 1.0
 #### async: True

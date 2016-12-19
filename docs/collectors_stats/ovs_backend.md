@@ -10,13 +10,13 @@ Gathers statistics about the Open vStorage backends.
 ```
 #### license: bsd
 #### author: christophe@greenitglobe.com
-#### period: 60
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/ovs_backend.py
 #### version: 1.0
-#### roles: ['storagedriver']
+#### roles: ['storagemaster']
+#### timeout: 60
 #### async: True
-#### organization: jumpscale
+#### organization: greenitglobe
 #### action_docstring: Send OVS backend statistics to DB
 #### order: 1
 #### log: False

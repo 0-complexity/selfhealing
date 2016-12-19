@@ -20,6 +20,7 @@ Result will be shown in the "System Load" section of the Grid Portal / Status Ov
 #### startatboot: True
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/threads_check.py
 #### version: 1.0
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

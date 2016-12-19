@@ -12,7 +12,7 @@ Generates warning if write speed is lower than 50 MiB / second.
 
 ```
 #### author: deboeckj@codescalers.com
-#### queue: io
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/deployment_test.py
 #### version: 1.0
 #### async: True

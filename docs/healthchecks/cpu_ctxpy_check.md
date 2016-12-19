@@ -22,6 +22,7 @@ TODO : check these values, specifically if amount of cores per CPU is growing
 #### startatboot: True
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/cpu_ctxpy_check.py
 #### version: 1.0
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

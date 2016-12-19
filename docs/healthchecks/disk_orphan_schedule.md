@@ -3,7 +3,7 @@
         
 #### category: monitor.healthcheck
 #### enable: True
-#### roles: ['master']
+#### roles: ['controller']
 #### descr: 
 ```
 Scheduler that runs on master to check for orphan disks on specific volume driver nodes.

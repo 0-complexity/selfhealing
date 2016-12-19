@@ -16,9 +16,10 @@ For Process queue > 1 min
 #### license: bsd
 #### author: khamisr@codescalers.com
 #### period: 600
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/workerstatus_check.py
 #### version: 1.0
-#### roles: []
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

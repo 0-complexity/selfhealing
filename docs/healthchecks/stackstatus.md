@@ -14,7 +14,7 @@ Result will be shown in the "Stack Status" section of the Grid Portal / Status O
 
 ```
 #### author: deboeckj@codescalers.com
-#### queue: io
+#### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/stackstatus.py
 #### version: 1.0
 #### async: True
