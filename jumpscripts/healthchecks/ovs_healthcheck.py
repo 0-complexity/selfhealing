@@ -63,7 +63,7 @@ def action():
             results.append({'message': msg, 'category': name, 'state': 'ERROR'})
 
     run(OpenvStorageHealthCheck, 'OpenvStorage')
-    run(ArakoonHealthCheck, 'Araoon')
+    run(ArakoonHealthCheck, 'Arakoon')
     run(VolumedriverHealthCheck, 'Volumedriver')
     run(AlbaHealthCheck, 'Alba')
 
