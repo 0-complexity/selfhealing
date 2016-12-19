@@ -18,7 +18,7 @@ async = True
 queue = 'process'
 roles = []
 enable = True
-period = 600
+period = 60
 roles = ['node']
 log = True
 
@@ -32,15 +32,12 @@ def action():
         pattern = j.application.config.getStr('gridmonitoring.disk.pattern')
 
     def diskfilter(partition):
-        return not (pattern and j.codetools.regex.match(pattern, disk.device))
+        return not (pattern and j.codetools.regex.match(pattern, partition.device))
 
     def disktoStr(partition, usage):
-        if partition.mountpoint:
-            freesize, freeunits = j.tools.units.bytes.converToBestUnit(usage.free)
-            size = j.tools.units.bytes.toSize(usage.total, '', freeunits)
-            return "%s on %s %.02f/%.02f %siB free" % (partition.device, partition.mountpoint, freesize, size, freeunits)
-        else:
-            return '%s %s' % (disk.device, disk.model)
+        freesize, freeunits = j.tools.units.bytes.converToBestUnit(usage.free)
+        size = j.tools.units.bytes.toSize(usage.total, '', freeunits)
+        return "%s on %s %.02f/%.02f %siB free" % (partition.device, partition.mountpoint, freesize, size, freeunits)
 
     results = list()
     for partition in filter(diskfilter, psutil.disk_partitions()):
@@ -72,6 +69,7 @@ def action():
         results.append({'message': 'No disks available', 'state': 'OK', 'category': 'Disks'})
 
     return results
+
 
 if __name__ == "__main__":
     import yaml
