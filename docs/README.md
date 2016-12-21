@@ -6,6 +6,8 @@ On the physical machines (PM) self-healing agents are monitoring and storing the
 
 ![](architecture.png)
 
+Also see ../specs/categories.md
+
 Auto-generated documentation:
 
 * [Collectors Reality](collectors_reality/)
