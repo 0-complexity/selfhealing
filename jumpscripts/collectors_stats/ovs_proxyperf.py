@@ -52,7 +52,7 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
     from ovs.extensions.plugins.albacli import AlbaCLI
 
     try:
-        output = AlbaCLI.run(command='proxy-statistics', host=ip, port=port, to_json=True)['ns_stats']
+        output = AlbaCLI.run(command='proxy-statistics', named_params={'host': ip, 'port': port})['ns_stats']
     except Exception:
         raise Exception("Could not get statistics from proxy at {0}:{1}".format(ip, port))
 
@@ -151,7 +151,8 @@ def action():
 
     return all_results
 
+
 if __name__ == '__main__':
     result = action()
     import yaml
-    print yaml.dump(result)
+    print(yaml.safe_dump(result, default_flow_style=False))
