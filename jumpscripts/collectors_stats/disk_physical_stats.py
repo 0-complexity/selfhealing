@@ -29,7 +29,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = []
+roles = ['node']
 
 
 def action():
@@ -89,8 +89,6 @@ def action():
         else:
             odisk.path = j.system.fs.joinPaths('/dev', path)
             odisk.mounted = False
-
-
 
         ckey = odisk.getContentKey()
         if ckey != oldkey:
