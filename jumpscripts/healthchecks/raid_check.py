@@ -1,5 +1,3 @@
-from JumpScale import j
-
 descr = """
 Checks whether all configured RAID devices are still healthy.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
@@ -30,21 +28,35 @@ def action():
 
     for name, device in stats['devices'].iteritems():
         faultydisks = []
+        result = {'state': 'OK', 'category': category}
         if device['active']:
             for diskname, disk in device['disks'].iteritems():
                 if disk['faulty']:
                     faultydisks.append(diskname)
-            result = {'state': 'OK', 'category': category}
+
+            status = device['status']
             if len(faultydisks) != 0:
-                msg = 'RAID device {} type {} has problems with disks ({})'.format(name, device['personality'], ', '.join(faultydisks))
+                msg = 'RAID device {} type {} has problems with disks ({})'.format(
+                    name, device['personality'], ', '.join(faultydisks))
                 result['uid'] = msg
                 result['state'] = 'ERROR'
+            elif status['non_degraded_disks'] != status['raid_disks']:
+                result['state'] = 'WARNING'
+                msg = 'RAID device {} type {} has atleast one degraded disk'.format(name, device['personality'])
+            elif device['resync']:
+                result['state'] = 'WARNING'
+                msg = 'RAID device {} type {} is syncing {}'.format(
+                    name, device['personality'], device['resync']['progress'])
             else:
                 msg = 'RAID device {} OK'.format(name)
-            result['message'] = msg
-            results.append(result)
-
+        else:
+            result['state'] = 'WARNING'
+            msg = 'RAID device {} is inactive'.format(name)
+        result['uid'] = msg
+        result['message'] = msg
+        results.append(result)
     return results
+
 
 if __name__ == '__main__':
     import yaml
