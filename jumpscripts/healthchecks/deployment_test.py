@@ -105,7 +105,7 @@ def action():
     status = 'OK'
     try:
         ip = vmachine['interfaces'][0]['ipAddress']
-        while now + 60 > time.time() and ip == 'Undefined':
+        while now + 180 > time.time() and ip == 'Undefined':
             j.console.echo('Waiting for IP', log=True)
             time.sleep(5)
             vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
