@@ -188,7 +188,7 @@ def action():
             j.console.echo('Failed to get public connection %s:%s' % (externalip, publicport), log=True)
             raise DeployMentTestFailure(msg)
 
-        msg = 'Connected to VM via {}:{}'.format(externalip, publicport)
+        msg = 'TCP port {}:{} reachable'.format(externalip, publicport)
         messages.append({'message': msg, 'category': category, 'state': "OK"})
 
     def execute_ssh_command(connection):
@@ -196,13 +196,13 @@ def action():
         for x in range(5):
             try:
                 connection.sudo("ls")
-                messages.append({'message': 'Executed command', 'category': category, 'state': "OK"})
+                messages.append({'message': 'Logged in via SSH and executed command', 'category': category, 'state': "OK"})
                 break
             except Exception as error:
                 print("Retrying, Failed to run dd command. Login error? %s" % error)
                 time.sleep(5)
         else:
-            msg = 'Failed to execute command. Login error? %s' % error
+            msg = 'Failed to execute SSH command. Login error? %s' % error
             messages.append({'message': msg, 'category': category, 'state': "EROR"})
             raise DeployMentTestFailure(msg)
 
@@ -216,7 +216,7 @@ def action():
                 match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$',
                                   output, re.MULTILINE).group('speed').split()
                 speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
-                msg = 'Measured write was %sMB/s' % (speed)
+                msg = 'Measured write speed on disk was %sMB/s' % (speed)
                 uid = 'write test on on Node %s' % (stack['name'])
                 status = 'OK'
                 j.console.echo(msg, log=True)
