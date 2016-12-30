@@ -24,179 +24,247 @@ def action():
     import re
     import netaddr
     category = 'Deployment Test'
+    imagename = 'Ubuntu 16.04 x64'
     ACCOUNTNAME = 'test_deployment'
+    messages = []
     pcl = j.clients.portal.getByInstance('main')
     ccl = j.clients.osis.getNamespace('cloudbroker')
     loc = ccl.location.search({'gid': j.application.whoAmI.gid})[1]['locationCode']
     CLOUDSPACENAME = loc
 
-    stack = ccl.stack.search({'referenceId': str(j.application.whoAmI.nid), 'gid': j.application.whoAmI.gid})[1]
-    if stack['status'] != 'ENABLED':
-        return [{'message': 'Disabling test stack is not enabled', 'uid': 'Disabling test stack is not enabled', 'category': category, 'state': 'SKIPPED'}]
+    class DeployMentTestFailure(Exception):
+        pass
 
-    images = []
-    if 'images' in stack:
-        images = ccl.image.search({'name': 'Ubuntu 16.04 x64', 'id': {'$in': stack['images']}})[1:]
-    if not images:
-        return [{'message': "Image not available (yet)", 'category': category, 'state': "SKIPPED"}]
-    imageId = images[0]['id']
-
-    with ccl.account.lock(ACCOUNTNAME):
-        accounts = ccl.account.search({'name': ACCOUNTNAME, 'status': {'$ne': 'DESTROYED'}})[1:]
-        if not accounts:
-            j.console.echo('Creating Account', log=True)
-            accountId = pcl.actors.cloudbroker.account.create(ACCOUNTNAME, 'admin', None)
+    def check_stack():
+        stack = ccl.stack.search({'referenceId': str(j.application.whoAmI.nid), 'gid': j.application.whoAmI.gid})[1]
+        if stack['status'] != 'ENABLED':
+            msg = 'Disabling test, stack is not enabled'
+            messages.append({'message': msg, 'uid': msg, 'category': category, 'state': 'SKIPPED'})
+            raise DeployMentTestFailure(msg)
         else:
-            account = accounts[0]
-            if account['status'] != 'CONFIRMED':
-                return [{'message': "Skipping deployment test account is not enabled.", 'category': category, 'state': "SKIPPED"}]
+            messages.append({'message': 'Stack is in status ENABLED', 'uid': 'Stack is in status ENABLED', 'category': category, 'state': 'OK'})
+        return stack
 
-            j.console.echo('Found Account', log=True)
-            accountId = account['id']
+    def get_image(stack):
+        if 'images' in stack:
+            images = ccl.image.search({'name': imagename, 'id': {'$in': stack['images']}})[1:]
+            msg = "Found image {}".format(imagename)
+            messages.append({'message': msg, 'category': category, 'state': "OK"})
+            return images[0]
+        if not images:
+            msg = "Image {} not available on stack".format(imagename)
+            messages.append({'message': msg, 'category': category, 'state': "SKIPPED"})
+            raise DeployMentTestFailure(msg)
 
-    lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
-    with ccl.cloudspace.lock(lockname, timeout=120):
-        cloudspaces = ccl.cloudspace.search({'accountId': accountId, 'name': CLOUDSPACENAME,
-                                             'gid': j.application.whoAmI.gid,
-                                             'status': {'$in': ['VIRTUAL', 'DEPLOYED']}
-                                             })[1:]
-        if not cloudspaces:
-            j.console.echo('Creating CloudSpace', log=True)
-            cloudspaceId = pcl.actors.cloudbroker.cloudspace.create(accountId, loc, CLOUDSPACENAME, 'admin')
-            cloudspace = ccl.cloudspace.get(cloudspaceId).dump()
-        else:
-            cloudspace = cloudspaces[0]
+    def get_account():
+        with ccl.account.lock(ACCOUNTNAME):
+            accounts = ccl.account.search({'name': ACCOUNTNAME, 'status': {'$ne': 'DESTROYED'}})[1:]
+            if not accounts:
+                j.console.echo('Creating Account', log=True)
+                accountId = pcl.actors.cloudbroker.account.create(ACCOUNTNAME, 'admin', None)
+                messages.append({'message': "Created account {}".format(ACCOUNTNAME), 'category': category, 'state': "OK"})
+                return accountId
+            else:
+                account = accounts[0]
+                if account['status'] != 'CONFIRMED':
+                    messages.append({'message': "Skipping deployment test account is not enabled.", 'category': category, 'state': "SKIPPED"})
+                    return None
+                messages.append({'message': "Found account {}".format(ACCOUNTNAME), 'category': category, 'state': "OK"})
+                j.console.echo('Found Account', log=True)
+                return account['id']
 
-        if cloudspace['status'] == 'VIRTUAL':
-            j.console.echo('Deploying CloudSpace', log=True)
-            pcl.actors.cloudbroker.cloudspace.deployVFW(cloudspace['id'])
-            cloudspace = ccl.cloudspace.get(cloudspace['id']).dump()
+    def get_cloudspace(accountId):
+        lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
+        with ccl.cloudspace.lock(lockname, timeout=120):
+            cloudspaces = ccl.cloudspace.search({'accountId': accountId, 'name': CLOUDSPACENAME,
+                                                 'gid': j.application.whoAmI.gid,
+                                                 'status': {'$in': ['VIRTUAL', 'DEPLOYED']}
+                                                 })[1:]
+            if not cloudspaces:
+                j.console.echo('Creating CloudSpace', log=True)
+                cloudspaceId = pcl.actors.cloudbroker.cloudspace.create(accountId, loc, CLOUDSPACENAME, 'admin')
+                messages.append({'message': "Creating cloudspace {}".format(CLOUDSPACENAME), 'category': category, 'state': "OK"})
+                cloudspace = ccl.cloudspace.get(cloudspaceId).dump()
+            else:
+                messages.append({'message': "Found cloudspace {}".format(CLOUDSPACENAME), 'category': category, 'state': "OK"})
+                cloudspace = cloudspaces[0]
 
-    size = ccl.size.search({'memory': 512})[1]
-    sizeId = size['id']
-    diskSize = min(size['disks'])
-    timestamp = time.ctime()
+            if cloudspace['status'] == 'VIRTUAL':
+                j.console.echo('Deploying CloudSpace', log=True)
+                pcl.actors.cloudbroker.cloudspace.deployVFW(cloudspace['id'])
+                cloudspace = ccl.cloudspace.get(cloudspace['id']).dump()
+            return cloudspace
 
-    name = '%s on %s' % (timestamp, stack['name'])
-    vms = ccl.vmachine.search({'stackId': stack['id'],
-                               'cloudspaceId': cloudspace['id'],
-                               'status': {'$nin': ['ERROR', 'DESTROYED']}
-                               })[1:]
-    for vm in vms:
-        try:
-            if time.time() - vm['creationTime'] > 3600 * 24:
-                j.console.echo('Deleting %s' % vm['name'], log=True)
-                pcl.actors.cloudapi.machines.delete(vm['id'])
-        except Exception as e:
-            j.console.echo('Failed to delete vm %s' % e, log=True)
-    vms = ccl.vmachine.search({'stackId': stack['id'], 'cloudspaceId': cloudspace['id'], 'status': 'RUNNING'})[1:]
-    if vms:
-        vmachineId = vms[0]['id']
-        vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
-        j.console.echo('Found VM %s' % vmachine['name'], log=True)
-    else:
-        j.console.echo('Deploying VM', log=True)
-        vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
-                                                                  imageId=imageId, sizeId=sizeId,
-                                                                  disksize=diskSize, stackid=stack['id'],
-                                                                  datadisks=[10])
-        vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
-    now = time.time()
-    status = 'OK'
-    try:
-        ip = vmachine['interfaces'][0]['ipAddress']
-        while now + 180 > time.time() and ip == 'Undefined':
-            j.console.echo('Waiting for IP', log=True)
-            time.sleep(5)
+    def get_create_vm(stack, cloudspace, imageId):
+        size = ccl.size.search({'memory': 512})[1]
+        sizeId = size['id']
+        diskSize = min(size['disks'])
+        timestamp = time.ctime()
+
+        name = '%s on %s' % (timestamp, stack['name'])
+        vms = ccl.vmachine.search({'stackId': stack['id'],
+                                   'cloudspaceId': cloudspace['id'],
+                                   'status': {'$nin': ['ERROR', 'DESTROYED']}
+                                   })[1:]
+        for vm in vms:
+            try:
+                if time.time() - vm['creationTime'] > 3600 * 24:
+                    j.console.echo('Deleting %s' % vm['name'], log=True)
+                    pcl.actors.cloudapi.machines.delete(vm['id'])
+            except Exception as e:
+                j.console.echo('Failed to delete vm %s' % e, log=True)
+        vms = ccl.vmachine.search({'stackId': stack['id'], 'cloudspaceId': cloudspace['id'], 'status': 'RUNNING'})[1:]
+        if vms:
+            vmachineId = vms[0]['id']
             vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
-            ip = vmachine['interfaces'][0]['ipAddress']
-
-        j.console.echo('Got IP %s' % ip, log=True)
-        publicports = []
-        publicport = 0
-        for forward in pcl.actors.cloudapi.portforwarding.list(cloudspace['id']):
-            if forward['localIp'] == ip and forward['localPort'] == '22':
-                publicport = forward['publicPort']
-                break
-            publicports.append(int(forward['publicPort']))
-        if publicport == 0:
-            publicport = 2000 + j.application.whoAmI.nid * 100
-            while publicport in publicports:
-                publicport += 1
-            j.console.echo('Creating portforward', log=True)
-            pcl.actors.cloudapi.portforwarding.create(
-                cloudspace['id'], cloudspace['externalnetworkip'], publicport, vmachineId, 22, 'tcp')
-
-        externalip = str(netaddr.IPNetwork(cloudspace['externalnetworkip']).ip)
-        account = vmachine['accounts'][0]
-        j.console.echo('Waiting for externalip connection', log=True)
-        if not j.system.net.waitConnectionTest(externalip, publicport, 60):
-            j.console.echo('Failed to get public connection %s:%s' % (externalip, publicport), log=True)
-            status = 'ERROR'
-            msg = 'Could not connect to VM over public interface'
-            uid = 'Could not connect to VM over public interface'
+            j.console.echo('Found VM %s' % vmachine['name'], log=True)
+            deploytime = vms[0]['creationTime'] + 3600 * 24
+            messages.append({'category': category,
+                             'message': 'VM already deployed redeploying at {{{{ts:{}}}}}'.format(deploytime),
+                             'state': 'SKIPPED'})
         else:
-            def runtests():
-                status = 'OK'
-                j.console.echo('Connecting over ssh %s:%s' % (externalip, publicport), log=True)
-                connection = j.remote.cuisine.connect(externalip, publicport, account['password'], account['login'])
-                connection.user(account['login'])
-                connection.fabric.api.env['abort_on_prompts'] = True
-                connection.fabric.api.env['abort_exception'] = RuntimeError
-                uid = None
+            j.console.echo('Deploying VM', log=True)
+            messages.append({'category': category,
+                             'msg': 'VM deyployment',
+                             'state': 'OK'})
+            try:
+                vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
+                                                                          imageId=imageId, sizeId=sizeId,
+                                                                          disksize=diskSize, stackid=stack['id'],
+                                                                          datadisks=[10])
+                vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
+            except Exception as e:
+                eco = j.errorconditionhandler.processPythonExceptionObject(e)
+                eco.process()
+                msg = "Failed to create VM [eco|/grid/error condition?id={}]".format(eco.guid)
+                j.errorconditionhandler.parsePythonErrorObject(e)
+                messages.append({'category': category,
+                                 'msg': msg,
+                                 'state': 'ERROR'})
+                raise DeployMentTestFailure(msg)
+        return vmachine
 
-                j.console.echo('Running dd', log=True)
-                error = ''
-                for x in range(5):
-                    try:
-                        output = connection.sudo("dd if=/dev/zero of=/dev/vdb bs=4k count=128k")
-                        break
-                    except Exception as error:
-                        print("Retrying, Failed to run dd command. Login error? %s" % error)
-                        time.sleep(5)
-                else:
-                    status = "ERROR"
-                    msg = "Failed to run dd command. Login error? %s" % error
-                    uid = "Failed to run dd command. Login error? %s" % error
-                    return status, msg, uid
+    def create_fwd(vmachine, externalip):
+        now = time.time()
+        try:
+            ip = vmachine['interfaces'][0]['ipAddress']
+            while now + 180 > time.time() and ip == 'Undefined':
+                j.console.echo('Waiting for IP', log=True)
+                time.sleep(5)
+                vmachine = pcl.actors.cloudapi.machines.get(vmachine['id'])
+                ip = vmachine['interfaces'][0]['ipAddress']
 
-                try:
-                    j.console.echo('Perfoming internet test', log=True)
-                    connection.run('ping -c 1 8.8.8.8')
-                except:
-                    msg = "Could not connect to internet from vm on node %s" % stack['name']
-                    uid = "Could not connect to internet from vm on node %s" % stack['name']
-                    j.console.echo(msg, log=True)
-                    status = 'ERROR'
-                    return status, msg, uid
-
-                try:
-                    match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$',
-                                      output, re.MULTILINE).group('speed').split()
-                    speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
-                    msg = 'Measured write speed on disk was %sMB/s on Node %s' % (speed, stack['name'])
-                    j.console.echo(msg, log=True)
-                    if speed < 50:
-                        status = 'WARNING'
-                        uid = 'Measured write speed on disk was so fast on Node %s' % (stack['name'])
-                    return status, msg, uid
-                except Exception as e:
-                    status = 'ERROR'
-                    uid = 'Failed to parse dd speed %s' % (stack['name'])
-                    msg = "Failed to parse dd speed %s, failed with %s" % (output, e)
-                    return status, msg, uid
-
-            status, msg, uid = runtests()
-        if status != 'OK':
-            eco = j.errorconditionhandler.getErrorConditionObject(
-                msg=msg, category='monitoring', level=1, type='OPERATIONS')
+            j.console.echo('Got IP %s' % ip, log=True)
+            publicports = []
+            publicport = 0
+            for forward in pcl.actors.cloudapi.portforwarding.list(cloudspace['id']):
+                if forward['localIp'] == ip and forward['localPort'] == '22':
+                    publicport = forward['publicPort']
+                    messages.append({'message': "Found port forward {}".format(publicport),
+                                     'category': category, 'state': "OK"})
+                    return publicport
+                publicports.append(int(forward['publicPort']))
+            if publicport == 0:
+                publicport = 2000 + j.application.whoAmI.nid * 100
+                while publicport in publicports:
+                    publicport += 1
+                j.console.echo('Creating portforward', log=True)
+                pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['externalnetworkip'],
+                                                          publicport, vmachine['id'], 22, 'tcp')
+                messages.append({'message': "Created port forward {}".format(publicport),
+                                 'category': category, 'state': "OK"})
+                return publicport
+        except Exception as e:
+            eco = j.errorconditionhandler.processPythonExceptionObject(e)
             eco.process()
-    except:
-        j.console.echo('Deleting test vm', log=True)
-        pcl.actors.cloudapi.machines.delete(vmachineId)
-        j.console.echo('Finished deleting test vm', log=True)
-        raise
-    return [{'message': msg, 'uid': uid, 'category': category, 'state': status}]
+            msg = "Failed to create port forward [eco|/grid/error condition?id={}]".format(eco.guid)
+            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            raise DeployMentTestFailure(msg)
+
+    def wait_for_connection(externalip, publicport):
+        if not j.system.net.waitConnectionTest(externalip, publicport, 60):
+            msg = 'Could not connect to VM over public interface'
+            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            j.console.echo('Failed to get public connection %s:%s' % (externalip, publicport), log=True)
+            raise DeployMentTestFailure(msg)
+
+        msg = 'Connected to VM via {}:{}'.format(externalip, publicport)
+        messages.append({'message': msg, 'category': category, 'state': "OK"})
+
+    def execute_ssh_command(connection):
+        error = ''
+        for x in range(5):
+            try:
+                connection.sudo("ls")
+                messages.append({'message': 'Executed command', 'category': category, 'state': "OK"})
+                break
+            except Exception as error:
+                print("Retrying, Failed to run dd command. Login error? %s" % error)
+                time.sleep(5)
+        else:
+            msg = 'Failed to execute command. Login error? %s' % error
+            messages.append({'message': msg, 'category': category, 'state': "EROR"})
+            raise DeployMentTestFailure(msg)
+
+    def execute_dd_test(connection):
+        output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=4k count=128k || echo $?")
+        if output == '124':  # this means timeout happend
+            msg = 'Executing dd command with bs 4k and count 128k failed to execute in 2minutes'
+            messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': msg})
+        else:
+            try:
+                match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$',
+                                  output, re.MULTILINE).group('speed').split()
+                speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
+                msg = 'Measured write was %sMB/s' % (speed)
+                uid = 'write test on on Node %s' % (stack['name'])
+                status = 'OK'
+                j.console.echo(msg, log=True)
+                if speed < 50:
+                    status = 'WARNING'
+                messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
+            except Exception as e:
+                status = 'ERROR'
+                msg = "Failed to parse dd speed %s, failed with %s" % (output, e)
+                messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
+
+    def execute_ping_test(connection):
+        uid = 'ping public ip %s' % connection.host
+        try:
+            j.console.echo('Perfoming internet test', log=True)
+            connection.run('ping -c 1 8.8.8.8')
+            messages.append({'message': "Pinged 8.8.8.8 from vm", 'category': category, 'state': 'OK'})
+        except:
+            messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': uid})
+
+    try:
+        stack = check_stack()
+        image = get_image(stack)
+        accountId = get_account()
+        cloudspace = get_cloudspace(accountId)
+        vmachine = get_create_vm(stack, cloudspace, image['id'])
+        externalip = str(netaddr.IPNetwork(cloudspace['externalnetworkip']).ip)
+        publicport = create_fwd(vmachine, externalip)
+        wait_for_connection(externalip, publicport)
+
+        account = vmachine['accounts'][0]
+        connection = j.remote.cuisine.connect(externalip, publicport, account['password'], account['login'])
+        connection.user(account['login'])
+        connection.fabric.api.env['abort_on_prompts'] = True
+        connection.fabric.api.env['abort_exception'] = RuntimeError
+        execute_ssh_command(connection)
+        execute_dd_test(connection)
+        execute_ping_test(connection)
+    except DeployMentTestFailure:
+        pass  # exception is already handled
+    except Exception as e:
+        eco = j.errorconditionhandler.processPythonExceptionObject(e)
+        eco.process()
+        msg = "Unexpected error during deployment test [eco|/grid/error condition?id={}]".format(eco.guid)
+        messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+
+    return messages
+
 
 if __name__ == '__main__':
     import yaml
