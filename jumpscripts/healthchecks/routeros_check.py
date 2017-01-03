@@ -36,6 +36,12 @@ def action():
             ok = client.ping('8.8.8.8')
             if not ok:
                 return dict(state='ERROR', category=category, message="Couldn't ping 8.8.8.8 on {roslink} for {spacelink}".format(roslink=roslink, spacelink=spacelink))
+            leases = len(client.do('/ip/dhcp-server/lease/print'))
+            if leases > 200:
+                return dict(state='WARNING', category=category, message="Running out of leases ({leases}/250) on {roslink} for {spacelink}".format(leases=leases, roslink=roslink, spacelink=spacelink))
+            elif leases >= 250:
+                return dict(state='ERROR', category=category, message="All leases are consumed for {spacelink}".format(leases=leases, roslink=roslink, spacelink=spacelink))
+
             return None
         except Exception as e:
             print("Failed to connect to {vfwid} {csname} error {err}".format(vfwid=vfwid, csname=c['name'], err=e))
@@ -48,6 +54,7 @@ def action():
         results = [dict(state='OK', category=category, message="All RouterOS are OK.")]
     results = [x for x in results if x]  # remove nones.
     return results
+
 
 if __name__ == "__main__":
     import yaml
