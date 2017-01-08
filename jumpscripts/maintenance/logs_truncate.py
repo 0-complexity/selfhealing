@@ -34,7 +34,7 @@ def action(locations=['/opt/jumpscale7/var/log/', '/var/log/'], freespace_needed
     logfiles = list()
     for location in locations:
         j.system.fswalker.walk(location, lambda _, path: logfiles.append(path),
-                               pathRegexIncludes=['.*\.log*$', '.*\.\d+(\.gz)?$'])
+                               pathRegexIncludes=['.*log.*', '.*\.\d+(\.gz)?$'])
 
     # Organize logfiles per partition
     partitions = psutil.disk_partitions()
