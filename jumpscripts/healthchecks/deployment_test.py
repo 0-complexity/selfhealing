@@ -46,15 +46,16 @@ def action():
         return stack
 
     def get_image(stack):
+        images = []
         if 'images' in stack:
             images = ccl.image.search({'name': imagename, 'id': {'$in': stack['images']}})[1:]
             msg = "Found image {}".format(imagename)
             messages.append({'message': msg, 'category': category, 'state': "OK"})
-            return images[0]
         if not images:
             msg = "Image {} not available on stack".format(imagename)
             messages.append({'message': msg, 'category': category, 'state': "SKIPPED"})
             raise DeployMentTestFailure(msg)
+        return images[0]
 
     def get_account():
         with ccl.account.lock(ACCOUNTNAME):
@@ -125,7 +126,7 @@ def action():
         else:
             j.console.echo('Deploying VM', log=True)
             messages.append({'category': category,
-                             'msg': 'VM deyployment',
+                             'message': 'VM deyployment',
                              'state': 'OK'})
             try:
                 vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
@@ -139,7 +140,7 @@ def action():
                 msg = "Failed to create VM [eco|/grid/error condition?id={}]".format(eco.guid)
                 j.errorconditionhandler.parsePythonErrorObject(e)
                 messages.append({'category': category,
-                                 'msg': msg,
+                                 'message': msg,
                                  'state': 'ERROR'})
                 raise DeployMentTestFailure(msg)
         return vmachine
