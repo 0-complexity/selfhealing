@@ -11,7 +11,6 @@ category = "monitor.healthcheck"
 roles = ['storagedriver']
 interval = (2 * j.application.whoAmI.nid) % 30
 period = "%s,%s * * * *" % (interval, interval + 30)
-period = 60 * 30  # 30min
 timeout = 60 * 5
 enable = True
 async = True
