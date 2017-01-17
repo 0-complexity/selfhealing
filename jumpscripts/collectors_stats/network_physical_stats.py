@@ -35,7 +35,7 @@ def action():
 
     all_results = {}
     for nic, stat in counters.iteritems():
-        if pattern and j.codetools.regex.match(pattern, nic) == False:
+        if pattern and j.codetools.regex.match(pattern, nic) is False:
             continue
 
         if j.system.net.getNicType(nic) == 'VIRTUAL' and 'pub' not in nic:
@@ -61,4 +61,4 @@ def action():
 if __name__ == '__main__':
     results = action()
     import yaml
-    print yaml.dump(results)
+    print(yaml.dump(results))
