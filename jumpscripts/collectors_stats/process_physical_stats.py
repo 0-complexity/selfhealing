@@ -24,11 +24,12 @@ log = False
 
 roles = ['node']
 
-NAMEFINDER = dict(volumedriver_fs=[[re.compile("^/mnt/([a-zA-Z]+?\\d+?)$")]],
+NAMEFINDER = dict(volumedriver_fs=[[re.compile(r"^/mnt/(\w+)$")]],
                   arakoon=[[re.compile("^arakoon://config/ovs/arakoon/(.+?)/config.*$")],
                            [re.compile("^/opt/(OpenvStorage)/config/arakoon_config\\.ini$")]],
                   alba=[[re.compile("^(asd\\-start)$"), re.compile("^arakoon://config/ovs/alba/asds/(.*?)\\?.*$")],
                         [re.compile("^(proxy\\-start)$"), re.compile("^arakoon://config/ovs/vpools/(.*?)\\?.*$")]])
+
 
 def action():
     import psutil
@@ -48,7 +49,7 @@ def action():
         if not cmdline:
             continue
         executable = cmdline[0].split(os.path.sep)[-1]
-        if not executable in ("arakoon", "alba", "volumedriver_fs"):
+        if executable not in ("arakoon", "alba", "volumedriver_fs"):
             continue
         for regexes in NAMEFINDER[executable]:
             tags = list()
@@ -65,7 +66,7 @@ def action():
                     all_match = False
                     break
             if all_match:
-                executable = "_".join([executable]+tags)
+                executable = "_".join([executable] + tags)
                 break
 
         # VmRSS
@@ -84,7 +85,8 @@ def action():
 
     return results
 
+
 if __name__ == '__main__':
     results = action()
     import yaml
-    print yaml.dump(results)
+    print(yaml.dump(results))
