@@ -1,6 +1,7 @@
 from JumpScale import j
 import psutil
 import re
+import json
 
 descr = """
 This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
@@ -46,21 +47,77 @@ def check_over_threads(count):
     return count >= THREAD_THRESHOLD
 
 
-def clean_volumedriver(ps):
+def get_ovs_client():
+    scl = j.clients.osis.getNamespace('system')
+    ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
+    return j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
+
+
+def find_move_targets(storagedrivers, vpool):
+    # implement mechanism to find the best target to move the disks
+    acc = j.clients.agentcontroller.get()
+
+    results = acc.executeJumpscript(
+        'greenitglobe',
+        'volumedriver_memory_get',
+        role='storagedriver',
+        all=True,
+        gid=j.application.whoAmI.gid,
+        args={'vpool': vpool}
+    )
+
+    results = filter(lambda r: r['state'] == 'OK', results)
+    results = sorted(results, key=lambda r: r['result'])
+
+    osis = j.clients.osis.getNamespace('system')
+    for result in results:
+        node = osis.node.get('{}_{}'.format(result['gid'], result['nid']))
+        for sd in storagedrivers:
+            if sd['storage_ip'] in node.ipaddr:
+                return sd['storagerouter_guid']
+
+    return None
+
+
+def clean_storagedriver(ps, vpool):
     # TODO:
     # 1- Find all volumes to move (from arakoon)
     # 2- Move volumes (if possible)
     # 3- Kill volumedriver
-    pass
+    ips = j.system.net.getIpAddresses()
+    ovscl = get_ovs_client()
+    sds = ovscl.get('/storagedrivers', params={'contents': 'storagerouter,vpool,vdisks_guids'})
+
+    storagedriver = None
+    for sd in sds['data']:
+        if sd['storage_ip'] in ips and sd['mountpoint'] != '/mnt/{}'.format(vpool):
+            storagedriver = sd
+            break
+
+    if storagedriver is None:
+        # didnot find a storagedriver that is on this vpool+ip
+        return
+
+    # find the move target
+    # make sure the current sotrage driver is out of the options
+    sds['data'].remove(storagedriver)
+    target = find_move_targets(sds['data'], vpool)
+
+    if target is not None:
+        # we can try moving vdisks before we kill it
+        jobs = []
+        for disk in storagedriver['vdisks_guids']:
+            job = ovscl.post(
+                '/vdisks/{}/move'.format(disk),
+                data=json.dumps({'target_storagerouter_guid': target})
+            )
+            jobs.append(job)
+
+    # kill the process
+    ps.kill()
 
 
-def get_memory_avg(agg, ps):
-    cmd = ' '.join(ps.cmdline())
-    m = re.search(r'--mountpoint /mnt/(\w+)', cmd)
-    if m is None:
-        raise RuntimeError('cannot find the pool mount point for volumedriver pid: %s', ps.pid)
-
-    pool = m.group(1)
+def get_memory_avg(agg, pool):
     key = 'process.memory.vmrss@phys.%d.%d.%s_%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, VOLUMEDRIVER_NAME, pool)
     stat = agg.statGet(key)
 
@@ -68,6 +125,15 @@ def get_memory_avg(agg, ps):
         return None
 
     return stat.m_avg
+
+
+def get_vpool(ps):
+    cmd = ' '.join(ps.cmdline())
+    m = re.search(r'--mountpoint /mnt/(\w+)', cmd)
+    if m is None:
+        raise RuntimeError('cannot find the pool mount point for volumedriver pid: %s', ps.pid)
+
+    return m.group(1)
 
 
 def action():
@@ -79,13 +145,14 @@ def action():
         if process.name() != VOLUMEDRIVER_NAME:
             continue
 
-        mem = get_memory_avg(aggregatorcl, process)
+        vpool = get_vpool(process)
+        mem = get_memory_avg(aggregatorcl, vpool)
 
         # check number of threads or memory
         if check_over_threads(len(process.threads())) or \
                 check_over_memory(mem):
             # volumedriver must be cleaned up
-            clean_volumedriver(process)
+            clean_storagedriver(process, vpool)
 
 
 if __name__ == '__main__':
