@@ -1,5 +1,4 @@
 from JumpScale import j
-from CloudscalerLibcloud.utils.Dispatcher import Dispatcher
 
 descr = """
 Checks average memory and CPU usage/load. If average per hour is higher than expected an error condition is thrown.
@@ -32,14 +31,17 @@ warntime = 30
 def action(warntime=300, quarantinetime=600):
     import libvirt
     import json
+    from CloudscalerLibcloud.utils.Dispatcher import Dispatcher
     
+    # (warntimestart, warntime, quarantinetimestart, quarantinetime, quarantinetimelegacy)
+    key = "stats:%s_%s:machines.quarantined" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
     d = Dispatcher()
     connection = libvirt.open()
     rediscl = j.clients.redis.getByInstance('system')
     
     # for demo use
     def emailsend(msg):
-        print("email==>" + msg)
+        j.clients.email.send(toaddrs, fromaddr, subject, message, files=None)
 
     def quarantine(quarantined, domain_dict, QT):
         d.quarantine_vm(domain.ID())
@@ -62,10 +64,12 @@ def action(warntime=300, quarantinetime=600):
     domains = connection.listAllDomains()
     
     # list all quarantined
-    key = "stats:%s_%s:machines.quarantined" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
-    # check if quartined list exists if not create it 
-    q_string = rediscl.get(key) if rediscl.get(key) else "{}"
-    quarantined = json.loads(q_string.replace("'", '"'))
+    # check if quartined list exists if not create it
+    q_string = rediscl.get(key)
+    if q_string != '':
+        quarantined = json.loads(q_string)
+    else:
+        quarantined = {}
 
     for domain in domains:
         # calculate cputime_avg
