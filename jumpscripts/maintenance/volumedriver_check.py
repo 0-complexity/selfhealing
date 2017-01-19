@@ -3,6 +3,7 @@ import psutil
 import re
 import json
 import time
+from itertools import cycle
 
 descr = """
 This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
@@ -107,15 +108,15 @@ def clean_storagedriver(ps, vpool):
     if targets:
         # we can try moving vdisks before we kill it
         jobs = []
+        roundrobin = cycle(targets)
         for disk in storagedriver['vdisks_guids']:
-            target = targets.pop(0)
+            target = next(roundrobin)
 
             job = ovscl.post(
                 '/vdisks/{}/move'.format(disk),
                 data=json.dumps({'target_storagerouter_guid': target})
             )
             jobs.append(job)
-            targets.append(target)
 
     # wait for the jobs
     for job in jobs:
