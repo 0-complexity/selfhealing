@@ -85,6 +85,7 @@ def wait_all_jobs(ovscl, jobs):
     max_wait_time = 120  # 2 minutes
     sleep_per_wait = 2  # seconds
     while max_wait_time > 0:
+        st = time.now()
         for i in range(len(jobs) - 1, -1, -1):
             job = jobs[i]
             task_metadata = ovscl.get('/tasks/{0}/'.format(job))
@@ -93,7 +94,7 @@ def wait_all_jobs(ovscl, jobs):
         if len(jobs) == 0:
             break
         time.sleep(sleep_per_wait)
-        max_wait_time -= sleep_per_wait
+        max_wait_time -= (time.now() - st)
 
 
 def clean_storagedriver(ps, vpool):
