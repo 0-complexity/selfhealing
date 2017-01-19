@@ -1,9 +1,4 @@
 from JumpScale import j
-import psutil
-import re
-import json
-import time
-from itertools import cycle
 
 descr = """
 This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
@@ -33,6 +28,8 @@ VOLUMEDRIVER_NAME = 'volumedriver_fs'
 
 
 def check_over_memory(value):
+    import psutil
+
     # memory can be None if stats collection didn't report any values yet.
     # we handle this case here for simplicity.
     if value is None:
@@ -82,6 +79,8 @@ def find_move_targets(storagedrivers, vpool):
 
 
 def wait_all_jobs(ovscl, jobs):
+    import time
+
     max_wait_time = 120  # 2 minutes
     sleep_per_wait = 2  # seconds
     while max_wait_time > 0:
@@ -98,10 +97,11 @@ def wait_all_jobs(ovscl, jobs):
 
 
 def clean_storagedriver(ps, vpool):
-    # TODO:
-    # 1- Find all volumes to move (from arakoon)
-    # 2- Move volumes (if possible)
-    # 3- Kill volumedriver
+    import time
+    import json
+    import psutil
+    from itertools import cycle
+
     ips = j.system.net.getIpAddresses()
     ovscl = get_ovs_client()
     sds = ovscl.get('/storagedrivers', params={'contents': 'storagerouter,vpool,vdisks_guids'})
@@ -162,6 +162,8 @@ def get_memory_avg(agg, pool):
 
 
 def get_vpool(ps):
+    import re
+
     cmd = ' '.join(ps.cmdline())
     m = re.search(r'--mountpoint /mnt/(\w+)', cmd)
     if m is None:
@@ -171,6 +173,8 @@ def get_vpool(ps):
 
 
 def action():
+    import psutil
+
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
