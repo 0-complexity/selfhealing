@@ -81,6 +81,21 @@ def find_move_targets(storagedrivers, vpool):
     return targets
 
 
+def wait_all_jobs(ovscl, jobs):
+    max_wait_time = 120  # 2 minutes
+    sleep_per_wait = 2  # seconds
+    while max_wait_time > 0:
+        for i in range(len(jobs) - 1, -1, -1):
+            job = jobs[i]
+            task_metadata = ovscl.get('/tasks/{0}/'.format(job))
+            if task_metadata['status'] in ('FAILURE', 'SUCCESS'):
+                jobs.pop(i)
+        if len(jobs) == 0:
+            break
+        time.sleep(sleep_per_wait)
+        max_wait_time -= sleep_per_wait
+
+
 def clean_storagedriver(ps, vpool):
     # TODO:
     # 1- Find all volumes to move (from arakoon)
@@ -118,13 +133,7 @@ def clean_storagedriver(ps, vpool):
             )
             jobs.append(job)
 
-    # wait for the jobs
-    for job in jobs:
-        try:
-            ovscl.wait_for_task(job, 10)
-        except:
-            print('move job {} timedout'.format(job))
-
+    wait_all_jobs(ovscl, jobs)
     # kill the process
     try:
         i = 0
