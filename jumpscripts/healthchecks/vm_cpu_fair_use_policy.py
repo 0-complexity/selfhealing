@@ -43,21 +43,26 @@ def action(warntime=300, quarantinetime=600):
     def emailsend(msg):
         j.clients.email.send(toaddrs, fromaddr, subject, message, files=None)
 
-    def quarantine(quarantined, domain_dict, QT):
+    def quarantine(quarantined, domain_dict, qt):
         d.quarantine_vm(domain.ID())
         emailsend('quarantine')
-        quarantined["%s" % domain.ID()] = (domain_dict[0], warntime, j.base.time.getTimeEpoch(), QT, None)
+        quarantined[domain_id] = {"warntimestart": domain_dict[0], "warntime": warntime,
+                                  "quarantinetimestart": j.base.time.getTimeEpoch(), "quarantinetime": qt,
+                                  "quarantinetimelegacy": None}
         rediscl.set(key, json.dumps(quarantined))
     
     def unquaranetine(quarantined, domain_dict):
         emailsend("unquarantine")
-        quarantined["%s" % domain.ID()] = (None, domain_dict[1], domain_dict[2], None, domain_dict[3])
+        quarantined[domain_id] = {"warntimestart": None, "warntime": domain_dict[1],
+                                  "quarantinetimestart": domain_dict[2],
+                                  "quarantinetime": None, "quarantinetimelegacy": domain_dict[3]}
         d.unquarantine_vm(domain.ID())
         rediscl.set(key, json.dumps(quarantined))
         
     def warn(quarantined):
         emailsend("warn")
-        quarantined["%s" % domain.ID()] = (j.base.time.getTimeEpoch(), warntime, 0, None, None)
+        quarantined[domain_id] = {"warntimestart": j.base.time.getTimeEpoch(), "warntime": warntime,
+                                  "quarantinetimestart": 0, "quarantinetime": None, "quarantinetimelegacy": None}
         rediscl.set(key, json.dumps(quarantined))
 
     # list all vms running in this node
@@ -72,18 +77,19 @@ def action(warntime=300, quarantinetime=600):
         quarantined = {}
 
     for domain in domains:
+        domain_id = str(domain.ID())
         # calculate cputime_avg
         aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid,
                                                                         j.application.whoAmI.nid))
         stats = aggregatorcl.statGet("machine.CPU.utilisation@virt.%s" % (j.application.whoAmI.gid,
                                                                           j.application.whoAmI.nid,
-                                                                          domain.ID()))
+                                                                          domain_id))
         cputime = stats.m_last
         cputime_avg = cputime / 300
 
         if cputime_avg >= 0.8:
             if '%s' % domain.ID() in quarantined.keys():
-                domain_dict = quarantined["%s" % domain.ID()]
+                domain_dict = quarantined[domain_id]
                 if not domain_dict[0]:
                     warn(quarantined)
                     continue
@@ -97,10 +103,10 @@ def action(warntime=300, quarantinetime=600):
                         else:
                             continue
                     else:
-                        QT = quarantinetime
+                        qt = quarantinetime
                         if domain_dict[4]:
-                            QT = domain_dict[4] * 2
-                        quarantine(quarantined, domain_dict, QT)
+                            qt = domain_dict[4] * 2
+                        quarantine(quarantined, domain_dict, qt)
                         continue
                 else:
                     continue
