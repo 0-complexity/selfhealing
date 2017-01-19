@@ -1,7 +1,4 @@
 from JumpScale import j
-import netaddr
-import math
-import random
 
 descr = """
 Check the bandwith consumption of the network
