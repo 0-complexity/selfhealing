@@ -68,12 +68,13 @@ def find_move_targets(storagedrivers, vpool):
     results = filter(lambda r: r['state'] == 'OK' and r['result'] < 50, results)
 
     osis = j.clients.osis.getNamespace('system')
-    targets = []
+    targets = set()
     for result in results:
         node = osis.node.get('{}_{}'.format(result['gid'], result['nid']))
         for sd in storagedrivers:
             if sd['storage_ip'] in node.ipaddr:
-                targets.append(sd['storagerouter_guid'])
+                targets.add(sd['storagerouter_guid'])
+                break
 
     return targets
 
@@ -84,7 +85,7 @@ def wait_all_jobs(ovscl, jobs):
     max_wait_time = 120  # 2 minutes
     sleep_per_wait = 2  # seconds
     while max_wait_time > 0:
-        st = time.now()
+        st = time.time()
         for i in range(len(jobs) - 1, -1, -1):
             job = jobs[i]
             task_metadata = ovscl.get('/tasks/{0}/'.format(job))
@@ -191,6 +192,12 @@ def action():
                 check_over_memory(mem):
             # volumedriver must be cleaned up
             clean_storagedriver(process, vpool)
+
+            # re-start process
+            j.system.process.execute(
+                'systemctl start ovs-volumedriver_{}.service'.format(vpool),
+                False
+            )
 
 
 if __name__ == '__main__':
