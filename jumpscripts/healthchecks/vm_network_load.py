@@ -17,7 +17,40 @@ roles = ['cpunode']
 category = "monitor.healthcheck"
 
 
+def tag_vm(ccl, vm, state, con):
+    tagobject = j.core.tags.getObject()
+    change = False
+    if state == 'OK':
+        change = tagobject.tags.pop('packetlimit', None) is not None
+    elif state in ['ERROR', 'WARNING']:
+        change = True
+        packetlimit = tagobject.tags.get('packetlimit')
+        if not packetlimit:
+            # execute first limt command
+            # TODO: limit command?
+            tagobject.tags['packetlimit'] = '1'
+        elif packetlimit == '1':
+            # execute 2nd limit command
+            # TODO: limit command?
+            tagobject.tags['packetlimit'] = '2'
+        elif packetlimit == '2':
+            # lets nuke this vms
+            dom = con.lookupByUUIDString(vm['referenceId'])
+            dom.destroy()
+            tagobject.tags['packetlimit'] = '3'
+    if change:
+        ccl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'tags': tagobject.tagstring}})
+
+
 def action():
+    import libvirt
+    ccl = j.clients.osis.getNamespace('cloudbroker')
+    con = libvirt.open()
+    domainguids = [dom.UUIString() for dom in con.listAllDomains()]
+    vms = ccl.vmachine.search({'$query': {'referenceId': {'$in': domainguids}},
+                               '$fields': ['tags', 'id', 'referenceId']
+                               })[1:]
+    vmdict = {vm['id']: vm for vm in vms}
     tmessage = {'state': 'OK', 'category': 'Network', 'message': 'All VM traffic is within boundries'}
     results = []
 
@@ -42,6 +75,9 @@ def action():
 
         if message['state'] != 'OK':
             results.append(message)
+
+        vmid = int(nic.split('-')[1])
+        tag_vm(ccl, vmdict.get(vmid), message['state'], con)
 
     if not results:
         results.append(tmessage)
