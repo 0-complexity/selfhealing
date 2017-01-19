@@ -1,11 +1,10 @@
 from JumpScale import j
-import psutil
 
 descr = """
 This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
 """
 
-organization = "jumpscale"
+organization = "greenitglobe"
 author = "muhamada@greenitglobe.com"
 category = "monitor.maintenance"
 license = "bsd"
@@ -19,6 +18,7 @@ roles = ['storagedriver']
 
 
 def action(vpool):
+    import psutil
     for process in psutil.process_iter():
         if process.name() != 'volumedriver_fs':
             continue
