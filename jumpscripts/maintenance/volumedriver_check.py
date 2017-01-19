@@ -194,10 +194,7 @@ def action():
             clean_storagedriver(process, vpool)
 
             # re-start process
-            j.system.process.execute(
-                'systemctl start ovs-volumedriver_{}.service'.format(vpool),
-                False
-            )
+            j.system.platform.ubuntu.startService('ovs-volumedriver_{}'.format(vpool))
 
 
 if __name__ == '__main__':
