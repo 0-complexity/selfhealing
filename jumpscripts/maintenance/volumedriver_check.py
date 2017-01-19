@@ -2,6 +2,7 @@ from JumpScale import j
 import psutil
 import re
 import json
+import time
 
 descr = """
 This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
@@ -66,17 +67,17 @@ def find_move_targets(storagedrivers, vpool):
         args={'vpool': vpool}
     )
 
-    results = filter(lambda r: r['state'] == 'OK', results)
-    results = sorted(results, key=lambda r: r['result'])
+    results = filter(lambda r: r['state'] == 'OK' and r['result'] < 50, results)
 
     osis = j.clients.osis.getNamespace('system')
+    targets = []
     for result in results:
         node = osis.node.get('{}_{}'.format(result['gid'], result['nid']))
         for sd in storagedrivers:
             if sd['storage_ip'] in node.ipaddr:
-                return sd['storagerouter_guid']
+                targets.append(sd['storagerouter_guid'])
 
-    return None
+    return targets
 
 
 def clean_storagedriver(ps, vpool):
@@ -101,20 +102,42 @@ def clean_storagedriver(ps, vpool):
     # find the move target
     # make sure the current sotrage driver is out of the options
     sds['data'].remove(storagedriver)
-    target = find_move_targets(sds['data'], vpool)
+    targets = find_move_targets(sds['data'], vpool)
 
-    if target is not None:
+    if targets:
         # we can try moving vdisks before we kill it
         jobs = []
         for disk in storagedriver['vdisks_guids']:
+            target = targets.pop(0)
+
             job = ovscl.post(
                 '/vdisks/{}/move'.format(disk),
                 data=json.dumps({'target_storagerouter_guid': target})
             )
             jobs.append(job)
+            targets.append(target)
+
+    # wait for the jobs
+    for job in jobs:
+        try:
+            ovscl.wait_for_task(job, 10)
+        except:
+            print('move job {} timedout'.format(job))
 
     # kill the process
-    ps.kill()
+    try:
+        i = 0
+        while ps.is_running():
+            if i > 0:
+                time.sleep(2)
+            ps.terminate()
+            i += 1
+            if i >= 5:
+                break
+
+        ps.kill()
+    except psutil.NoSuchProcess:
+        pass
 
 
 def get_memory_avg(agg, pool):
