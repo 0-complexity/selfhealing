@@ -46,16 +46,16 @@ def action(warntime=300, quarantinetime=600):
     def quarantine(quarantined, domain_dict, qt):
         d.quarantine_vm(domain.ID())
         emailsend('quarantine')
-        quarantined[domain_id] = {"warntimestart": domain_dict[0], "warntime": warntime,
+        quarantined[domain_id] = {"warntimestart": domain_dict['warntimestart'], "warntime": warntime,
                                   "quarantinetimestart": j.base.time.getTimeEpoch(), "quarantinetime": qt,
                                   "quarantinetimelegacy": None}
         rediscl.set(key, json.dumps(quarantined))
     
     def unquaranetine(quarantined, domain_dict):
         emailsend("unquarantine")
-        quarantined[domain_id] = {"warntimestart": None, "warntime": domain_dict[1],
-                                  "quarantinetimestart": domain_dict[2],
-                                  "quarantinetime": None, "quarantinetimelegacy": domain_dict[3]}
+        quarantined[domain_id] = {"warntimestart": None, "warntime": domain_dict['warntime'],
+                                  "quarantinetimestart": domain_dict['quarantinetimestart'],
+                                  "quarantinetime": None, "quarantinetimelegacy": domain_dict['quarantinetimelegacy']}
         d.unquarantine_vm(domain.ID())
         rediscl.set(key, json.dumps(quarantined))
         
