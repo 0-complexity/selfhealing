@@ -73,14 +73,14 @@ def action():
         value = memory_info.rss
         key = 'process.memory.vmrss@phys.%d.%d.%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
         tags = 'gid:%d nid:%d process:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
-        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
+        aggregatorcl.measure(key, tags, value, timestamp=now)
         results[key] = value
 
         # VmSize
         value = memory_info.vms
         key = 'process.memory.vmsize@phys.%d.%d.%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
         tags = 'gid:%d nid:%d process:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
-        aggregatorcl.measureDiff(key, tags, value, timestamp=now)
+        aggregatorcl.measure(key, tags, value, timestamp=now)
         results[key] = value
 
     return results
