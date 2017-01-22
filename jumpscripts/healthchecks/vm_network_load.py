@@ -16,9 +16,14 @@ period = 180
 roles = ['cpunode']
 category = "monitor.healthcheck"
 
+WARNING_TRESHHOLD = 8000
+ERROR_TRESHHOLD = 10000
+
 
 def tag_vm(ccl, vm, state, con):
-    tagobject = j.core.tags.getObject()
+    if vm is None:
+        return  # vm has left this node
+    tagobject = j.core.tags.getObject(vm['tags'])
     change = False
     if state == 'OK':
         change = tagobject.tags.pop('packetlimit', None) is not None
@@ -37,16 +42,16 @@ def tag_vm(ccl, vm, state, con):
             # lets nuke this vms
             dom = con.lookupByUUIDString(vm['referenceId'])
             dom.destroy()
-            tagobject.tags['packetlimit'] = '3'
     if change:
-        ccl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'tags': tagobject.tagstring}})
+        print 'Tagging VM {} {}'.format(vm['id'], str(tagobject))
+        ccl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'tags': str(tagobject)}})
 
 
 def action():
     import libvirt
     ccl = j.clients.osis.getNamespace('cloudbroker')
     con = libvirt.open()
-    domainguids = [dom.UUIString() for dom in con.listAllDomains()]
+    domainguids = [dom.UUIDString() for dom in con.listAllDomains()]
     vms = ccl.vmachine.search({'$query': {'referenceId': {'$in': domainguids}},
                                '$fields': ['tags', 'id', 'referenceId']
                                })[1:]
@@ -68,9 +73,9 @@ def action():
         packetsps = packetsin5min / float(300)
         message = tmessage.copy()
         message['message'] = 'VM nic {} has {:.2f} packets/s'.format(nic, packetsps)
-        if packetsps > 10000:
+        if packetsps > ERROR_TRESHHOLD:
             message['state'] = 'ERROR'
-        elif packetsin5min > 8000:
+        elif packetsps > WARNING_TRESHHOLD:
             message['state'] = 'WARNING'
 
         if message['state'] != 'OK':
