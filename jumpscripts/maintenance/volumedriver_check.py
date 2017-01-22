@@ -21,7 +21,7 @@ roles = ['storagedriver']
 
 # params
 THREAD_THRESHOLD = 2000  # threads
-MEMORY_THRESHOLD = 0.8
+MEMORY_THRESHOLD = 0.4
 
 # do not change
 VOLUMEDRIVER_NAME = 'volumedriver_fs'
