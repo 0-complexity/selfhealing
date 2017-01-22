@@ -35,8 +35,10 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     # (warntimestart, warntime, quarantinetimestart, quarantinetime, quarantinetimelegacy)
     key = "stats:%s_%s:machines.quarantined" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
     d = Dispatcher()
-    connection = libvirt.open()
     rediscl = j.clients.redis.getByInstance('system')
+    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid,
+                                                                    j.application.whoAmI.nid))
+    connection = libvirt.open()
     cbcl = j.clients.osis.getNamespace('cloudbroker')
     ccl = j.clients.osis.getNamespace('system')
     acl = j.clients.agentcontroller.get()
@@ -57,7 +59,6 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         d.quarantine_vm(domain.UUIDString())
         emailsend('machine  %s quarantined ' % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", tags.tagGet('warntimestart'))
-        tags.tagSet("warntime", warntime)
         tags.tagSet("quarantinetimestart", j.base.time.getTimeEpoch())
         tags.tagSet("quarantinetime", qt)
         if tags.tagExists("quarantinetimelegacy"):
@@ -69,7 +70,6 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     def unquaranetine(quarantined, vm_dict):
         emailsend("unquarantine of machine %s " % vm_dict.id, vm_dict)
         tags.tagDelete("warntimestart")
-        tags.tagSet("warntime", tags.tagGet('warntime'))
         tags.tagSet("quarantinetimestart", tags.tagGet('quarantinetimestart'))
         tags.tagSet("quarantinetimelegacy", tags.tagGet('quarantinetime'))
         if tags.tagExists("quarantinetime"):
@@ -83,7 +83,6 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     def warn(quarantined, vm_dict):
         emailsend("warning threshold cputime passed on machine  %s " % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", j.base.time.getTimeEpoch())
-        tags.tagSet("warntime", warntime)
         tags.tagSet("quarantinetimestart", 0)
         if tags.tagExists("quarantinetime"):
             tags.tagDelete("quarantinetime")
@@ -110,48 +109,39 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         vm_dict = cbcl.vmachine.get(int(domain_id))
         tags = j.core.tags.getObject(vm_dict.tags)
         # calculate cputime_avg
-        aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid,
-                                                                        j.application.whoAmI.nid))
+
         stats = aggregatorcl.statGet("machine.CPU.utilisation@virt.%s" % domain_id)
         if not stats:
             continue
+
         cputime = stats.m_last
         cputime_avg = cputime / 300
-        if tags.tagExists('warned'):
-            if cputime_avg < threshold:
-                if tags.tagExists('quarantinetimestart') and tags.tagGet('quarantinetimestart') != '0':
-                    quarantine_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('quarantinetimestart'))
-                    if tags.tagExists('quarantinetime') and quarantine_timer >= int(tags.tagGet('quarantinetime')):
-                        unquaranetine(quarantined, vm_dict)
-                        continue
-                    else:
-                        continue
-                else:
-                    continue
-            if cputime_avg >= threshold:
-                if not tags.tagExists('warntimestart'):
-                    warn(quarantined)
-                    continue
-                warn_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('warntimestart'))
-                if warn_timer >= int(tags.tagGet('warntime')):
-                    if tags.tagExists('quarantinetimestart') and tags.tagGet('quarantinetimestart') != '0':
-                        quarantine_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('quarantinetimestart'))
-                        if tags.tagExists('quarantinetime') and quarantine_timer >= int(tags.tagGet('quarantinetime')):
-                            unquaranetine(quarantined, vm_dict)
-                            continue
-                        else:
-                            continue
-                    else:
-                        qt = quarantinetime
-                        if tags.tagExists('quarantinetimelegacy'):
-                            qt = int(tags.tagGet('quarantinetimelegacy')) * 2
-                        quarantine(quarantined, vm_dict, qt)
-                        continue
-                else:
-                    continue
-        else:
+        if not tags.tagExists('warned'):
             if cputime_avg >= threshold:
                 warn(quarantined, vm_dict)
+            continue
+
+        if cputime_avg < threshold:
+            if tags.tagExists('quarantinetimestart') and tags.tagGet('quarantinetimestart') != '0':
+                quarantine_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('quarantinetimestart'))
+                if tags.tagExists('quarantinetime') and quarantine_timer >= int(tags.tagGet('quarantinetime')):
+                    unquaranetine(quarantined, vm_dict)
+            continue
+
+        warn_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('warntimestart'))
+        if warn_timer < warntime:
+            continue
+
+        if tags.tagExists('quarantinetimestart') and tags.tagGet('quarantinetimestart') != '0':
+            quarantine_timer = j.base.time.getTimeEpoch() - int(tags.tagGet('quarantinetimestart'))
+            if tags.tagExists('quarantinetime') and quarantine_timer >= int(tags.tagGet('quarantinetime')):
+                unquaranetine(quarantined, vm_dict)
+        else:
+            qt = quarantinetime
+            if tags.tagExists('quarantinetimelegacy'):
+                qt = int(tags.tagGet('quarantinetimelegacy')) * 2
+            quarantine(quarantined, vm_dict, qt)
+
 
 if __name__ == '__main__':
     action(warntime=30, quarantinetime=60, threshold=0.001)
