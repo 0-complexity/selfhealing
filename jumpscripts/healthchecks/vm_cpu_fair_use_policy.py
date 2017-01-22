@@ -47,8 +47,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         for ac in vm_dict.acl:
             user = ccl.user.search(ac['userGroupID'])
             recepients += user['emails']
-        acl.executeJumpscript('jumpscale', 'emailsend', gid=j.application.gid,
-                              role='master', timeout=3600, args={'recipients': recepients, 
+        acl.executeJumpscript('jumpscale', 'emailsend', gid=j.application.whoAmI.gid,
+                              role='master', timeout=3600, args={'recipients': recepients,
                                                                  'sender': 'support@greenitglobe.com',
                                                                  'subject': 'cpu fair use alert',
                                                                  'message': msg})
