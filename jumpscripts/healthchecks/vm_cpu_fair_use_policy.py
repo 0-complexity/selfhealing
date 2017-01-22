@@ -43,12 +43,12 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
 
     # for demo use
     def emailsend(msg, vm_dict):
-        recepients = []
+        recipients = []
         for ac in vm_dict.acl:
             user = ccl.user.search(ac['userGroupID'])
-            recepients += user['emails']
+            recipients += user['emails']
         acl.executeJumpscript('jumpscale', 'emailsend', gid=j.application.whoAmI.gid,
-                              role='master', timeout=3600, args={'recipients': recepients,
+                              role='master', timeout=3600, args={'recipients,': recipients,
                                                                  'sender': 'support@greenitglobe.com',
                                                                  'subject': 'cpu fair use alert',
                                                                  'message': msg})
@@ -104,7 +104,7 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         quarantined = {}
 
     for domain in domains:
-        if not domain.name().startswith("vm-"):
+        if not domain.name().startswith("vm-") or domain.state()[0] != 1:
             continue
         domain_id = domain.name().strip('vm-')
         vm_dict = cbcl.vmachine.get(int(domain_id))
@@ -126,6 +126,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
                         continue
                     else:
                         continue
+                else:
+                    continue
             if cputime_avg >= threshold:
                 if not tags.tagExists('warntimestart'):
                     warn(quarantined)
@@ -148,7 +150,7 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
                 else:
                     continue
         else:
-            if cputime_avg < threshold:
+            if cputime_avg >= threshold:
                 warn(quarantined, vm_dict)
 
 if __name__ == '__main__':
