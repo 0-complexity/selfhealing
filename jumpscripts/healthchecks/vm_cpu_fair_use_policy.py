@@ -31,22 +31,31 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     import libvirt
     import json
     from CloudscalerLibcloud.utils.Dispatcher import Dispatcher
-    
+
     # (warntimestart, warntime, quarantinetimestart, quarantinetime, quarantinetimelegacy)
     key = "stats:%s_%s:machines.quarantined" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
     d = Dispatcher()
     connection = libvirt.open()
     rediscl = j.clients.redis.getByInstance('system')
     cbcl = j.clients.osis.getNamespace('cloudbroker')
-    
+    ccl = j.clients.osis.getNamespace('system')
+    acl = j.clients.agentcontroller.get()
+
     # for demo use
-    def emailsend(msg):
-        # j.clients.email.send(toaddrs, fromaddr, subject, message, files=None)
-        print("msg == > ", msg)
+    def emailsend(msg, vm_dict):
+        recepients = []
+        for ac in vm_dict.acl:
+            user = ccl.user.search(ac['userGroupID'])
+            recepients += user['emails']
+        acl.executeJumpscript('jumpscale', 'emailsend', gid=j.application.gid,
+                              role='master', timeout=3600, args={'recipients': recepients, 
+                                                                 'sender': 'support@greenitglobe.com',
+                                                                 'subject': 'cpu fair use alert',
+                                                                 'message': msg})
 
     def quarantine(quarantined, vm_dict, qt):
         d.quarantine_vm(domain.UUIDString())
-        emailsend('quarantine')
+        emailsend('machine  %s quarantined ' % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", tags.tagGet('warntimestart'))
         tags.tagSet("warntime", warntime)
         tags.tagSet("quarantinetimestart", j.base.time.getTimeEpoch())
@@ -58,7 +67,7 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         cbcl.vmachine.updateSearch({'id': vm_dict.id}, {'$set': {'tags': str(tags)}})
 
     def unquaranetine(quarantined, vm_dict):
-        emailsend("unquarantine")
+        emailsend("unquarantine of machine %s " % vm_dict.id, vm_dict)
         tags.tagDelete("warntimestart")
         tags.tagSet("warntime", tags.tagGet('warntime'))
         tags.tagSet("quarantinetimestart", tags.tagGet('quarantinetimestart'))
@@ -71,8 +80,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         vm_dict.tags = str(tags)
         cbcl.vmachine.updateSearch({'id': vm_dict.id}, {'$set': {'tags': str(tags)}})
 
-    def warn(quarantined):
-        emailsend("warn")
+    def warn(quarantined, vm_dict):
+        emailsend("warning threshold cputime passed on machine  %s " % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", j.base.time.getTimeEpoch())
         tags.tagSet("warntime", warntime)
         tags.tagSet("quarantinetimestart", 0)
@@ -139,7 +148,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
                 else:
                     continue
         else:
-            warn(quarantined)
+            if cputime_avg < threshold:
+                warn(quarantined, vm_dict)
 
 if __name__ == '__main__':
     action(warntime=30, quarantinetime=60, threshold=0.001)
