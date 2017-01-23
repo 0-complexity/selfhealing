@@ -46,6 +46,38 @@ def check_over_threads(count):
     return count >= THREAD_THRESHOLD
 
 
+def check_volume_read(ovscl, driver):
+    """
+    Gets the list of all volumes available on this storagedriver and then
+    try to read disk info of few random disks (10% of all disks)
+    """
+    import random
+
+    driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']))
+    vdisks = driver_obj['vdisks_guids']
+    if len(vdisks) == 0:
+        return False
+
+    base_url = 'openvstorage+rdma:{storage_ip}:{ports[edge]}'.format(**driver)
+
+    random.shuffle(vdisks)
+    for i in range(0, max(1, int(len(vdisks) * 10 / 100))):
+        # TODO: read volume info
+        vdisk = ovscl.get('/vdisks/{}'.format(vdisks[i]))
+        url = '{}/{}'.format(base_url, vdisk['name'])
+
+        try:
+            print('qemu-img info {}'.format(url))
+            code, _, _ = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False)
+        except:
+            # Failed to read the info (probably timedout)
+            return True
+        if code != 0:
+            return True
+
+    return False
+
+
 def get_ovs_client():
     scl = j.clients.osis.getNamespace('system')
     ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
@@ -94,7 +126,7 @@ def wait_all_jobs(ovscl, jobs):
         if len(jobs) == 0:
             break
         time.sleep(sleep_per_wait)
-        max_wait_time -= (time.now() - st)
+        max_wait_time -= (time.time() - st)
 
 
 def clean_storagedriver(ps, vpool):
@@ -173,11 +205,37 @@ def get_vpool(ps):
     return m.group(1)
 
 
+def get_storage_drivers(ovscl):
+    ips = j.system.net.getIpAddresses()
+    drivers = ovscl.get('/storagedrivers', params={'contents': 'storagedriver'})
+
+    storage_drivers = []
+    for sd in drivers['data']:
+        if sd['storage_ip'] in ips:
+            storage_drivers.append(sd)
+
+    return storage_drivers
+
+
+def filter_storage_driver(drivers, vpool):
+    matches = filter(lambda sd: sd['mountpoint'] == '/mnt/{}'.format(vpool), drivers)
+    if len(matches) == 1:
+        return matches[0]
+    elif len(matches) == 0:
+        return None
+    else:
+        raise RuntimeError('found more than one match')
+
+
 def action():
     import psutil
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+
+    ovscl = get_ovs_client()
+
+    storage_drivers = get_storage_drivers(ovscl)
 
     # - Find all volumedriver processe
     for process in psutil.process_iter():
@@ -185,11 +243,15 @@ def action():
             continue
 
         vpool = get_vpool(process)
+        storage_driver = filter_storage_driver(storage_drivers, vpool)
+
         mem = get_memory_avg(aggregatorcl, vpool)
 
         # check number of threads or memory
         if check_over_threads(len(process.threads())) or \
-                check_over_memory(mem):
+                check_over_memory(mem) or \
+                check_volume_read(ovscl, storage_driver):
+
             # volumedriver must be cleaned up
             clean_storagedriver(process, vpool)
 
