@@ -10,7 +10,7 @@ category = "monitor.maintenance"
 license = "bsd"
 version = "1.0"
 period = 300  # always in sec
-timeout = period * 0.8
+timeout = 3600  # an hour
 startatboot = True
 order = 1
 enable = True
@@ -53,6 +53,7 @@ def check_volume_read(ovscl, driver):
     """
     import random
 
+    print('checking driver {mountpoint}'.format(**driver))
     driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']))
     vdisks = driver_obj['vdisks_guids']
     if len(vdisks) == 0:
@@ -71,6 +72,7 @@ def check_volume_read(ovscl, driver):
             code, _, _ = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False)
         except:
             # Failed to read the info (probably timedout)
+            print('timedout reading {}'.format(url))
             return True
         if code != 0:
             return True
@@ -227,6 +229,20 @@ def filter_storage_driver(drivers, vpool):
         raise RuntimeError('found more than one match')
 
 
+def is_active(vpool):
+    import re
+    code, out, err = j.do.execute(
+        'systemctl status ovs-volumedriver_{}.service'.format(vpool),
+        outputStdout=False
+    )
+
+    if code != 0:
+        raise RuntimeError('failed to check status of volumedriver {}: {}'.format(vpool, err))
+    m = re.search('Active:\s*([^\(\s]+)', out)
+
+    return m.group(1) == 'active'
+
+
 def action():
     import psutil
 
@@ -243,11 +259,15 @@ def action():
             continue
 
         vpool = get_vpool(process)
-        storage_driver = filter_storage_driver(storage_drivers, vpool)
+        if not is_active(vpool):
+            print('volumedriver {} is not active'.format(vpool))
+            continue
 
+        print('volumedriver {} is active: running health checks ...'.format(vpool))
+        storage_driver = filter_storage_driver(storage_drivers, vpool)
         mem = get_memory_avg(aggregatorcl, vpool)
 
-        # check number of threads or memory
+        # check number of threads, memory, or if vdisks are not readable
         if check_over_threads(len(process.threads())) or \
                 check_over_memory(mem) or \
                 check_volume_read(ovscl, storage_driver):
@@ -255,8 +275,8 @@ def action():
             # volumedriver must be cleaned up
             clean_storagedriver(process, vpool)
 
-            # re-start process
-            j.system.platform.ubuntu.startService('ovs-volumedriver_{}'.format(vpool))
+            # Note, we don't need to revive the killed volumedriver since
+            # systemd will take care of restarting it.
 
 
 if __name__ == '__main__':
