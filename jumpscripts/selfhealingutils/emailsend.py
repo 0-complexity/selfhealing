@@ -26,7 +26,15 @@ roles = ['master']
 
 
 def action(recipients, sender='', subject='', message=''):
+    import ipdb; ipdb.set_trace()
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     j.clients.email.send(recipients, sender, subject, message)
+    j.errorconditionhandler.raiseOperationalWarning(
+        message='email has been sent from master node on nid:%s and gid:%s ' % (nid, gid),
+        category='info.notify',
+        tags='info.emailsend'
+    )
 
 
 if __name__ == '__main__':

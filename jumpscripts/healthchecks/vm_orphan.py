@@ -20,6 +20,8 @@ queue = 'process'
 
 def action():
     import libvirt
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     result = []
     cbcl = j.clients.osis.getNamespace('cloudbroker', j.core.osis.client)
     vcl = j.clients.osis.getNamespace('vfw', j.core.osis.client)
@@ -55,7 +57,17 @@ def action():
                         j.console.warning('Destroying domain {}'.format(domain.name()))
                         if domain.ID() != -1:
                             domain.destroy()
+                            j.errorconditionhandler.raiseOperationalWarning(
+                                message='destroy orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+                                category=category,
+                                tags='domain.destroy'
+                            )
                         domain.undefine()
+                        j.errorconditionhandler.raiseOperationalWarning(
+                            message='undefine orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+                            category=category,
+                            tags='domain.undefine'
+                        )
                     except libvirt.libvirtError:
                         pass
                     messages.append(vmorphan % (domain.name()))

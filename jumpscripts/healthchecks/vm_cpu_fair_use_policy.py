@@ -31,6 +31,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     import libvirt
     import json
     from CloudscalerLibcloud.utils.Dispatcher import Dispatcher
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
 
     # (warntimestart, warntime, quarantinetimestart, quarantinetime, quarantinetimelegacy)
     key = "stats:%s_%s:machines.quarantined" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
@@ -57,6 +59,11 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
 
     def quarantine(quarantined, vm_dict, qt):
         d.quarantine_vm(domain.UUIDString())
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='quarantine rogue vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
+            category=category,
+            tags='vm.quarantine'
+        )
         emailsend('machine  %s quarantined ' % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", tags.tagGet('warntimestart'))
         tags.tagSet("quarantinetimestart", j.base.time.getTimeEpoch())
@@ -77,6 +84,11 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         if tags.tagExists("warned"):
             tags.tagDelete("warned")
         d.unquarantine_vm(domain.UUIDString())
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='unquarantine behaving vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
+            category=category,
+            tags='vm.unquarantine'
+        )
         vm_dict.tags = str(tags)
         cbcl.vmachine.updateSearch({'id': vm_dict.id}, {'$set': {'tags': str(tags)}})
 

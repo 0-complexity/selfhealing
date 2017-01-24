@@ -21,6 +21,8 @@ ERROR_TRESHHOLD = 10000
 
 
 def tag_vm(ccl, vm, state, con):
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     if vm is None:
         return  # vm has left this node
     tagobject = j.core.tags.getObject(vm['tags'])
@@ -42,6 +44,11 @@ def tag_vm(ccl, vm, state, con):
             # lets nuke this vms
             dom = con.lookupByUUIDString(vm['referenceId'])
             dom.destroy()
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='destroy domain %s for excess bandwidth consumption on nid:%s gid:%s' % (dom.name(), nid, gid),
+                category=category,
+                tags='domain.destroy'
+            )
     if change:
         print 'Tagging VM {} {}'.format(vm['id'], str(tagobject))
         ccl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'tags': str(tagobject)}})

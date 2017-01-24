@@ -23,6 +23,8 @@ def action():
     import time
     import re
     import netaddr
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     category = 'Deployment Test'
     imagename = 'Ubuntu 16.04 x64'
     ACCOUNTNAME = 'test_deployment'
@@ -63,6 +65,11 @@ def action():
             if not accounts:
                 j.console.echo('Creating Account', log=True)
                 accountId = pcl.actors.cloudbroker.account.create(ACCOUNTNAME, 'admin', None)
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message='create account with name %s usename admin on nid:%s gid:%s' % (ACCOUNTNAME, nid, gid),
+                    category=category,
+                    tags='account.create'
+                )
                 messages.append({'message': "Created account {}".format(ACCOUNTNAME), 'category': category, 'state': "OK"})
                 return accountId
             else:
@@ -77,6 +84,11 @@ def action():
     def get_cloudspace(accountId):
         lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
         with ccl.cloudspace.lock(lockname, timeout=120):
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='lock space with name %s for account %s on nid:%s gid:%s' % (CLOUDSPACENAME, ACCOUNTNAME, nid, gid),
+                category=category,
+                tags='cloudspace.lock'
+            )
             cloudspaces = ccl.cloudspace.search({'accountId': accountId, 'name': CLOUDSPACENAME,
                                                  'gid': j.application.whoAmI.gid,
                                                  'status': {'$in': ['VIRTUAL', 'DEPLOYED']}
@@ -84,6 +96,12 @@ def action():
             if not cloudspaces:
                 j.console.echo('Creating CloudSpace', log=True)
                 cloudspaceId = pcl.actors.cloudbroker.cloudspace.create(accountId, loc, CLOUDSPACENAME, 'admin')
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message='create cloudspace with name %s accountId %s on nid:%s gid:%s' % (CLOUDSPACENAME,
+                                                                                              accountId, nid, gid),
+                    category=category,
+                    tags='cloudspace.create'
+                )
                 messages.append({'message': "Creating cloudspace {}".format(CLOUDSPACENAME), 'category': category, 'state': "OK"})
                 cloudspace = ccl.cloudspace.get(cloudspaceId).dump()
             else:
@@ -112,6 +130,11 @@ def action():
                 if time.time() - vm['creationTime'] > 3600 * 24:
                     j.console.echo('Deleting %s' % vm['name'], log=True)
                     pcl.actors.cloudapi.machines.delete(vm['id'])
+                    j.errorconditionhandler.raiseOperationalWarning(
+                        message='delete vm with id %s nid:%s gid:%s' % (vm['id'], nid, gid),
+                        category=category,
+                        tags='vm.delete'
+                    )
             except Exception as e:
                 j.console.echo('Failed to delete vm %s' % e, log=True)
         vms = ccl.vmachine.search({'stackId': stack['id'], 'cloudspaceId': cloudspace['id'], 'status': 'RUNNING'})[1:]
@@ -133,6 +156,13 @@ def action():
                                                                           imageId=imageId, sizeId=sizeId,
                                                                           disksize=diskSize, stackid=stack['id'],
                                                                           datadisks=[10])
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message="""create vm on cloudspace %s with name %s
+                    imageid %s on stack %s nid:%s gid:%s""" % (vm['id'], cloudspace['id'], imageId,
+                                                               stack['id'], nid, gid),
+                    category=category,
+                    tags='vm.create'
+                )
                 vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
             except Exception as e:
                 eco = j.errorconditionhandler.processPythonExceptionObject(e)
@@ -172,6 +202,12 @@ def action():
                 j.console.echo('Creating portforward', log=True)
                 pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['externalnetworkip'],
                                                           publicport, vmachine['id'], 22, 'tcp')
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message="""create portforward from %s to 22
+                    on vm %s on nid:%s gid:%s""" % (publicport, vmachine['id'], nid, gid),
+                    category=category,
+                    tags='vm.createportforward portforward.create'
+                )
                 messages.append({'message': "Created port forward {}".format(publicport),
                                  'category': category, 'state': "OK"})
                 return publicport

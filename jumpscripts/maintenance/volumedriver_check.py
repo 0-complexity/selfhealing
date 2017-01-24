@@ -174,6 +174,8 @@ def get_vpool(ps):
 
 
 def action():
+    gid = j.application.whoAmI.gid
+    nid = j.application.whoAmI.nid
     import psutil
 
     rediscl = j.clients.redis.getByInstance('system')
@@ -192,6 +194,11 @@ def action():
                 check_over_memory(mem):
             # volumedriver must be cleaned up
             clean_storagedriver(process, vpool)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
+                category=category,
+                tags='volumedriver.kill'
+            )
 
             # re-start process
             j.system.platform.ubuntu.startService('ovs-volumedriver_{}'.format(vpool))
