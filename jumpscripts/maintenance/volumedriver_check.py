@@ -52,32 +52,87 @@ def check_volume_read(ovscl, driver):
     try to read disk info of few random disks (10% of all disks)
     """
     import random
+    import time
 
     print('checking driver {mountpoint}'.format(**driver))
-    driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']))
+    driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'cluster_node_config,vdisks_guids'})
     vdisks = driver_obj['vdisks_guids']
     if len(vdisks) == 0:
         return False
 
-    base_url = 'openvstorage+rdma:{storage_ip}:{ports[edge]}'.format(**driver)
+    if driver_obj['cluster_node_config']['network_server_uri'].startswith('tcp://'):
+        protocol = 'openvstorage+tcp'
+    else:
+        protocol = 'openvstorage+rdma'
+    base_url = protocol + ':{storage_ip}:{ports[edge]}'.format(**driver)
 
     random.shuffle(vdisks)
+    scores = list()
     for i in range(0, max(1, int(len(vdisks) * 10 / 100))):
         # TODO: read volume info
-        vdisk = ovscl.get('/vdisks/{}'.format(vdisks[i]))
-        url = '{}/{}'.format(base_url, vdisk['name'])
+        try:
+            vdisk = ovscl.get('/vdisks/{}'.format(vdisks[i]))
+        except:
+            scores.append(vdisks[i])
+            continue
+        if vdisk['is_vtemplate']:
+            scores.append(None)
+            continue
+        url = '{}{}'.format(base_url, vdisk['devicename'][:-4])
 
         try:
             print('qemu-img info {}'.format(url))
-            code, _, _ = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False)
-        except:
+            code, out, err = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False, dieOnNonZeroExitCode=False)
+        except RuntimeError:
             # Failed to read the info (probably timedout)
             print('timedout reading {}'.format(url))
-            return True
-        if code != 0:
-            return True
+            scores.append(vdisks[i])
+            continue
 
-    return False
+        if code != 0:
+            scores.append(vdisks[i])
+        else:
+            scores.append(None)
+
+    if len([x for x in scores if x]) == 0:
+        return False
+
+    for x in xrange(10):
+        time.sleep(5)
+
+        driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'vdisks_guids'})
+        vdisks = driver_obj['vdisks_guids']
+
+        checks = list(scores)
+        for vdisk in checks:
+            if vdisk not in vdisks:
+                scores.remove(vdisk)
+                continue
+
+            try:
+                vdisk = ovscl.get('/vdisks/{}'.format(vdisk))
+            except:
+                continue
+
+            url = '{}{}'.format(base_url, vdisk['devicename'][:-4])
+
+            try:
+                print('qemu-img info {}'.format(url))
+                code, out, err = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False, dieOnNonZeroExitCode=False)
+                if code == 0:
+                    scores.remove(vdisk)
+            except RuntimeError:
+                # Failed to read the info (probably timedout)
+                print('timedout reading {}'.format(url))
+                continue
+
+        if len(scores) == 0:
+            break
+
+    if len(scores) == 0:
+        return False
+
+    return True
 
 
 def get_ovs_client():
@@ -143,7 +198,7 @@ def clean_storagedriver(ps, vpool):
 
     storagedriver = None
     for sd in sds['data']:
-        if sd['storage_ip'] in ips and sd['mountpoint'] != '/mnt/{}'.format(vpool):
+        if sd['storage_ip'] in ips and sd['mountpoint'] == '/mnt/{}'.format(vpool):
             storagedriver = sd
             break
 
@@ -233,11 +288,9 @@ def is_active(vpool):
     import re
     code, out, err = j.do.execute(
         'systemctl status ovs-volumedriver_{}.service'.format(vpool),
-        outputStdout=False
+        outputStdout=False, dieOnNonZeroExitCode=False
     )
 
-    if code != 0:
-        raise RuntimeError('failed to check status of volumedriver {}: {}'.format(vpool, err))
     m = re.search('Active:\s*([^\(\s]+)', out)
 
     return m.group(1) == 'active'
@@ -273,6 +326,7 @@ def action():
                 check_volume_read(ovscl, storage_driver):
 
             # volumedriver must be cleaned up
+            print("CLEANING UP", vpool)
             clean_storagedriver(process, vpool)
 
             # Note, we don't need to revive the killed volumedriver since
