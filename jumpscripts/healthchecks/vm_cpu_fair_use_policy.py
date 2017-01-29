@@ -24,7 +24,7 @@ enable = True
 async = True
 log = True
 queue = 'process'
-roles = ['node']
+roles = ['cpunode']
 
 
 def action(warntime=300, quarantinetime=600, threshold=0.8):
