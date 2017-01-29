@@ -21,6 +21,8 @@ log = True
 
 
 def action(vmname):
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     from CloudscalerLibcloud.utils.libvirtutil import LibvirtUtil
     libvirtutil = LibvirtUtil()
     try:
@@ -31,6 +33,11 @@ def action(vmname):
     try:
         print('Destroying VM')
         domain.destroy()
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='destroy orphan libvirt domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+            category='selfhealing',
+            tags='domain.destroy domainname.%s' % domain.name()
+        )
     except:
         pass
     for disk in domaindisks:
@@ -42,6 +49,11 @@ def action(vmname):
         con.run('cd /mnt/; find -name "{}" -delete'.format(filename))
     print("Undefining VM")
     domain.undefine()
+    j.errorconditionhandler.raiseOperationalWarning(
+        message='undefine orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+        category='selfhealing',
+        tags='domain.undefine domainname.%s' % domain.name()
+    )
     return True
 
 if __name__ == '__main__':

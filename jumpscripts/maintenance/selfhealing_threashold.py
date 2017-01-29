@@ -27,6 +27,8 @@ IOPS_REDIS_KEY = 'throttle.iops.%s'
 NETS_THRESHOLD = 1  # MB/sec
 NETS_PACKET_THRRSHOLD = 500
 NETS_REDIS_KEY = 'throttle.net.%s'
+nid = j.application.whoAmI.nid
+gid = j.application.whoAmI.gid
 
 
 def _aggregate(series, tag):
@@ -56,16 +58,27 @@ def _process_iops(ovc, influx):
             # last 2 values are over IOPS_THRESHOLD. We need to take action.
             # limit IO.
             ovc.api.cloudbroker.qos.limitIO(diskId=int(vdiskid), iops=IOPS_THRESHOLD)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='limit vdisk %s\'s ios to %s on nid:%s and gid:%s ' % (vdiskid, IOPS_THRESHOLD, nid, gid),
+                category='selfhealing',
+                tags='vdisk.limitio vdsikid.%s' % vdiskid
+            )
             j.core.db.set(key, 'x')
             continue
 
         # Unthrottle
         if j.core.db.get(key) is not None:
             ovc.api.cloudbroker.qos.limitIO(diskId=int(vdiskid), iops=0)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='set limit on vdisk %s\'s ios to %s on nid:%s and gid:%s ' % (vdiskid, 0, nid, gid),
+                category='selfhealing',
+                tags='vdisk.limitio vdsikid.%s' % vdiskid
+            )
             j.core.db.delete(key)
 
 
 def _process_network(ovc, influx):
+    cbcl = j.clients.osis.getNamespace('cloudbroker')
     throughput = influx.query('''SELECT mean(value) FROM /network.throughput.*\|t/ WHERE "type" = 'virtual' AND time > now() - 5m GROUP BY "mac"''')
     if 'series' not in throughput.raw:
         print('network.throughput no data')
@@ -80,16 +93,32 @@ def _process_network(ovc, influx):
 
     for mac, count in agg_throughput.items():
         pac = agg_packet.get(mac, 0)
-
+        
+        vm = cbcl.vmachine.search({'nics': {'$elemMatch': {'macAddress': mac}}})[1]
+        cloudspace = cbcl.cloudspace.get(vm['cloudspaceId'])
         key = NETS_REDIS_KEY % mac
         if count > NETS_THRESHOLD and pac > NETS_PACKET_THRRSHOLD:
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='limit  internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
+                category='selfhealing',
+                tags='network.limitInternalBandwith vmid.%s accountid.%s cloudspaceid.%s ' % (vm['id'],
+                                                                                              cloudspace.accountId,
+                                                                                              vm['cloudspaceId'])
+            )
             j.core.db.set(key, 'x')
             continue
 
         # Unthrottle
         if j.core.db.get(key) is not None:
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='limit internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
+                category='selfhealing',
+                tags='network.limitInternalBandwith vmid.%s accountid.%s cloudspaceid.%s ' % (vm['id'],
+                                                                                              cloudspace.accountId,
+                                                                                              vm['cloudspaceId'])
+            )
             j.core.db.delete(key)
 
 

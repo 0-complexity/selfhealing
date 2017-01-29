@@ -297,6 +297,8 @@ def is_active(vpool):
 
 
 def action():
+    gid = j.application.whoAmI.gid
+    nid = j.application.whoAmI.nid
     import psutil
 
     rediscl = j.clients.redis.getByInstance('system')
@@ -328,6 +330,11 @@ def action():
             # volumedriver must be cleaned up
             print("CLEANING UP", vpool)
             clean_storagedriver(process, vpool)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
+                category='selfhealing',
+                tags='volumedriver.kill nodeid.%s' % nid
+            )
 
             # Note, we don't need to revive the killed volumedriver since
             # systemd will take care of restarting it.
