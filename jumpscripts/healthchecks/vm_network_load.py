@@ -23,6 +23,7 @@ ERROR_TRESHHOLD = 10000
 def tag_vm(ccl, vm, state, con):
     nid = j.application.whoAmI.nid
     gid = j.application.whoAmI.gid
+    ccl = j.clients.osis.getNamespace('cloudbroker')
     if vm is None:
         return  # vm has left this node
     tagobject = j.core.tags.getObject(vm['tags'])
@@ -44,10 +45,13 @@ def tag_vm(ccl, vm, state, con):
             # lets nuke this vms
             dom = con.lookupByUUIDString(vm['referenceId'])
             dom.destroy()
+            cloudspace = ccl.cloudspace.get(vm['cloudspaceId'])
             j.errorconditionhandler.raiseOperationalWarning(
                 message='destroy domain %s for excess bandwidth consumption on nid:%s gid:%s' % (dom.name(), nid, gid),
                 category='selfhealing',
-                tags='domain.destroy vm.delete vmid.%s' % dom.name()
+                tags='domain.destroy vm.delete vmid.%s accountid.%s cloudspaceid.%s' % (dom.name(),
+                                                                                        cloudspace.accountId,
+                                                                                        cloudspace.id)
             )
     if change:
         print 'Tagging VM {} {}'.format(vm['id'], str(tagobject))

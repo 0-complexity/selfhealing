@@ -78,6 +78,7 @@ def _process_iops(ovc, influx):
 
 
 def _process_network(ovc, influx):
+    cbcl = j.clients.osis.getNamespace('cloudbroker')
     throughput = influx.query('''SELECT mean(value) FROM /network.throughput.*\|t/ WHERE "type" = 'virtual' AND time > now() - 5m GROUP BY "mac"''')
     if 'series' not in throughput.raw:
         print('network.throughput no data')
@@ -92,14 +93,18 @@ def _process_network(ovc, influx):
 
     for mac, count in agg_throughput.items():
         pac = agg_packet.get(mac, 0)
-
+        
+        vm = cbcl.vmachine.search({'nics': {'$elemMatch': {'macAddress': mac}}})[1]
+        cloudspace = cbcl.cloudspace.get(vm['cloudspaceId'])
         key = NETS_REDIS_KEY % mac
         if count > NETS_THRESHOLD and pac > NETS_PACKET_THRRSHOLD:
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='limit  internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
                 category='selfhealing',
-                tags='network.limitInternalBandwith macaddress.%s' % mac
+                tags='network.limitInternalBandwith vmid.%s accountid.%s cloudspaceid.%s ' % (vm['id'],
+                                                                                              cloudspace.accountId,
+                                                                                              vm['cloudspaceId'])
             )
             j.core.db.set(key, 'x')
             continue
@@ -110,7 +115,9 @@ def _process_network(ovc, influx):
             j.errorconditionhandler.raiseOperationalWarning(
                 message='limit internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
                 category='selfhealing',
-                tags='network.limitInternalBandwith macaddress.%s' % mac
+                tags='network.limitInternalBandwith vmid.%s accountid.%s cloudspaceid.%s ' % (vm['id'],
+                                                                                              cloudspace.accountId,
+                                                                                              vm['cloudspaceId'])
             )
             j.core.db.delete(key)
 
