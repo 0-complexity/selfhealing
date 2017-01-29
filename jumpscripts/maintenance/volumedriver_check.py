@@ -285,15 +285,15 @@ def filter_storage_driver(drivers, vpool):
 
 
 def is_active(vpool):
-    import re
-    code, out, err = j.do.execute(
-        'systemctl status ovs-volumedriver_{}.service'.format(vpool),
-        outputStdout=False, dieOnNonZeroExitCode=False
+    active = j.system.platform.ubuntu.statusService(
+        'ovs-volumedriver_{}'.format(vpool)
     )
 
-    m = re.search('Active:\s*([^\(\s]+)', out)
+    if not active:
+        return False
 
-    return m.group(1) == 'active'
+    # check mount point
+    return j.system.fs.isMount('/mnt/{}'.format(vpool))
 
 
 def action():
