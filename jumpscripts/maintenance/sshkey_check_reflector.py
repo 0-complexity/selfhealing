@@ -69,8 +69,8 @@ def action():
         j.errorconditionhandler.raiseOperationalWarning(
             message='reflector add sshkeys to authorized file on nid:%s and gid:%s ' % (nid,
                                                                                         gid),
-            category=category,
-            tags='reflector.sshkeyadd '
+            category='selfhealing',
+            tags='reflector.sshkeyadd nodeid.%s' % nid
         )
 
     authorized_keys = cleanup_list(authorized_keys.splitlines())

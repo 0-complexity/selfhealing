@@ -81,7 +81,7 @@ def action():
                 ovscl.delete('/vdisks/{}'.format(disk['guid']))
                 j.errorconditionhandler.raiseOperationalWarning(
                     message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], id, gid),
-                    category=category,
+                    category='selfhealing',
                     tags='ovs.diskdelete vdisk.delete'
                 )
                 continue
@@ -92,7 +92,7 @@ def action():
                 ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
                 j.errorconditionhandler.raiseOperationalWarning(
                     message='create snapshot of ovs disk %s on nid:%s gid:%s' % (disk['guid'], id, gid),
-                    category=category,
+                    category='selfhealing',
                     tags='ovs.diskdelete vdisk.delete'
                 )
             results.append({'state': 'WARNING',

@@ -60,8 +60,8 @@ def _process_iops(ovc, influx):
             ovc.api.cloudbroker.qos.limitIO(diskId=int(vdiskid), iops=IOPS_THRESHOLD)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='limit vdisk %s\'s ios to %s on nid:%s and gid:%s ' % (vdiskid, IOPS_THRESHOLD, nid, gid),
-                category=category,
-                tags='vdisk.limitio'
+                category='selfhealing',
+                tags='vdisk.limitio vdsikid.%s' % vdiskid
             )
             j.core.db.set(key, 'x')
             continue
@@ -71,8 +71,8 @@ def _process_iops(ovc, influx):
             ovc.api.cloudbroker.qos.limitIO(diskId=int(vdiskid), iops=0)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='set limit on vdisk %s\'s ios to %s on nid:%s and gid:%s ' % (vdiskid, 0, nid, gid),
-                category=category,
-                tags='vdisk.limitio'
+                category='selfhealing',
+                tags='vdisk.limitio vdsikid.%s' % vdiskid
             )
             j.core.db.delete(key)
 
@@ -98,8 +98,8 @@ def _process_network(ovc, influx):
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='limit  internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
-                category=category,
-                tags='network.limitInternalBandwith'
+                category='selfhealing',
+                tags='network.limitInternalBandwith macaddress.%s' % mac
             )
             j.core.db.set(key, 'x')
             continue
@@ -109,8 +109,8 @@ def _process_network(ovc, influx):
             ovc.api.cloudbroker.qos.limitInternalBandwith(machineMAC=mac, rate=NETS_THRESHOLD, burst=0)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='limit internal bandwidth on %s to %s from nid:%s gid:%s' % (mac, NETS_THRESHOLD, nid, gid),
-                category=category,
-                tags='network.limitInternalBandwith'
+                category='selfhealing',
+                tags='network.limitInternalBandwith macaddress.%s' % mac
             )
             j.core.db.delete(key)
 

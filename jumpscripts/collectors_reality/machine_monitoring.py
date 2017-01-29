@@ -102,15 +102,6 @@ def action():
                 rediscl.hset('machines', machine.guid, ckey)
                 print 'Saving', machine.name
                 syscl.machine.set(machine)
-                nid = j.application.whoAmI.nid
-                gid = j.application.whoAmI.gid
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message='create machine object with name %s using domain %s on nid:%s gid:%s' % (machine.name,
-                                                                                                     domain.ID(),
-                                                                                                     nid, gid),
-                    category=category,
-                    tags='machineobj.create'
-                )
 
             for disk in xml.findall('devices/disk'):
                 if disk.attrib['device'] != 'disk':
@@ -142,16 +133,6 @@ def action():
                     #  obj changed
                     rediscl.hset('vdisks', path, vdisk.getContentKey())
                     syscl.vdisk.set(vdisk)
-                    nid = j.application.whoAmI.nid
-                    gid = j.application.whoAmI.gid
-                    j.errorconditionhandler.raiseOperationalWarning(
-                        message='create vdisk object with name %s using vdisk %s on nid:%s gid:%s' % (vdisk.name,
-                                                                                                      vdisk.devicename,
-                                                                                                      domain.ID(),
-                                                                                                      nid, gid),
-                        category=category,
-                        tags='vdiskobj.create'
-                    )
     finally:
         deletedmachines = set(allmachines.keys()) - set(domainmachines)
         for deletedmachine in deletedmachines:

@@ -46,8 +46,8 @@ def tag_vm(ccl, vm, state, con):
             dom.destroy()
             j.errorconditionhandler.raiseOperationalWarning(
                 message='destroy domain %s for excess bandwidth consumption on nid:%s gid:%s' % (dom.name(), nid, gid),
-                category=category,
-                tags='domain.destroy'
+                category='selfhealing',
+                tags='domain.destroy vm.delete vmid.%s' % dom.name()
             )
     if change:
         print 'Tagging VM {} {}'.format(vm['id'], str(tagobject))

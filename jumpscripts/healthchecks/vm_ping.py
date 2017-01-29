@@ -28,12 +28,5 @@ def action(vm_ip_address, vm_cloudspace_id):
         vfw = vfws[0]
         routeros = j.clients.routeros.get(vfw['host'], 'vscalers', vfw['password'])
         pingable = routeros.ping(vm_ip_address)
-        nid = j.application.whoAmI.nid
-        gid = j.application.whoAmI.gid
-        j.errorconditionhandler.raiseOperationalWarning(
-            message='ping vm from nid:%s gid:%s' % (nid, gid),
-            category=category,
-            tags='vm.ping '
-        )
         return pingable
     return False

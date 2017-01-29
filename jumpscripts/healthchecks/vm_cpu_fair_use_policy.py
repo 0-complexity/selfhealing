@@ -61,8 +61,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         d.quarantine_vm(domain.UUIDString())
         j.errorconditionhandler.raiseOperationalWarning(
             message='quarantine rogue vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
-            category=category,
-            tags='vm.quarantine'
+            category='selfhealing',
+            tags='vm.quarantine vmid.%s' % vm_dict.id
         )
         emailsend('machine  %s quarantined ' % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", tags.tagGet('warntimestart'))
@@ -86,8 +86,8 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         d.unquarantine_vm(domain.UUIDString())
         j.errorconditionhandler.raiseOperationalWarning(
             message='unquarantine behaving vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
-            category=category,
-            tags='vm.unquarantine'
+            category='selfhealing',
+            tags='vm.unquarantine vmid.%s' % vm_dict.id
         )
         vm_dict.tags = str(tags)
         cbcl.vmachine.updateSearch({'id': vm_dict.id}, {'$set': {'tags': str(tags)}})

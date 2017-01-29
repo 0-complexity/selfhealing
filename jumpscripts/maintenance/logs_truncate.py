@@ -90,7 +90,7 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
                 gid = j.application.whoAmI.gid
                 j.errorconditionhandler.raiseOperationalWarning(
                     message='logfile %s truncated on nid:%s gid:%s' % (logfile, nid, gid),
-                    category=category,
+                    category='selfhealing',
                     tags='logs.truncate'
                 )
             if check_diskspace():

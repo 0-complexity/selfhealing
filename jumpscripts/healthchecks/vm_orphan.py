@@ -59,14 +59,14 @@ def action():
                             domain.destroy()
                             j.errorconditionhandler.raiseOperationalWarning(
                                 message='destroy orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
-                                category=category,
-                                tags='domain.destroy'
+                                category='selfhealing',
+                                tags='domain.destroy domainname.%s' % domain.name()
                             )
                         domain.undefine()
                         j.errorconditionhandler.raiseOperationalWarning(
                             message='undefine orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
-                            category=category,
-                            tags='domain.undefine'
+                            category='selfhealing',
+                            tags='domain.undefine domainname.%s' % domain.name()
                         )
                     except libvirt.libvirtError:
                         pass

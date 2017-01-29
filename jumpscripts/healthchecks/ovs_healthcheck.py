@@ -29,8 +29,6 @@ LOG_TYPES = {0: 'ERROR',  # FAILURE
 def action():
     import sys
     sys.path.insert(0, '/opt/OpenvStorage')
-    nid = j.application.whoAmI.nid
-    gid = j.application.whoAmI.gid
     from ovs.extensions.healthcheck.openvstorage.openvstoragecluster_health_check import OpenvStorageHealthCheck
     from ovs.extensions.healthcheck.arakoon.arakooncluster_health_check import ArakoonHealthCheck
     from ovs.extensions.healthcheck.volumedriver.volumedriver_health_check import VolumedriverHealthCheck
@@ -64,29 +62,9 @@ def action():
             results.append({'message': msg, 'category': name, 'state': 'ERROR'})
 
     run(OpenvStorageHealthCheck, 'OpenvStorage')
-    j.errorconditionhandler.raiseOperationalWarning(
-        message='run ovs OpenvStorageHealthCheck on nid:%s gid:%s' % (nid, gid),
-        category=category,
-        tags='ovs.healthcheck ovs.OpenvStorageHealthCheck'
-    )
     run(ArakoonHealthCheck, 'Arakoon')
-    j.errorconditionhandler.raiseOperationalWarning(
-        message='run ovs ArakoonHealthCheck on nid:%s gid:%s' % (nid, gid),
-        category=category,
-        tags='ovs.healthcheck ovs.ArakoonHealthCheck'
-    )
     run(VolumedriverHealthCheck, 'Volumedriver')
-    j.errorconditionhandler.raiseOperationalWarning(
-        message='run ovs VolumedriverHealthCheck on nid:%s gid:%s' % (nid, gid),
-        category=category,
-        tags='ovs.healthcheck ovs.VolumedriverHealthCheck'
-    )
     run(AlbaHealthCheck, 'Alba')
-    j.errorconditionhandler.raiseOperationalWarning(
-        message='run ovs AlbaHealthCheck on nid:%s gid:%s' % (nid, gid),
-        category=category,
-        tags='ovs.healthcheck ovs.AlbaHealthCheck'
-    )
 
     return results
 

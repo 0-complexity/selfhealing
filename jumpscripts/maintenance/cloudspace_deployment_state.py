@@ -50,8 +50,8 @@ def action():
                 gid = j.application.whoAmI.gid
                 j.errorconditionhandler.raiseOperationalWarning(
                     message='deploy cloudspace %s on nid:%s gid:%s' % (cs['name'], nid, gid),
-                    category=category,
-                    tags='cloudspace.deploy'
+                    category='selfhealing',
+                    tags='cloudspace.deploy cloudspaceid.%s' % cs['id']
                 )
             except Exception as e:
                 j.errorconditionhandler.processPythonExceptionObject(e)

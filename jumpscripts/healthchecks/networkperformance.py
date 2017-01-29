@@ -101,13 +101,6 @@ class NetworkPerformance(object):
                 j.logger.log('Installing iperf on %s' % ip, 1)
                 if not sshclient.command_check('iperf3'):
                     sshclient.run('apt-get install -y iperf3')
-                    nid = j.application.whoAmI.nid
-                    gid = j.application.whoAmI.gid
-                    j.errorconditionhandler.raiseOperationalWarning(
-                        message='execute install of iperf3 on %s from nid:%s gid:%s' % (ip, nid, gid),
-                        category=category,
-                        tags='ssh.executecommand'
-                    )
                 output = sshclient.run('iperf3 -c %s --format m -k 10000 -b 1G -J' % self.backplaneNet.ip)
                 try:
                     data = json.loads(output)

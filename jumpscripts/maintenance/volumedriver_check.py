@@ -196,8 +196,8 @@ def action():
             clean_storagedriver(process, vpool)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
-                category=category,
-                tags='volumedriver.kill'
+                category='selfhealing',
+                tags='volumedriver.kill nodeid.%s' % nid
             )
 
             # re-start process

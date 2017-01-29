@@ -71,8 +71,8 @@ def action():
         j.system.fs.writeFile('/root/.ssh/authorized_keys', authorized_keys)
         j.errorconditionhandler.raiseOperationalWarning(
             message='checks nodes for sshkey from other nodes are authorized on nid:%s and gid:%s ' % (nid, gid),
-            category=category,
-            tags='node.sshkeyadd'
+            category='selfhealing',
+            tags='node.sshkeyadd nodeid.%s' % nid
         )
 
     if j.system.fs.exists('/root/.ssh/known_hosts'):
