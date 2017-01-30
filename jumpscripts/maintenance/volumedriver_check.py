@@ -27,7 +27,19 @@ MEMORY_THRESHOLD = 0.4
 VOLUMEDRIVER_NAME = 'volumedriver_fs'
 
 
-def check_over_memory(value):
+class Reasons(object):
+    def __init__(self):
+        self._reasons = {}
+
+    def reason(self, label, value):
+        self._reasons[label] = str(value)
+
+    @property
+    def tags(self):
+        return j.core.tags.getTagString(tags=self._reasons)
+
+
+def check_over_memory(value, reasons):
     import psutil
 
     # memory can be None if stats collection didn't report any values yet.
@@ -37,16 +49,22 @@ def check_over_memory(value):
 
     # formula to find if this memory value is exceeding the threshold
     vm = psutil.virtual_memory()
-    if float(value) / vm.total >= MEMORY_THRESHOLD:
+    percent = float(value) / vm.total
+    if percent >= MEMORY_THRESHOLD:
+        reasons.reason('memory.over', percent)
         return True
     return False
 
 
-def check_over_threads(count):
-    return count >= THREAD_THRESHOLD
+def check_over_threads(count, reasons):
+    if count >= THREAD_THRESHOLD:
+        reasons.reason('threads.over', count)
+        return True
+
+    return False
 
 
-def check_volume_read(ovscl, driver):
+def check_volume_read(ovscl, driver, reasons):
     """
     Gets the list of all volumes available on this storagedriver and then
     try to read disk info of few random disks (10% of all disks)
@@ -94,7 +112,7 @@ def check_volume_read(ovscl, driver):
         else:
             scores.append(None)
 
-    if len([x for x in scores if x]) == 0:
+    if not any(scores):
         return False
 
     for x in xrange(10):
@@ -121,8 +139,11 @@ def check_volume_read(ovscl, driver):
                 code, out, err = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False, dieOnNonZeroExitCode=False)
                 if code == 0:
                     scores.remove(vdisk)
+                else:
+                    reasons.reason('vdisk.{}'.format(vdisk['guid']), 'read-error')
             except RuntimeError:
                 # Failed to read the info (probably timedout)
+                reasons.reason('vdisk.{}'.format(vdisk['guid']), 'timeout')
                 print('timedout reading {}'.format(url))
                 continue
 
@@ -132,6 +153,7 @@ def check_volume_read(ovscl, driver):
     if len(scores) == 0:
         return False
 
+    reasons.reason('scores', len(scores))
     return True
 
 
@@ -323,17 +345,19 @@ def action():
         mem = get_memory_avg(aggregatorcl, vpool)
 
         # check number of threads, memory, or if vdisks are not readable
-        if check_over_threads(len(process.threads())) or \
-                check_over_memory(mem) or \
-                check_volume_read(ovscl, storage_driver):
+        reasons = Reasons()
+        if check_over_threads(len(process.threads()), reasons) or \
+                check_over_memory(mem, reasons) or \
+                check_volume_read(ovscl, storage_driver, reasons):
 
             # volumedriver must be cleaned up
             print("CLEANING UP", vpool)
-            clean_storagedriver(process, vpool)
+            # clean_storagedriver(process, vpool)
+            print("REASONS:", reasons.tags)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
                 category='selfhealing',
-                tags='volumedriver.kill nodeid.%s' % nid
+                tags='volumedriver.kill nodeid.%s %s' % (nid, reasons.tags)
             )
 
             # Note, we don't need to revive the killed volumedriver since
