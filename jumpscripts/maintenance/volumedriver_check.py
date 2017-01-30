@@ -352,8 +352,7 @@ def action():
 
             # volumedriver must be cleaned up
             print("CLEANING UP", vpool)
-            # clean_storagedriver(process, vpool)
-            print("REASONS:", reasons.tags)
+            clean_storagedriver(process, vpool)
             j.errorconditionhandler.raiseOperationalWarning(
                 message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
                 category='selfhealing',
