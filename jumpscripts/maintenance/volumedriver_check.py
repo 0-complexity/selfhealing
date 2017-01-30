@@ -84,18 +84,38 @@ def check_volume_read(ovscl, driver, reasons):
         protocol = 'openvstorage+rdma'
     base_url = protocol + ':{storage_ip}:{ports[edge]}'.format(**driver)
 
+    osis = j.clients.osis.getNamespace('cloudbroker')
     random.shuffle(vdisks)
     scores = list()
-    for i in range(0, max(1, int(len(vdisks) * 10 / 100))):
-        # TODO: read volume info
+    check_count = max(1, int(len(vdisks) * 10 / 100))
+    disks = []
+
+    for guid in vdisks:
         try:
-            vdisk = ovscl.get('/vdisks/{}'.format(vdisks[i]))
+            vdisk = ovscl.get('/vdisks/{}'.format(guid))
         except:
-            scores.append(vdisks[i])
+            print('error getting vdiks %s' % guid)
             continue
+
         if vdisk['is_vtemplate']:
-            scores.append(None)
             continue
+
+        print('checking if disk %s is actually in use by ovc' % guid)
+        count = osis.disk.search({
+            'referenceId': {'$regex': '{}$'.format(guid)},
+            'status': {'$ne': 'DESTROYED'},
+        })[0]
+
+        if count == 0:
+            # disk is not used by the system
+            print('disk %s is not in use in ovc' % guid)
+            continue
+
+        disks.append(vdisk)
+        if len(disks) == check_count:
+            break
+
+    for vdisk in disks:
         url = '{}{}'.format(base_url, vdisk['devicename'][:-4])
 
         try:
@@ -104,18 +124,16 @@ def check_volume_read(ovscl, driver, reasons):
         except RuntimeError:
             # Failed to read the info (probably timedout)
             print('timedout reading {}'.format(url))
-            scores.append(vdisks[i])
+            scores.append(vdisk['guid'])
             continue
 
         if code != 0:
-            scores.append(vdisks[i])
-        else:
-            scores.append(None)
+            scores.append(vdisk['guid'])
 
-    if not any(scores):
+    if len(scores) == 0:
         return False
 
-    for x in xrange(10):
+    for x in range(10):
         time.sleep(5)
 
         driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'vdisks_guids'})
@@ -209,9 +227,7 @@ def wait_all_jobs(ovscl, jobs):
 
 
 def clean_storagedriver(ps, vpool):
-    import time
     import json
-    import psutil
     from itertools import cycle
 
     ips = j.system.net.getIpAddresses()
@@ -246,21 +262,7 @@ def clean_storagedriver(ps, vpool):
             )
             jobs.append(job)
 
-    wait_all_jobs(ovscl, jobs)
-    # kill the process
-    try:
-        i = 0
-        while ps.is_running():
-            if i > 0:
-                time.sleep(2)
-            ps.terminate()
-            i += 1
-            if i >= 5:
-                break
-
-        ps.kill()
-    except psutil.NoSuchProcess:
-        pass
+        wait_all_jobs(ovscl, jobs)
 
 
 def get_memory_avg(agg, pool):
@@ -359,8 +361,7 @@ def action():
                 tags='volumedriver.kill nodeid.%s %s' % (nid, reasons.tags)
             )
 
-            # Note, we don't need to revive the killed volumedriver since
-            # systemd will take care of restarting it.
+            j.system.platform.ubuntu.restartService('ovs-volumedriver_{}'.format(vpool))
 
 
 if __name__ == '__main__':
