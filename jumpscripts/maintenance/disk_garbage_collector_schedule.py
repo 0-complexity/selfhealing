@@ -19,15 +19,7 @@ queue = 'process'
 
 def action():
     acl = j.clients.agentcontroller.get()
-
-    results = []
-    job = acl.executeJumpscript('greenitglobe', 'disk_garbage_collector', role='storagedriver', gid=j.application.whoAmI.gid)
-    if job['state'] == 'OK':
-        results.extend(job['result'])
-
-    if not results:
-        results.append({'state': 'OK', 'category': 'GarbageCollector', 'message': 'Nothing needed to be cleaned.'})
-    return results
+    acl.executeJumpscript('greenitglobe', 'disk_garbage_collector', role='storagedriver', gid=j.application.whoAmI.gid)
 
 if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')
