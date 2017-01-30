@@ -5,7 +5,7 @@ Restarts a stopped disk on the right storage router.
 """
 
 organization = 'greenitglobe'
-category = "monitor.healthcheck"
+category = "selfhealing"
 author = "geert@greenitglobe.com"
 version = "1.0"
 
