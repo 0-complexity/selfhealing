@@ -1,7 +1,7 @@
 from JumpScale import j
 
 descr = """
-Scheduler that runs on master to check for orphan disks on specific volume driver nodes.
+Scheduler that runs on controller to check for orphan disks on specific volume driver nodes.
 Generates warning if orphan disks exist on the specified volumes.
 """
 
