@@ -69,10 +69,13 @@ def action():
     else:
         authorized_keys = ''
         j.system.fs.writeFile('/root/.ssh/authorized_keys', authorized_keys)
+        eco_tags = j.core.tags.getObject()
+        eco_tags.tagSet('nid', nid)
+        eco_tags.labelSet('node.sshkeyadd')
         j.errorconditionhandler.raiseOperationalWarning(
             message='checks nodes for sshkey from other nodes are authorized on nid:%s and gid:%s ' % (nid, gid),
             category='selfhealing',
-            tags='node.sshkeyadd nodeid.%s' % nid
+            tags=str(eco_tags)
         )
 
     if j.system.fs.exists('/root/.ssh/known_hosts'):

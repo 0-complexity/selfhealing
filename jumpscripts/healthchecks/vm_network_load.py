@@ -46,12 +46,16 @@ def tag_vm(ccl, vm, state, con):
             dom = con.lookupByUUIDString(vm['referenceId'])
             dom.destroy()
             cloudspace = ccl.cloudspace.get(vm['cloudspaceId'])
+            eco_tags = j.core.tags.getObject()
+            eco_tags.tagSet('machineId', dom.name())
+            eco_tags.tagSet('accountId', cloudspace.accountId)
+            eco_tags.tagSet('cloudspaceId', cloudspace.id)
+            eco_tags.labelSet('domain.destroy')
+            eco_tags.labelSet('vm.delete')
             j.errorconditionhandler.raiseOperationalWarning(
                 message='destroy domain %s for excess bandwidth consumption on nid:%s gid:%s' % (dom.name(), nid, gid),
                 category='selfhealing',
-                tags='domain.destroy vm.delete vmid.%s accountid.%s cloudspaceid.%s' % (dom.name(),
-                                                                                        cloudspace.accountId,
-                                                                                        cloudspace.id)
+                tags=str(eco_tags)
             )
     if change:
         print 'Tagging VM {} {}'.format(vm['id'], str(tagobject))

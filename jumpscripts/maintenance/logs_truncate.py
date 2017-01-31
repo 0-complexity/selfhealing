@@ -88,10 +88,13 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
                 f.write("Logfile truncated by JumpScale agent on {}\n".format(datetime.datetime.now()))
                 nid = j.application.whoAmI.nid
                 gid = j.application.whoAmI.gid
+                eco_tags = j.core.tags.getObject()
+                eco_tags.tagSet('logfile', logfile)
+                eco_tags.labelSet('log.truncate')
                 j.errorconditionhandler.raiseOperationalWarning(
                     message='logfile %s truncated on nid:%s gid:%s' % (logfile, nid, gid),
                     category='selfhealing',
-                    tags='logs.truncate'
+                    tags=str(eco_tags)
                 )
             if check_diskspace():
                 break

@@ -355,10 +355,13 @@ def action():
             # volumedriver must be cleaned up
             print("CLEANING UP", vpool)
             clean_storagedriver(process, vpool)
+            eco_tags = j.core.tags.getObject()
+            eco_tags.tagSet('nid', nid)
+            eco_tags.labelSet('volumedriver.kill')
             j.errorconditionhandler.raiseOperationalWarning(
                 message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
                 category='selfhealing',
-                tags='volumedriver.kill nodeid.%s %s' % (nid, reasons.tags)
+                tags=str(eco_tags) + ' %s' % reasons.tags
             )
 
             j.system.platform.ubuntu.restartService('ovs-volumedriver_{}'.format(vpool))

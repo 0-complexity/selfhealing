@@ -55,18 +55,17 @@ def action():
                 if vm and vm['status'] == 'DESTROYED':
                     try:
                         j.console.warning('Destroying domain {}'.format(domain.name()))
+                        eco_tags = j.core.tags.getObject()
                         if domain.ID() != -1:
                             domain.destroy()
-                            j.errorconditionhandler.raiseOperationalWarning(
-                                message='destroy orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
-                                category='selfhealing',
-                                tags='domain.destroy domainname.%s' % domain.name()
-                            )
+                            eco_tags.labelSet('domain.destroy')
                         domain.undefine()
+                        eco_tags.tagSet('domainname', domain.name())
+                        eco_tags.labelSet('domain.undefine')
                         j.errorconditionhandler.raiseOperationalWarning(
-                            message='undefine orphan domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+                            message='undefine orphan libvirt domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
                             category='selfhealing',
-                            tags='domain.undefine domainname.%s' % domain.name()
+                            tags=str(eco_tags)
                         )
                     except libvirt.libvirtError:
                         pass

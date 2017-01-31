@@ -60,12 +60,15 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     def quarantine(quarantined, vm_dict, qt):
         d.quarantine_vm(domain.UUIDString())
         cloudspace = cbcl.cloudspace.get(vm_dict.cloudspaceId)
+        eco_tags = j.core.tags.getObject()
+        eco_tags.tagSet('machineId', vm_dict.id)
+        eco_tags.tagSet('accountId', cloudspace.accountId)
+        eco_tags.tagSet('cloudspaceId', cloudspace.id)
+        eco_tags.labelSet('vm.quarantine')
         j.errorconditionhandler.raiseOperationalWarning(
             message='quarantine rogue vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
             category='selfhealing',
-            tags='vm.quarantine vmid.%s accountid.%s cloudspaceid.%s' % (vm_dict.id,
-                                                                         cloudspace.id,
-                                                                         cloudspace.accountId)
+            tags=str(eco_tags)
         )
         emailsend('machine  %s quarantined ' % vm_dict.id, vm_dict)
         tags.tagSet("warntimestart", tags.tagGet('warntimestart'))
@@ -88,12 +91,15 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
             tags.tagDelete("warned")
         d.unquarantine_vm(domain.UUIDString())
         cloudspace = cbcl.cloudspace.get(vm_dict.cloudspaceId)
+        eco_tags = j.core.tags.getObject()
+        eco_tags.tagSet('machineId', vm_dict.id)
+        eco_tags.tagSet('accountId', cloudspace.accountId)
+        eco_tags.tagSet('cloudspaceId', cloudspace.id)
+        eco_tags.labelSet('vm.unquarantine')
         j.errorconditionhandler.raiseOperationalWarning(
             message='unquarantine behaving vm %s on nid:%s gid:%s' % (vm_dict.id, nid, gid),
             category='selfhealing',
-            tags='vm.unquarantine vmid.%s accountid.%s cloudspaceid.%s' % (vm_dict.id,
-                                                                           cloudspace.id,
-                                                                           cloudspace.accountId)
+            tags=str(eco_tags)
         )
         vm_dict.tags = str(tags)
         cbcl.vmachine.updateSearch({'id': vm_dict.id}, {'$set': {'tags': str(tags)}})
