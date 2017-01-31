@@ -25,7 +25,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = []
+roles = ['node']
 
 
 def action():
