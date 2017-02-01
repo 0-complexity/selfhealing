@@ -86,16 +86,6 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
             with open(logfile, 'w') as f:
                 f.truncate()  # open in write mode would truncate the file anyway but just to make sure.
                 f.write("Logfile truncated by JumpScale agent on {}\n".format(datetime.datetime.now()))
-                nid = j.application.whoAmI.nid
-                gid = j.application.whoAmI.gid
-                eco_tags = j.core.tags.getObject()
-                eco_tags.tagSet('logfile', logfile)
-                eco_tags.labelSet('log.truncate')
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message='logfile %s truncated on nid:%s gid:%s' % (logfile, nid, gid),
-                    category='selfhealing',
-                    tags=str(eco_tags)
-                )
             if check_diskspace():
                 break
         except Exception as e:
@@ -103,7 +93,17 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
             j.logger.log(error_message, 2)
             errors.append(error_message)
 
+    if len(logfiles) != 0:
+        nid = j.application.whoAmI.nid
+        gid = j.application.whoAmI.gid
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='logfiles truncated on nid:%s gid:%s' % (logfile, nid, gid),
+            category='selfhealing',
+            tags='log.truncate logfiles:%d errors:%d' % (len(logfiles), len(errors))
+        )
+
     return errors
+
 
 if __name__ == '__main__':
     action()
