@@ -66,11 +66,14 @@ def action():
         authorized_keys = ''
         j.system.fs.writeFile(authorizedfile, authorized_keys)
         set_permissions()
+        eco_tags = j.core.tags.getObject()
+        eco_tags.tagSet('nid', nid)
+        eco_tags.labelSet('reflector.sshkeyadd')
         j.errorconditionhandler.raiseOperationalWarning(
             message='reflector add sshkeys to authorized file on nid:%s and gid:%s ' % (nid,
                                                                                         gid),
             category='selfhealing',
-            tags='reflector.sshkeyadd nodeid.%s' % nid
+            tags=str(eco_tags)
         )
 
     authorized_keys = cleanup_list(authorized_keys.splitlines())

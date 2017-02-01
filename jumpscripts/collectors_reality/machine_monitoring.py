@@ -17,7 +17,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = []
+roles = ['node']
 
 from xml.etree import ElementTree
 try:

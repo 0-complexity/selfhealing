@@ -68,8 +68,9 @@ def action():
             else:
                 account = accounts[0]
                 if account['status'] != 'CONFIRMED':
-                    messages.append({'message': "Skipping deployment test account is not enabled.", 'category': category, 'state': "SKIPPED"})
-                    return None
+                    msg = "Skipping deployment test account is not enabled."
+                    messages.append({'message': msg, 'category': category, 'state': "SKIPPED"})
+                    raise DeployMentTestFailure(msg)
                 messages.append({'message': "Found account {}".format(ACCOUNTNAME), 'category': category, 'state': "OK"})
                 j.console.echo('Found Account', log=True)
                 return account['id']

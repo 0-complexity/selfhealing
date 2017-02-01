@@ -79,10 +79,14 @@ def action():
             if deletedisk:
                 print('Deleting {}'.format(disk['devicename']))
                 ovscl.delete('/vdisks/{}'.format(disk['guid']))
+                eco_tags = j.core.tags.getObject()
+                eco_tags.tagSet('vdiskGuid', disk['guid'])
+                eco_tags.labelSet('vdisk.delete')
+                eco_tags.labelSet('ovs.diskdelete')
                 j.errorconditionhandler.raiseOperationalWarning(
-                    message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], id, gid),
+                    message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
                     category='selfhealing',
-                    tags='ovs.diskdelete vdisk.delete'
+                    tags=str(eco_tags)
                 )
                 continue
             elif snapshottime == 0:
@@ -90,10 +94,14 @@ def action():
                 snapshottime = int(time.time())
                 params = dict(name='orphan', timestamp=snapshottime, sticky=True)
                 ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
+                eco_tags = j.core.tags.getObject()
+                eco_tags.tagSet('vdiskGuid', disk['guid'])
+                eco_tags.labelSet('vdisk.snapshot')
+                eco_tags.labelSet('ovs.snapshot')
                 j.errorconditionhandler.raiseOperationalWarning(
-                    message='create snapshot of ovs disk %s on nid:%s gid:%s' % (disk['guid'], id, gid),
+                    message='create snapshot of ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
                     category='selfhealing',
-                    tags='ovs.diskdelete vdisk.delete'
+                    tags=str(eco_tags)
                 )
             results.append({'state': 'WARNING',
                             'category': 'Orphanage',

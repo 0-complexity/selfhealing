@@ -31,14 +31,16 @@ def action():
         except:
             continue
 
-        results.append(message)
         percent = (stat.m_last / float(nicspeed)) * 100
         message['message'] = 'Nic {} {} bandwith is {:.2f}%'.format(nic, direction, percent)
         if percent > 80:
+            results.append(message)
             message['state'] = 'WARNING'
         elif percent > 90:
+            results.append(message)
             message['state'] = 'ERROR'
-
+    if not results:
+        results.append({'state': 'OK', 'category': 'Network', 'message': 'All network bandwith is within boundries'})
     return results
 
 

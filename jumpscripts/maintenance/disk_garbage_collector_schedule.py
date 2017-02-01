@@ -5,9 +5,9 @@ Scheduler that runs on controller to check for orphan disks on specific volume d
 Generates warning if orphan disks exist on the specified volumes.
 """
 
-organization = 'cloudscalers'
+organization = 'greenitglobe'
 category = "monitor.healthcheck"
-author = "deboeckj@codescalers.com"
+author = "geert@greenitglobe.com"
 version = "1.0"
 
 enable = True
@@ -19,15 +19,7 @@ queue = 'process'
 
 def action():
     acl = j.clients.agentcontroller.get()
-
-    results = []
-    job = acl.executeJumpscript('cloudscalers', 'disk_orphan', role='storagedriver', gid=j.application.whoAmI.gid)
-    if job['state'] == 'OK':
-        results.extend(job['result'])
-
-    if not results:
-        results.append({'state': 'OK', 'category': 'Orphanage', 'message': 'No orphan disks found.'})
-    return results
+    acl.executeJumpscript('greenitglobe', 'disk_garbage_collector', role='storagedriver', gid=j.application.whoAmI.gid)
 
 if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')
