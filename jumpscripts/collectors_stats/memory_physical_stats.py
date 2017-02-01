@@ -21,6 +21,14 @@ log = False
 roles = []
 
 
+def get_swap_cached():
+    import re
+
+    info = j.system.fs.fileGetTextContents('/proc/meminfo')
+    m = re.search('^SwapCached:\s*(\d+)', info, re.M)
+    return int(m.group(1)) * 1024
+
+
 def action():
     import psutil
     rediscl = j.clients.redis.getByInstance('system')
@@ -32,8 +40,11 @@ def action():
     results['machine.memory.ram.available'] = round(memory.available / (1024.0 * 1024.0), 2)
 
     swap = psutil.swap_memory()
-    results["machine.memory.swap.left"] = round(swap.free / (1024.0 * 1024.0), 2)
-    results["machine.memory.swap.used"] = round(swap.used / (1024.0 * 1024.0), 2)
+    cached = get_swap_cached()
+    free = swap.free + cached
+    results["machine.memory.swap.left"] = round(free / (1024.0 * 1024.0), 2)
+    used = swap.used - cached
+    results["machine.memory.swap.used"] = round(used / (1024.0 * 1024.0), 2)
 
     for key, value in results.iteritems():
         key = "%s@phys.%d.%d" % (key, j.application.whoAmI.gid, j.application.whoAmI.nid)
@@ -41,6 +52,7 @@ def action():
         aggregatorcl.measure(key, tags, value, timestamp=now)
 
     return results
+
 
 if __name__ == '__main__':
     results = action()
