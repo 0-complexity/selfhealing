@@ -10,7 +10,7 @@ Ping nodes for 10 times
 When less then 90% produce a warning
 When less then 70% procede an error
 When timings are more then 10ms produce a warning
-When timings are more then 100ms produce am error
+When timings are more then 200ms produce am error
 
 """
 organization = "cloudscalers"
@@ -47,7 +47,7 @@ def ping(ip):
         status = 'WARNING'
     if avg > 10:
         status = 'WARNING'
-    elif avg > 100:
+    elif avg > 200:
         status = 'ERROR'
     msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, avg if avg != -1 else 'NA')
     return {'message': msg, 'state': status, 'category': 'Network'}
