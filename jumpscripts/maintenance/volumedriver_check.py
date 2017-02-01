@@ -156,7 +156,7 @@ def check_volume_read(ovscl, driver, reasons):
                 print('qemu-img info {}'.format(url))
                 code, out, err = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False, dieOnNonZeroExitCode=False)
                 if code == 0:
-                    scores.remove(vdisk)
+                    scores.remove(vdisk['guid'])
                 else:
                     reasons.reason('vdisk.{}'.format(vdisk['guid']), 'read-error')
             except RuntimeError:
