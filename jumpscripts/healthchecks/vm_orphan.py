@@ -82,7 +82,7 @@ def action():
             result.append({'state': 'WARNING', 'category': 'Orphanage', 'message': message, 'uid': message})
         errormsg = '\n'.join(messages)
         print(errormsg)
-        j.errorconditionhandler.raiseOperationalWarning(errormsg, 'monitoring')
+        j.errorconditionhandler.raiseOperationalWarning(errormsg, 'monitoring', noreraise=True)
     else:
         result.append({'state': 'OK', 'category': 'Orphanage', 'message': 'No orphans found'})
 
