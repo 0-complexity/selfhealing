@@ -36,6 +36,9 @@ def updateNetwork(node, networks):
 
 
 def ping(ip):
+    # first wake up the network
+    j.system.net.ping(ip, 5)
+    # check results
     pingresults = j.system.net.ping(ip)
     status = 'OK'
     percent = pingresults['percent']
@@ -55,6 +58,7 @@ def ping(ip):
 
 def action():
     from multiprocessing import Pool
+    from threading import Thread
     scl = j.clients.osis.getNamespace('system')
     nodes = scl.node.search({'gid': j.application.whoAmI.gid, 'active': True, 'roles': {'$in': roles}})[1:]
     networks = {}
@@ -63,23 +67,31 @@ def action():
         if node['id'] != j.application.whoAmI.nid:
             updateNetwork(node['netaddr'], networks)
 
-    for netinfo in j.system.net.getNetworkInfo():
+    def process_network(netinfo):
         if netinfo['name'] == 'lo':
-            continue
+            return
         for myip, cidr in zip(netinfo['ip'], netinfo['cidr']):
             mynet = netaddr.IPNetwork('{}/{}'.format(myip, cidr)).cidr
             netresults = []
             iplist = networks.get(mynet)
             if iplist is not None:
-
+                pool = Pool()
                 pinglist = random.sample(iplist, int(math.log(len(iplist)) + 1))
-                pool = Pool(len(pinglist))
                 for result in pool.map(ping, pinglist):
                     netresults.append(result)
             else:
                 netresults.append({'message': 'Found IP {} ({}) in strange network'.format(
                     myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
             results.extend(netresults)
+
+    threads = []
+    for netinfo in j.system.net.getNetworkInfo():
+        thread = Thread(target=process_network, args=(netinfo,))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
 
     return results
 
