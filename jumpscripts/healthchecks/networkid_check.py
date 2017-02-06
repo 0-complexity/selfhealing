@@ -18,21 +18,18 @@ log = True
 
 
 def action():
-    import json
     category = "Network"
     results = []
     ccl = j.clients.osis.getNamespace('cloudbroker')
-    lcl = j.clients.osis.getNamespace('libcloud')
+    lcl = j.clients.osis.getNamespace('libvirt')
 
     for location in ccl.location.search({})[1:]:
         gid = location['gid']
-        key = 'networkids_{}'.format(gid)
-        if not lcl.libvirtdomain.exists(key):
+        if not lcl.networkids.exists(gid):
             results.append(dict(state='ERROR', category=category,
                                 message="No networkids defined for gid {}".format(gid)))
-        netids = len(json.loads(lcl.libvirtdomain.get(key)))
-
-        usedids_count = ccl.cloudspace.count({'gid': gid, 'status': 'DEPLOYED'})
+        netids = len(lcl.networkids.get(gid).networkids)
+        usedids_count = ccl.cloudspace.count({'gid': gid, 'status': {'$ne': 'DESTROYED'}})
 
         percent = (float(usedids_count) / (usedids_count + netids)) * 100
         message = "Used networkids on location {locationname} passed the dangerous threshold. ({percent:.0f}%)"
