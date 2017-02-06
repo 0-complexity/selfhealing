@@ -45,7 +45,7 @@ def action():
         if partition.device in checked_devices:
             continue
 
-        checked_devices.apped(partition.device)
+        checked_devices.append(partition.device)
 
         result = {'category': 'Disks'}
         result['path'] = j.system.fs.getBaseName(partition.device)
