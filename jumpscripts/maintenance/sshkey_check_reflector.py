@@ -38,6 +38,7 @@ def action():
     import os
     guest = pwd.getpwnam('guest')
     nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
     ncl = j.clients.osis.getNamespace('system').node
     current_node = ncl.get(nid).dump()
     roles = ['cpunode', 'storagenode', 'storagedriver', ]
@@ -65,6 +66,15 @@ def action():
         authorized_keys = ''
         j.system.fs.writeFile(authorizedfile, authorized_keys)
         set_permissions()
+        eco_tags = j.core.tags.getObject()
+        eco_tags.tagSet('nid', nid)
+        eco_tags.labelSet('reflector.sshkeyadd')
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='reflector add sshkeys to authorized file on nid:%s and gid:%s ' % (nid,
+                                                                                        gid),
+            category='selfhealing',
+            tags=str(eco_tags)
+        )
 
     authorized_keys = cleanup_list(authorized_keys.splitlines())
     authlen = len(authorized_keys)

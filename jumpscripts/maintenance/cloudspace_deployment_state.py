@@ -46,6 +46,16 @@ def action():
             try:
                 j.console.info('Deploying cloudspace {id} {name}'.format(**cs))
                 pcl.actors.cloudapi.cloudspaces.deploy(cs["id"])
+                nid = j.application.whoAmI.nid
+                gid = j.application.whoAmI.gid
+                eco_tags = j.core.tags.getObject()
+                eco_tags.tagSet('cloudspaceId', cs['id'])
+                eco_tags.labelSet('cloudspace.deploy')
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message='deploy cloudspace %s on nid:%s gid:%s' % (cs['name'], nid, gid),
+                    category='selfhealing',
+                    tags=str(eco_tags)
+                )
             except Exception as e:
                 j.errorconditionhandler.processPythonExceptionObject(e)
 

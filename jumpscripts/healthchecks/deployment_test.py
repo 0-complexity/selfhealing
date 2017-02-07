@@ -205,7 +205,7 @@ def action():
                 time.sleep(5)
         else:
             msg = 'Failed to execute SSH command. Login error? %s' % error
-            messages.append({'message': msg, 'category': category, 'state': "EROR"})
+            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
             raise DeployMentTestFailure(msg)
 
     def execute_dd_test(connection):

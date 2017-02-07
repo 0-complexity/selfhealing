@@ -40,7 +40,13 @@ def action():
         return "%s on %s %.02f/%.02f %siB free" % (partition.device, partition.mountpoint, freesize, size, freeunits)
 
     results = list()
+    checked_devices = []
     for partition in filter(diskfilter, psutil.disk_partitions()):
+        if partition.device in checked_devices:
+            continue
+
+        checked_devices.append(partition.device)
+
         result = {'category': 'Disks'}
         result['path'] = j.system.fs.getBaseName(partition.device)
         checkusage = not (partition.mountpoint and

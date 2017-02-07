@@ -93,7 +93,17 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
             j.logger.log(error_message, 2)
             errors.append(error_message)
 
+    if len(logfiles) != 0:
+        nid = j.application.whoAmI.nid
+        gid = j.application.whoAmI.gid
+        j.errorconditionhandler.raiseOperationalWarning(
+            message='logfiles truncated on nid:%s gid:%s' % (nid, gid),
+            category='selfhealing',
+            tags='log.truncate logfiles:%d errors:%d' % (len(logfiles), len(errors))
+        )
+
     return errors
+
 
 if __name__ == '__main__':
     action()

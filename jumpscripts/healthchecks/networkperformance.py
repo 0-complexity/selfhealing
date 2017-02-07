@@ -52,19 +52,7 @@ class NetworkPerformance(object):
     @property
     def speed(self):
         if not self._speed:
-            speedfile = '/sys/class/net/%s/speed' % self.nic
-            if j.system.fs.exists(speedfile):
-                self._speed = int(j.system.fs.fileGetContents(speedfile))
-            else:
-                # check if its ovs bridge
-                ovsconfig = j.system.ovsnetconfig.getConfigFromSystem()
-                nics = j.system.process.execute('ovs-vsctl list-ifaces %s' % self.nic)[1].split('\n')
-                for nic in nics:
-                    if nic in ovsconfig:
-                        if ovsconfig[nic]['detail'][0] == 'PHYS':
-                            match = re.search('(?P<speed>\d+)', ovsconfig[nic]['detail'][3])
-                            self._speed = int(match.group('speed'))
-                            break
+            self._speed = j.system.net.getNicSpeed(self.nic)
         return self._speed
 
     @property
