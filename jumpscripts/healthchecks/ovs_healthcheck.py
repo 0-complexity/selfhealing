@@ -17,54 +17,41 @@ async = True
 queue = 'process'
 log = True
 
-LOG_TYPES = {0: 'ERROR',  # FAILURE
-             1: 'OK',  # SUCCESS
-             2: 'WARNING',
-             3: 'OK',  # info
-             4: 'ERROR',  # EXCEPTION
-             5: 'SKIPPED',
-             6: 'DEBUG'}
+MESSAGETYPE = {'error': 'ERROR',
+               'success': 'OK',
+               'warning': 'WARNING',
+               'exception': 'ERROR',
+               'skip': 'SKIPPED'}
 
 
 def action():
     import sys
     sys.path.insert(0, '/opt/OpenvStorage')
-    from ovs.extensions.healthcheck.openvstorage.openvstoragecluster_health_check import OpenvStorageHealthCheck
-    from ovs.extensions.healthcheck.arakoon.arakooncluster_health_check import ArakoonHealthCheck
-    from ovs.extensions.healthcheck.volumedriver.volumedriver_health_check import VolumedriverHealthCheck
-    from ovs.extensions.healthcheck.alba.alba_health_check import AlbaHealthCheck
-    from ovs.log.healthcheck_logHandler import HCLogHandler
-
-    module = {'name': ''}
-
-    def failure(self, msg, test_name=None):
-        results.append({'message': msg, 'uid': test_name, 'category': module['name'], 'state': 'ERROR'})
-
-    def success(self, msg, test_name=None):
-        results.append({'message': msg, 'uid': test_name, 'category': module['name'], 'state': 'OK'})
-
-    def warning(self, msg, test_name=None):
-        results.append({'message': msg, 'uid': test_name, 'category': module['name'], 'state': 'WARNING'})
-
-    HCLogHandler.failure = failure
-    HCLogHandler.success = success
-    HCLogHandler.warning = warning
-    logger = HCLogHandler(print_progress=False)
+    from ovs.extensions.healthcheck.expose_to_cli import HealthCheckCLIRunner
     results = []
 
-    def run(check, name):
-        module['name'] = name
+    def run(modulename, category):
         try:
-            check.run(logger)
+            hcresults = HealthCheckCLIRunner.run_method(modulename)
+            for testcategory, messageinfo in hcresults['result'].iteritems():
+                for state, messages in messageinfo['messages'].iteritems():
+                    for message in messages:
+                        results.append(dict(state=MESSAGETYPE.get(state),
+                                            message=message['message'],
+                                            uid=message['message'],
+                                            category=category)
+                                       )
+
         except Exception as e:
+            raise
             eco = j.errorconditionhandler.processPythonExceptionObject(e)
             msg = 'Failure in check see [eco|/grid/error condition?id={}]'.format(eco.guid)
-            results.append({'message': msg, 'category': name, 'state': 'ERROR'})
+            results.append({'message': msg, 'category': category, 'state': 'ERROR'})
 
-    run(OpenvStorageHealthCheck, 'OpenvStorage')
-    run(ArakoonHealthCheck, 'Arakoon')
-    run(VolumedriverHealthCheck, 'Volumedriver')
-    run(AlbaHealthCheck, 'Alba')
+    run('ovs', 'OpenvStorage')
+    run('arakoon', 'Arakoon')
+    run('volumedriver', 'Volumedriver')
+    run('alba', 'Alba')
 
     return results
 
