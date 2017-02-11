@@ -16,20 +16,13 @@ enable = True
 async = True
 queue = 'process'
 log = False
-
 roles = ['node']
-
-from xml.etree import ElementTree
-try:
-    import JumpScale.lib.qemu_img
-    import libvirt
-except:
-    enable = False
 
 
 def getContentKey(obj):
     dd = j.code.object2json(obj, True, ignoreKeys=["guid", "id", "sguid", "moddate", 'lastcheck'], ignoreUnderscoreKeys=True)
     return j.tools.hash.md5_string(str(dd))
+
 
 def get_edge_url(disk):
     source = disk.find('source')
@@ -50,6 +43,12 @@ def get_edge_url(disk):
 
 
 def action():
+    from xml.etree import ElementTree
+    try:
+        import JumpScale.lib.qemu_img
+        import libvirt
+    except:
+        return
     syscl = j.clients.osis.getNamespace('system')
     rediscl = j.clients.redis.getByInstance('system')
     con = libvirt.open('qemu:///system')
