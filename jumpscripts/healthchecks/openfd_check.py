@@ -32,8 +32,9 @@ def action():
             elif count > 0.9 * soft:
                 state = 'ERROR'
             if state is not None:
-                msg = "To many open file descriptors for {} with PID {} {}/{}".format(proc.cmdline(), proc.pid, count, soft)
-                results.append({'state': state, 'message': msg, 'category': category, 'uid': msg})
+                msg = "Too many open file descriptors for {} with PID {} {}/{}".format(proc.cmdline(), proc.pid, count, soft)
+                uid = "too many fd for pid {}".format(proc.pid)
+                results.append({'state': state, 'message': msg, 'category': category, 'uid': uid})
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             # process exited just carry on like it never existed
             pass

@@ -1,12 +1,12 @@
 from JumpScale import j
 
 descr = """
-This script make sure any rouge volumedriver is killed by checking its threads count and memory consumption
+healthcheck that monitors rouge volumedriver  by checking its threads count and memory consumptio
 """
 
 organization = "jumpscale"
 author = "muhamada@greenitglobe.com"
-category = "monitor.maintenance"
+category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
 period = 300  # always in sec
@@ -30,6 +30,7 @@ VOLUMEDRIVER_NAME = 'volumedriver_fs'
 class Reasons(object):
     def __init__(self):
         self._reasons = {}
+        self.messages = []
 
     def reason(self, label, value):
         self._reasons[label] = str(value)
@@ -52,6 +53,7 @@ def check_over_memory(value, reasons):
     percent = float(value) / vm.total
     if percent >= MEMORY_THRESHOLD:
         reasons.reason('memory.over', percent)
+        reasons.messages.append("{}/{} memory".format(percent * 100, MEMORY_THRESHOLD * 100))
         return True
     return False
 
@@ -59,6 +61,7 @@ def check_over_memory(value, reasons):
 def check_over_threads(count, reasons):
     if count >= THREAD_THRESHOLD:
         reasons.reason('threads.over', count)
+        reasons.messages.append("{}/{} threads".format(count, THREAD_THRESHOLD))
         return True
 
     return False
@@ -140,13 +143,13 @@ def check_volume_read(ovscl, driver, reasons):
         vdisks = driver_obj['vdisks_guids']
 
         checks = list(scores)
-        for vdisk in checks:
-            if vdisk not in vdisks:
-                scores.remove(vdisk)
+        for vdiskguid in checks:
+            if vdiskguid not in vdisks:
+                scores.remove(vdiskguid)
                 continue
 
             try:
-                vdisk = ovscl.get('/vdisks/{}'.format(vdisk))
+                vdisk = ovscl.get('/vdisks/{}'.format(vdiskguid))
             except:
                 continue
 
@@ -158,10 +161,12 @@ def check_volume_read(ovscl, driver, reasons):
                 if code == 0:
                     scores.remove(vdisk['guid'])
                 else:
+                    reasons.messages.append("Failed to read volume {} ({})".format(vdisk['devicename'], vdisk['guid']))
                     reasons.reason('vdisk.{}'.format(vdisk['guid']), 'read-error')
             except RuntimeError:
                 # Failed to read the info (probably timedout)
                 reasons.reason('vdisk.{}'.format(vdisk['guid']), 'timeout')
+                reasons.messages.append("Reading of volume timedout {} ({})".format(vdisk['devicename'], vdisk['guid']))
                 print('timedout reading {}'.format(url))
                 continue
 
@@ -179,90 +184,6 @@ def get_ovs_client():
     scl = j.clients.osis.getNamespace('system')
     ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
     return j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
-
-
-def find_move_targets(storagedrivers, vpool):
-    # implement mechanism to find the best target to move the disks
-    acc = j.clients.agentcontroller.get()
-
-    results = acc.executeJumpscript(
-        'greenitglobe',
-        'volumedriver_memory_get',
-        role='storagedriver',
-        all=True,
-        gid=j.application.whoAmI.gid,
-        args={'vpool': vpool}
-    )
-
-    results = filter(lambda r: r['state'] == 'OK' and r['result'] < 50, results)
-
-    osis = j.clients.osis.getNamespace('system')
-    targets = set()
-    for result in results:
-        node = osis.node.get('{}_{}'.format(result['gid'], result['nid']))
-        for sd in storagedrivers:
-            if sd['storage_ip'] in node.ipaddr:
-                targets.add(sd['storagerouter_guid'])
-                break
-
-    return targets
-
-
-def wait_all_jobs(ovscl, jobs):
-    import time
-
-    max_wait_time = 120  # 2 minutes
-    sleep_per_wait = 2  # seconds
-    while max_wait_time > 0:
-        st = time.time()
-        for i in range(len(jobs) - 1, -1, -1):
-            job = jobs[i]
-            task_metadata = ovscl.get('/tasks/{0}/'.format(job))
-            if task_metadata['status'] in ('FAILURE', 'SUCCESS'):
-                jobs.pop(i)
-        if len(jobs) == 0:
-            break
-        time.sleep(sleep_per_wait)
-        max_wait_time -= (time.time() - st)
-
-
-def clean_storagedriver(ps, vpool):
-    import json
-    from itertools import cycle
-
-    ips = j.system.net.getIpAddresses()
-    ovscl = get_ovs_client()
-    sds = ovscl.get('/storagedrivers', params={'contents': 'storagerouter,vpool,vdisks_guids'})
-
-    storagedriver = None
-    for sd in sds['data']:
-        if sd['storage_ip'] in ips and sd['mountpoint'] == '/mnt/{}'.format(vpool):
-            storagedriver = sd
-            break
-
-    if storagedriver is None:
-        # didnot find a storagedriver that is on this vpool+ip
-        return
-
-    # find the move target
-    # make sure the current sotrage driver is out of the options
-    sds['data'].remove(storagedriver)
-    targets = find_move_targets(sds['data'], vpool)
-
-    if targets:
-        # we can try moving vdisks before we kill it
-        jobs = []
-        roundrobin = cycle(targets)
-        for disk in storagedriver['vdisks_guids']:
-            target = next(roundrobin)
-
-            job = ovscl.post(
-                '/vdisks/{}/move'.format(disk),
-                data=json.dumps({'target_storagerouter_guid': target})
-            )
-            jobs.append(job)
-
-        wait_all_jobs(ovscl, jobs)
 
 
 def get_memory_avg(agg, pool):
@@ -321,9 +242,8 @@ def is_active(vpool):
 
 
 def action():
-    gid = j.application.whoAmI.gid
-    nid = j.application.whoAmI.nid
     import psutil
+    results = []
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
@@ -354,18 +274,22 @@ def action():
 
             # volumedriver must be cleaned up
             print("CLEANING UP", vpool)
-            clean_storagedriver(process, vpool)
             eco_tags = j.core.tags.getObject()
-            eco_tags.tagSet('nid', nid)
             eco_tags.labelSet('volumedriver.kill')
             j.errorconditionhandler.raiseOperationalWarning(
-                message='kill rogue volumedriver %s on nid:%s and gid:%s ' % (vpool, nid, gid),
+                message='Rogue volumedriver {}'.format(vpool),
                 category='selfhealing',
-                tags=str(eco_tags) + ' %s' % reasons.tags
+                tags=str(eco_tags) + ' {}'.format(reasons.tags)
             )
-
-            j.system.platform.ubuntu.restartService('ovs-volumedriver_{}'.format(vpool))
+        if reasons.messages:
+            message = "\n".join(["Volumedriver {} has some problems:".format(vpool)])
+            msg = {'category': 'Volumedriver',
+                   'state': 'WARNING',
+                   'message': message}
+            results.append(msg)
+    return results
 
 
 if __name__ == '__main__':
-    action()
+    import yaml
+    print(yaml.safe_dump(action(), default_flow_style=False))

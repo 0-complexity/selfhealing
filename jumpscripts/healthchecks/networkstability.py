@@ -11,7 +11,8 @@ When less then 90% produce a warning
 When less then 70% procede an error
 When timings are more then 10ms produce a warning
 When timings are more then 200ms produce am error
-
+Futhermore it makes sure that all nics in network have same MTU
+Otherwise produces an error message
 """
 organization = "cloudscalers"
 author = "deboeckj@greenitglobe.com"
@@ -32,6 +33,16 @@ def updateNetwork(node, networks):
         for ip, cidr in zip(netinfo['ip'], netinfo['cidr']):
             net = netaddr.IPNetwork('{}/{}'.format(ip, cidr)).cidr
             networks.setdefault(net, []).append(ip)
+    return networks
+
+
+def getMTUSubnet(node, networks):
+    for netinfo in node:
+        if netinfo['name'] == 'lo':
+            continue
+        for ip, cidr in zip(netinfo['ip'], netinfo['cidr']):
+            net = netaddr.IPNetwork('{}/{}'.format(ip, cidr)).cidr
+            networks.setdefault(net, []).append(netinfo['mtu'])
     return networks
 
 
@@ -62,10 +73,12 @@ def action():
     scl = j.clients.osis.getNamespace('system')
     nodes = scl.node.search({'gid': j.application.whoAmI.gid, 'active': True, 'roles': {'$in': roles}})[1:]
     networks = {}
+    networksmtu = {}
     results = []
     for node in nodes:
         if node['id'] != j.application.whoAmI.nid:
             updateNetwork(node['netaddr'], networks)
+            getMTUSubnet(node['netaddr'], networksmtu)
 
     def process_network(netinfo):
         if netinfo['name'] == 'lo':
@@ -74,6 +87,7 @@ def action():
             mynet = netaddr.IPNetwork('{}/{}'.format(myip, cidr)).cidr
             netresults = []
             iplist = networks.get(mynet)
+            mtulist = networksmtu.get(mynet)
             if iplist is not None:
                 pool = Pool()
                 pinglist = random.sample(iplist, int(math.log(len(iplist)) + 1))
@@ -82,6 +96,12 @@ def action():
             else:
                 netresults.append({'message': 'Found IP {} ({}) in strange network'.format(
                     myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
+            if mtulist is not None:
+                if len(set(mtulist)) > 1:
+                    results.append({'message': 'All MTUs in network: {}/{} need to be configured the same'.format(myip, cidr), 'state': 'WARNING', 'category': 'Network'})
+                else:
+                    results.append({'message': 'All MTUs all configured the same in network: {}/{}'.format(myip,cidr), 'state': 'OK', 'category': 'Network'})
+
             results.extend(netresults)
 
     threads = []
@@ -92,7 +112,6 @@ def action():
 
     for thread in threads:
         thread.join()
-
     return results
 
 
