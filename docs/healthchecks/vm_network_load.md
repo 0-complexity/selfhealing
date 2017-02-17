@@ -127,7 +127,7 @@ function start(){
 		tc qdisc add dev $IFB parent 1:${QUEUE} handle 2:${QUEUE} tbf rate $RATE burst $BURST latency $DELAY peakrate $RATE minburst 1520
 	done
 
-	# libvirt added a few qdiscs already (if rate is defined in xml), so we'll 
+	# libvirt added a few qdiscs already (if rate is defined in xml), so we'll
 	# need to replace it for traffic going to the VM
 
 	# remove root qdiscs (libvirt ones) from $VMIF
@@ -135,7 +135,7 @@ function start(){
 	# add the same netem qdisc
 	tc qdisc add dev $VMIF root netem $DELAY rate $RATE
 
-	
+
 }
 
 
@@ -154,7 +154,7 @@ A user could be capable of using the GUI of the routerOS to
   - add an ip address to the public interface, of which we don't know the existence
   - advertise an IPv6 subnet
   - run a Prefix delegation server
-  - provide dhcpv6 
+  - provide dhcpv6
 
 To mi
 
@@ -230,3 +230,50 @@ case $1 in
 		;;
 esac
 ```
+
+## For blocking the gwm-xxx port on the ROS into the envision
+
+With ROS having a leg into the environment throug it's interface on gw_mgmt, we need to stop any attempt from someone connected on cli of the ROS to access the IP addrs (all cpu nodes) in 10.199.0.0/22
+
+Let's block it off, but allow for the gw_mgmt net to get INTO the ROS
+
+```bash
+ros=routeros_00da
+bridge=gw_mgmt
+rosmac=`virsh domiflist routeros_00da | awk '/gwm-/{print $5}'`
+rosport=`ovs-vsctl -f table -d bare --no-heading -- --columns=ofport list Interface pub-${ros/routeros_}`
+rosport=$(( $rosport ))
+patchport=$(( $patchport ))
+
+# first, remove all forwarding on this bridge
+sudo ovs-ofctl del-flows ${bridge}
+
+# drop network chatter
+sudo ovs-ofctl add-flow ${bridge} "table=0,priority=100,dl_src=01:00:00:00:00:00/01:00:00:00:00:00, actions=drop"
+
+# drop all UDP
+sudo ovs-ofctl add-flow ${bridge} "table=0,priority=100,dl_type=0x0800,nw_proto=17,actions=drop"
+
+# drop all ipv6
+sudo ovs-ofctl add-flow ${bridge} "table=0,in_port=${rosport},priority=100,dl_src=${rosmac},dl_type=0x86dd,actions=drop"
+
+# send rest in table 1
+sudo ovs-ofctl add-flow ${bridge} "table=0, priority=0, actions=resubmit(,1)"
+
+# Table 1 ; stateful packet filter ( ovs >= 2.5 )
+
+sudo ovs-ofctl add-flows ${bridge} - << EOF
+table=1,priority=1,action=drop
+table=1,priority=10,arp,action=normal
+table=1,priority=100,ip,ct_state=-trk,action=ct(table=2)
+table=2,nw_src=10.199.0.0/22,dl_dst=${rosmac},ip,ct_state=+trk+new,action=ct(commit),normal
+table=2,nw_src=10.199.0.0/22,dl_dst=${rosmac},ip,ct_state=+trk+est,action=normal
+
+table=2,in_port=${rosport},ip,ct_state=+trk+new,action=drop
+table=2,in_port=${rosport},ip,ct_state=+trk+est,action=normal
+
+EOF
+
+```
+
+TODO : also block arp who-has requests that are NOT specifically for
