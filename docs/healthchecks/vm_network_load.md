@@ -263,15 +263,21 @@ sudo ovs-ofctl add-flow ${bridge} "table=0, priority=0, actions=resubmit(,1)"
 # Table 1 ; stateful packet filter ( ovs >= 2.5 )
 
 sudo ovs-ofctl add-flows ${bridge} - << EOF
+# start dropping it all (fallthrough (lowest priority))
 table=1,priority=1,action=drop
+# allow all arp (for now)
 table=1,priority=10,arp,action=normal
+# when an ip packet arrives and is not tracked, send it to the conntracker and continue table2
 table=1,priority=100,ip,ct_state=-trk,action=ct(table=2)
+# a packet from 10... with dest MAC, that is IP, and is a NEW session packet, commit it in conntracker
 table=2,nw_src=10.199.0.0/22,dl_dst=${rosmac},ip,ct_state=+trk+new,action=ct(commit),normal
+# and do normal packet forwarding processing on it
 table=2,nw_src=10.199.0.0/22,dl_dst=${rosmac},ip,ct_state=+trk+est,action=normal
-
+# otherwise, all new IP sessions get dropped
 table=2,in_port=${rosport},ip,ct_state=+trk+new,action=drop
+# unless they are related to a comitted session
 table=2,in_port=${rosport},ip,ct_state=+trk+est,action=normal
-
+# fall through over prio 10 and 1 (specified above)
 EOF
 
 ```
