@@ -123,7 +123,7 @@ def check_volume_read(ovscl, driver, reasons):
 
         try:
             print('qemu-img info {}'.format(url))
-            code, out, err = j.do.execute('qemu-img info {}'.format(url), timeout=10, outputStdout=False, dieOnNonZeroExitCode=False)
+            code, out, err = j.do.execute(['qemu-img', 'info', url], timeout=10, outputStdout=False, dieOnNonZeroExitCode=False, useShell=False)
         except RuntimeError:
             # Failed to read the info (probably timedout)
             print('timedout reading {}'.format(url))
