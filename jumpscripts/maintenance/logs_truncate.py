@@ -1,6 +1,7 @@
 from JumpScale import j
 import psutil
 import re
+import time
 import os
 import datetime
 from collections import defaultdict
@@ -23,9 +24,45 @@ enable = True
 log = True
 
 
+class LogArchiver:
+    def __init__(self):
+        self.client = None
+        self.sftp = None
+        try:
+            from CloudscalerLibcloud.utils.gridconfig import GridConfig
+            self.config = GridConfig()
+            server = self.config.get('log_server')
+            if server:
+                import paramiko
+                self.client = paramiko.SSHClient()
+                self.client.set_missing_host_key_policy(paramiko.WarningPolicy())
+                try:
+                    self.client.connect(server['host'], server.get('port', 22), server.get('username'), server.get('password'))
+                    self.sftp = self.client.open_sftp()
+                except Exception as e:
+                    j.errorconditionhandler.processPythonExceptionObject(e)
+        except ImportError:
+            pass
+        self.destfolder = "/".join(j.system.net.getHostname().split('.')[::-1] + [time.strftime('%Y%m%d-%H%M%S')])
+
+    def make_dirs(self, destfile):
+        root = []
+        for segment in destfile.split('/')[:-1]:
+            root.append(segment)
+            self.sftp.mkdir(j.system.fs.joinPaths(*root))
+
+    def archive_log(self, filepath):
+        if not self.sftp:
+            return
+        dest = j.system.fs.joinPaths(self.destfolder, filepath.strip('/'))
+        self.make_dirs(dest)
+        self.sftp.put(filepath, dest)
+
+
 def action(locations=['/opt/jumpscale7/var/log/', '/var/log/'], freespace_needed=20.0):
     # mountpoints: List of mountpoints where we can do potential cleaning
     # freespace_needed: Percentage of free diskspace needed at least
+    logarchiver = LogArchiver()
 
     if '/var/log/' not in locations:
         locations.append('/var/log/')
@@ -46,14 +83,14 @@ def action(locations=['/opt/jumpscale7/var/log/', '/var/log/'], freespace_needed
     # Cleanup logs in each partition
     errors = list()
     for partition, logfiles in logfiles_per_partition.iteritems():
-        errors.extend(_cleanup_logs_in_partition(partition, logfiles, freespace_needed))
+        errors.extend(_cleanup_logs_in_partition(partition, logfiles, freespace_needed, logarchiver))
 
     # In case any error occurred raise error
     if errors:
         raise RuntimeError("Failures in log cleanup:\n\n{}".format('\n\n'.join(errors)))
 
 
-def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
+def _cleanup_logs_in_partition(partition, logfiles, freespace_needed, logarchiver):
     def check_diskspace():
         return 100 - psutil.disk_usage(partition.mountpoint).percent > freespace_needed
     errors = list()
@@ -67,6 +104,7 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
     for logfile in [lf for lf in logfiles if r.match(lf)]:
         j.logger.log('rm "{}"'.format(logfile), 1)
         try:
+            logarchiver.archive_log(logfile)
             j.do.delete(logfile, force=True)
             logfiles.remove(logfile)
         except Exception as e:
@@ -83,6 +121,7 @@ def _cleanup_logs_in_partition(partition, logfiles, freespace_needed):
     for logfile in logfiles:
         j.logger.log('truncate "%s"' % logfile, 1)
         try:
+            logarchiver.archive_log(logfile)
             with open(logfile, 'w') as f:
                 f.truncate()  # open in write mode would truncate the file anyway but just to make sure.
                 f.write("Logfile truncated by JumpScale agent on {}\n".format(datetime.datetime.now()))
