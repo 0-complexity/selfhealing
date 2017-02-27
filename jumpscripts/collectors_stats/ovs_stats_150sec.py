@@ -8,7 +8,7 @@ organization = 'greenitglobe'
 author = "deboeckj@codescalers.com"
 version = "1.0"
 
-enable = False
+enable = True
 async = True
 period = 60  # 1 hrs
 roles = ['controller', ]
