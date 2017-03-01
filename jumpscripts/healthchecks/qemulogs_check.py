@@ -17,13 +17,18 @@ log = False
 
 
 def action():
-    from CloudscalerLibcloud.utils.libvirtutil import LibvirtUtil
+    import libvirt
     from multiprocessing.pool import ThreadPool as Pool
+    con = libvirt.open()
 
     category = "QEMU Logs"
     vmlogpath = "/var/log/libvirt/qemu/{vm_name}.log"
-    libvirt = LibvirtUtil()
-    domains_list = [domain['name'] for domain in libvirt.list_domains() if domain['state'] == 1]
+    domains_list = []
+    for domain in con.listAllDomains(libvirt.VIR_DOMAIN_RUNNING):
+        try:
+            domains_list.append(domain.name())
+        except libvirt.libvirtError:
+            pass
 
     # go for multiprocessing.
     results = []
