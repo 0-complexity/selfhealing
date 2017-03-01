@@ -254,39 +254,42 @@ def action():
 
     # - Find all volumedriver processe
     for process in psutil.process_iter():
-        if process.name() != VOLUMEDRIVER_NAME:
-            continue
+        try:
+            if process.name() != VOLUMEDRIVER_NAME:
+                continue
 
-        vpool = get_vpool(process)
-        if not is_active(vpool):
-            print('volumedriver {} is not active'.format(vpool))
-            continue
+            vpool = get_vpool(process)
+            if not is_active(vpool):
+                print('volumedriver {} is not active'.format(vpool))
+                continue
 
-        print('volumedriver {} is active: running health checks ...'.format(vpool))
-        storage_driver = filter_storage_driver(storage_drivers, vpool)
-        mem = get_memory_avg(aggregatorcl, vpool)
+            print('volumedriver {} is active: running health checks ...'.format(vpool))
+            storage_driver = filter_storage_driver(storage_drivers, vpool)
+            mem = get_memory_avg(aggregatorcl, vpool)
 
-        # check number of threads, memory, or if vdisks are not readable
-        reasons = Reasons()
-        if check_over_threads(len(process.threads()), reasons) or \
-                check_over_memory(mem, reasons) or \
-                check_volume_read(ovscl, storage_driver, reasons):
+            # check number of threads, memory, or if vdisks are not readable
+            reasons = Reasons()
+            if check_over_threads(len(process.threads()), reasons) or \
+                    check_over_memory(mem, reasons) or \
+                    check_volume_read(ovscl, storage_driver, reasons):
 
-            # volumedriver must be cleaned up
-            print("CLEANING UP", vpool)
-            eco_tags = j.core.tags.getObject()
-            eco_tags.labelSet('volumedriver.kill')
-            j.errorconditionhandler.raiseOperationalWarning(
-                message='Rogue volumedriver {}'.format(vpool),
-                category='selfhealing',
-                tags=str(eco_tags) + ' {}'.format(reasons.tags)
-            )
-        if reasons.messages:
-            message = "\n".join(["Volumedriver {} has some problems:".format(vpool)])
-            msg = {'category': 'Volumedriver',
-                   'state': 'WARNING',
-                   'message': message}
-            results.append(msg)
+                # volumedriver must be cleaned up
+                print("CLEANING UP", vpool)
+                eco_tags = j.core.tags.getObject()
+                eco_tags.labelSet('volumedriver.kill')
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message='Rogue volumedriver {}'.format(vpool),
+                    category='selfhealing',
+                    tags=str(eco_tags) + ' {}'.format(reasons.tags)
+                )
+            if reasons.messages:
+                message = "\n".join(["Volumedriver {} has some problems:".format(vpool)])
+                msg = {'category': 'Volumedriver',
+                       'state': 'WARNING',
+                       'message': message}
+                results.append(msg)
+        except psutil.NoSuchProcess:
+            pass  # process has stopped no need to monitor it
     return results
 
 
