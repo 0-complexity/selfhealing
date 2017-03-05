@@ -26,10 +26,9 @@ def action():
     pools = ccl.externalnetwork.search(query={})[1:]  # ignore the count of search result.
 
     for pool in pools:
-        gid = pool['gid']
         ips = pool['ips']
         ips_count = len(ips)
-        usedips_count = ccl.cloudspace.count({'gid': gid, 'status': 'DEPLOYED'})
+        usedips_count = ccl.cloudspace.count({'externalnetworkId': pool['id'], 'status': 'DEPLOYED'})
         for vm in ccl.vmachine.search({'nics.type': 'PUBLIC', 'status': {'$nin': ['ERROR', 'DESTROYED']}})[1:]:
             for nic in vm['nics']:
                 if nic['type'] == 'PUBLIC':
