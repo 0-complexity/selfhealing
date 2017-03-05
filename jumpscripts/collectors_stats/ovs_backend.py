@@ -18,7 +18,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = ['storagemaster']
+roles = ['storagemaster', 'stats']
 
 
 def format_tags(tags):

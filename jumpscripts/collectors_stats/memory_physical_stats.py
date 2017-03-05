@@ -18,7 +18,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = []
+roles = ['stats']
 
 
 def get_swap_cached():

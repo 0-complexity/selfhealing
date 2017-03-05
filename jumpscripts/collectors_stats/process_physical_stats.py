@@ -22,7 +22,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = ['node']
+roles = ['stats']
 
 NAMEFINDER = dict(volumedriver_fs=[[re.compile(r"^/mnt/(\w+)$")]],
                   arakoon=[[re.compile("^arakoon://config/ovs/arakoon/(.+?)/config.*$")],

@@ -19,7 +19,7 @@ timeout = period * 0.2
 enable = True
 async = True
 queue = 'process'
-roles = ['cpunode']
+roles = ['cpunode', 'stats']
 log = False
 
 
