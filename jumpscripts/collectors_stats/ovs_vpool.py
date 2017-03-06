@@ -18,7 +18,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = ['storagemaster', 'stats']
+roles = ['storagemaster']
 
 
 def pop_realtime_info(points):

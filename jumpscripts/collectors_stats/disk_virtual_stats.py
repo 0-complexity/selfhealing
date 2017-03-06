@@ -17,7 +17,7 @@ async = True
 queue = 'process'
 log = False
 
-roles = ['cpunode', 'stats']
+roles = ['cpunode']
 
 
 def action():
