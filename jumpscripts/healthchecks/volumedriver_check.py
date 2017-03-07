@@ -73,7 +73,6 @@ def check_volume_read(ovscl, driver, reasons):
     try to read disk info of few random disks (10% of all disks)
     """
     import random
-    import time
 
     print('checking driver {mountpoint}'.format(**driver))
     driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'cluster_node_config,vdisks_guids'})
@@ -124,60 +123,14 @@ def check_volume_read(ovscl, driver, reasons):
         try:
             print('qemu-img info {}'.format(url))
             code, out, err = j.do.execute(['qemu-img', 'info', url], timeout=10, outputStdout=False, dieOnNonZeroExitCode=False, useShell=False)
+            if code != 0:
+                reasons.messages.append("Failed to read volume {} ({})".format(vdisk['devicename'], vdisk['guid']))
+                reasons.reason('vdisk.{}'.format(vdisk['guid']), 'read-error')
         except RuntimeError:
             # Failed to read the info (probably timedout)
+            reasons.reason('vdisk.{}'.format(vdisk['guid']), 'timeout')
+            reasons.messages.append("Reading of volume timedout {} ({})".format(vdisk['devicename'], vdisk['guid']))
             print('timedout reading {}'.format(url))
-            scores.append(vdisk['guid'])
-            continue
-
-        if code != 0:
-            scores.append(vdisk['guid'])
-
-    if len(scores) == 0:
-        return False
-
-    for x in range(10):
-        time.sleep(5)
-
-        driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'vdisks_guids'})
-        vdisks = driver_obj['vdisks_guids']
-
-        checks = list(scores)
-        for vdiskguid in checks:
-            if vdiskguid not in vdisks:
-                scores.remove(vdiskguid)
-                continue
-
-            try:
-                vdisk = ovscl.get('/vdisks/{}'.format(vdiskguid))
-            except:
-                continue
-
-            url = '{}{}'.format(base_url, vdisk['devicename'][:-4])
-
-            try:
-                print('qemu-img info {}'.format(url))
-                code, out, err = j.do.execute(['qemu-img', 'info', url], timeout=10, outputStdout=False, dieOnNonZeroExitCode=False, useShell=False)
-                if code == 0:
-                    scores.remove(vdisk['guid'])
-                else:
-                    reasons.messages.append("Failed to read volume {} ({})".format(vdisk['devicename'], vdisk['guid']))
-                    reasons.reason('vdisk.{}'.format(vdisk['guid']), 'read-error')
-            except RuntimeError:
-                # Failed to read the info (probably timedout)
-                reasons.reason('vdisk.{}'.format(vdisk['guid']), 'timeout')
-                reasons.messages.append("Reading of volume timedout {} ({})".format(vdisk['devicename'], vdisk['guid']))
-                print('timedout reading {}'.format(url))
-                continue
-
-        if len(scores) == 0:
-            break
-
-    if len(scores) == 0:
-        return False
-
-    reasons.reason('scores', len(scores))
-    return True
 
 
 def get_ovs_client():
@@ -269,23 +222,19 @@ def action():
 
             # check number of threads, memory, or if vdisks are not readable
             reasons = Reasons()
-            if check_over_threads(len(process.threads()), reasons) or \
-                    check_over_memory(mem, reasons) or \
-                    check_volume_read(ovscl, storage_driver, reasons):
-
-                # volumedriver must be cleaned up
-                print("CLEANING UP", vpool)
-                eco_tags = j.core.tags.getObject()
-                eco_tags.labelSet('volumedriver.kill')
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message='Rogue volumedriver {}'.format(vpool),
-                    category='selfhealing',
-                    tags=str(eco_tags) + ' {}'.format(reasons.tags)
-                )
+            check_over_threads(len(process.threads()), reasons)
+            check_over_memory(mem, reasons)
+            check_volume_read(ovscl, storage_driver, reasons)
             if reasons.messages:
                 message = "\n".join(["Volumedriver {} has some problems:".format(vpool)])
                 msg = {'category': 'Volumedriver',
                        'state': 'WARNING',
+                       'message': message}
+                results.append(msg)
+            else:
+                message = "Volumedriver {} has no problems.".format(vpool)
+                msg = {'category': 'Volumedriver',
+                       'state': 'OK',
                        'message': message}
                 results.append(msg)
         except psutil.NoSuchProcess:
