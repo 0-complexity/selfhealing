@@ -32,7 +32,8 @@ def action():
             if int(key.split('_')[1]) == int(stack['referenceId']):
                 ti = int(time.time() - value[0])
                 if ti > 300:
-                    pcl.actors.cloudbroker.computenode.maintenance(id=stack['id'], gid=stack['gid'], vmaction='move')
+                    pcl.actors.cloudbroker.computenode.maintenance(id=stack['id'], gid=stack['gid'], vmaction='move',
+                                                                   message='Agent down, putting node into maintenance')
                     eco = j.errorconditionhandler.getErrorConditionObject(msg='Node: %s is put in maintenance mode' % (stack['referenceId']),
                                                                           msgpub='Node: %s is put in maintenance mode' % (stack['referenceId']),
                                                                           category='selfhealing', level=3,
