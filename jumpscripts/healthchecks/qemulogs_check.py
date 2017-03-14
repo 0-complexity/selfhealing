@@ -35,11 +35,15 @@ def action():
 
     def report_domain(domain):
         logpath = vmlogpath.format(vm_name=domain)
-        with open(logpath) as f:
-            last10 = f.readlines()[-1:-10]
-            for line in last10:
-                if 'error' in line.lower():
-                    results.append(dict(state='ERROR', category=category, message=line))
+        try:
+            with open(logpath) as f:
+                last10 = f.readlines()[-1:-10]
+                for line in last10:
+                    if 'error' in line.lower():
+                        results.append(dict(state='ERROR', category=category, message=line))
+        except IOError as e:
+            if e.errno != 2:
+                raise
 
     pool = Pool(50)
     pool.map(report_domain, domains_list)
@@ -48,6 +52,7 @@ def action():
         results.append(dict(state='OK', category=category, message="QEMU Logs are OK."))
 
     return results
+
 
 if __name__ == '__main__':
     import yaml
