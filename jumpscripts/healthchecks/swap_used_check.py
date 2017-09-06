@@ -4,8 +4,8 @@ descr = """
 Checks the amount of swap used by the system, and throws an error if higher than expected.
 
 Currently throws:
-- WARNING if more than 1 GB
-- ERROR if more than 2 GB
+- WARNING if more than 10 GB
+- ERROR if more than 14 GB
 
 Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 """
@@ -27,6 +27,7 @@ queue = 'process'
 
 
 def action():
+    import psutil
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     nodekey = '{}_{}'.format(gid, nid)
@@ -34,12 +35,14 @@ def action():
     rcl = j.clients.redis.getByInstance('system')
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
     stat = statsclient.statGet('machine.memory.swap.used@phys.{}.{}'.format(gid, nid))
+    memstat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
+    totalmemory = psutil.virtual_memory().total / (1024 ** 2)
 
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
 
-    if stat is None:
+    if stat is None or memstat is None:
         level = 2
         result['state'] = 'WARNING'
         result['message'] = 'Swap used value is not available'
@@ -50,15 +53,16 @@ def action():
     result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
     level = None
 
-    if avg_swap_used > 2000:
-        level = 1
-        result['state'] = 'ERROR'
-        result['uid'] = 'Swap used value is too large'
+    if memstat.h_avg / totalmemory > 0.8:
+        if avg_swap_used > 14000:
+            level = 1
+            result['state'] = 'ERROR'
+            result['uid'] = 'Swap used value is too large'
 
-    elif avg_swap_used > 1000:
-        level = 2
-        result['state'] = 'WARNING'
-        result['uid'] = 'Swap used value is too large'
+        elif avg_swap_used > 10000:
+            level = 2
+            result['state'] = 'WARNING'
+            result['uid'] = 'Swap used value is too large'
 
     if level:
         msg = 'Swap used is too high: %.2fMB' % avg_swap_used
