@@ -43,7 +43,6 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
     connection = libvirt.open()
     cbcl = j.clients.osis.getNamespace('cloudbroker')
     ccl = j.clients.osis.getNamespace('system')
-    acl = j.clients.agentcontroller.get()
 
     # for demo use
     def emailsend(msg, vm_dict):

@@ -22,22 +22,22 @@ log = True
 
 
 def action():
-    import JumpScale.grid.osis
     osiscl = j.clients.osis.getByInstance('main')
     status = osiscl.getStatus()
     results = list()
-    if status['mongodb'] == False :
+    if status['mongodb'] is False:
         j.errorconditionhandler.raiseOperationalCritical('MongoDB halted', 'monitoring', die=False)
         results.append({'message': 'MongoDB halted', 'uid': 'MongoDB halted', 'state': 'HALTED', 'category': 'Databases'})
     else:
         results.append({'message': 'MongoDB running', 'state': 'OK', 'category': 'Databases'})
 
-    if status['influxdb'] == False :
+    if status['influxdb'] is False:
         j.errorconditionhandler.raiseOperationalCritical('InfluxDB halted', 'monitoring', die=False)
         results.append({'message': 'InfluxDB halted', 'uid': 'InfluxDB halted', 'state': 'HALTED', 'category': 'Databases'})
     else:
         results.append({'message': 'InfluxDB is running', 'state': 'OK', 'category': 'Databases'})
     return results
 
+
 if __name__ == "__main__":
-    print action()
+    print(action())

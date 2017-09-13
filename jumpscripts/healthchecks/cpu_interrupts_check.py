@@ -47,24 +47,13 @@ def action():
 
     avg_inter = int(stat.h_avg)
     result['message'] = 'Number of interrupts per second is: %d/s' % avg_inter
-    level = None
     if avg_inter > 198000:
-        level = 1
         result['state'] = 'ERROR'
         result['uid'] = 'Number of interrupts per second is too high'
 
     elif avg_inter > 180000:
-        level = 2
         result['state'] = 'WARNING'
         result['uid'] = 'Number of interrupts per second is too high'
-
-    if level:
-        msg = 'Number of interrupts per second is too high: %d/s' % avg_inter
-        result['message'] = msg
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-        eco.nid = nid
-        eco.gid = gid
-        eco.process()
 
     return [result]
 

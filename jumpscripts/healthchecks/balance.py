@@ -20,9 +20,9 @@ queue = 'process'
 roles = ['cpunode', 'storagenode', 'storagedriver', ]
 
 
-
 def action():
     j.system.process.execute('nohup /bin/btrfs balance start -dusage=80 / > /dev/null &', useShell=True)
+
 
 if __name__ == '__main__':
     action()

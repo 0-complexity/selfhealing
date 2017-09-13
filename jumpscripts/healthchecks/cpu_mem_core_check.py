@@ -65,28 +65,18 @@ def action():
 
 
 def get_results(type_, percent):
-    level = None
     result = dict()
     result['state'] = 'OK'
     result['message'] = r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent)
     result['category'] = 'System Load'
     if percent > 95:
-        level = 1
         result['state'] = 'ERROR'
         result['uid'] = r'Average %s load during last hour was too high' % (type_.upper())
     elif percent > 80:
-        level = 2
         result['state'] = 'WARNING'
         result['uid'] = r'Avergage %s load during last hour was too high' % (type_.upper())
-    if level:
-        #  500_6_cpu.promile
-        msg = 'Avergage %s load during last hour was above treshhold value: %.2f%%' % (type_.upper(), percent)
-        result['message'] = msg
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-        eco.nid = j.application.whoAmI.nid
-        eco.gid = j.application.whoAmI.gid
-        eco.process()
     return result
+
 
 if __name__ == '__main__':
     import yaml

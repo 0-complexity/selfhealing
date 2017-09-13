@@ -49,23 +49,13 @@ def action():
 
     avgctx = stat.h_avg
     result['message'] = 'Number of CPU context switches per second: %.2f/s' % avgctx
-    level = None
     if avgctx > 1000000:
-        level = 1
         result['state'] = 'ERROR'
         result['uid'] = 'Number of CPU context switches per second is too high'
 
     elif avgctx > 600000:
-        level = 2
         result['state'] = 'WARNING'
         result['uid'] = 'Number of CPU context switches per second is too high'
-
-    if level:
-        msg = 'Number of CPU context switches per second is too high: %.2f/s' % avgctx
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-        eco.nid = nid
-        eco.gid = gid
-        eco.process()
 
     return [result]
 

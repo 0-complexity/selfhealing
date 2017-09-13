@@ -29,6 +29,7 @@ def action():
         results.append({'state': 'OK', 'category': 'Orphanage', 'message': 'No orphan disks found.'})
     return results
 
+
 if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')
-    print action()
+    print(action())

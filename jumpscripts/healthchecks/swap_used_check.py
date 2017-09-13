@@ -43,7 +43,6 @@ def action():
     result['category'] = 'System Load'
 
     if stat is None or memstat is None:
-        level = 2
         result['state'] = 'WARNING'
         result['message'] = 'Swap used value is not available'
         result['uid'] = result['message']
@@ -51,25 +50,15 @@ def action():
 
     avg_swap_used = stat.h_avg
     result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
-    level = None
 
     if memstat.h_avg / totalmemory > 0.8:
         if avg_swap_used > 14000:
-            level = 1
             result['state'] = 'ERROR'
             result['uid'] = 'Swap used value is too large'
 
         elif avg_swap_used > 10000:
-            level = 2
             result['state'] = 'WARNING'
             result['uid'] = 'Swap used value is too large'
-
-    if level:
-        msg = 'Swap used is too high: %.2fMB' % avg_swap_used
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-        eco.nid = nid
-        eco.gid = gid
-        eco.process()
 
     return [result]
 

@@ -61,7 +61,6 @@ def action():
 
                 if (used_memory / maxmemory) * 100 > 90:
                     state = 'WARNING'
-                    j.errorconditionhandler.raiseOperationalWarning(result['message'], 'monitoring')
 
             result['state'] = state
             result['uid'] = errmsg

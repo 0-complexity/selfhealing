@@ -62,11 +62,9 @@ def action():
                 jumpscript = j.clients.redisworker.getJumpscriptFromName('0-complexity', 'logs_truncate')
                 j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
             if checkusage and (freepercent < 10):
-                j.errorconditionhandler.raiseOperationalWarning(result['message'], 'monitoring')
                 result['state'] = 'WARNING'
                 result['uid'] = result['message']
             if checkusage and (freepercent < 5):
-                j.errorconditionhandler.raiseOperationalCritical(result['message'], 'monitoring', die=False)
                 result['state'] = 'ERROR'
                 result['uid'] = result['message']
         results.append(result)

@@ -40,7 +40,6 @@ def action():
     result['category'] = 'System Load'
 
     if stat is None:
-        level = 2
         result['state'] = 'WARNING'
         result['message'] = 'Number of threads is not available'
         result['uid'] = result['message']
@@ -48,24 +47,14 @@ def action():
 
     avg_thread = int(stat.h_avg)
     result['message'] = 'Number of threads is: %d' % avg_thread
-    level = None
 
     if avg_thread > 20000:
-        level = 1
         result['state'] = 'ERROR'
         result['uid'] = 'Number of threads is too high'
 
     elif avg_thread > 18000:
-        level = 2
         result['state'] = 'WARNING'
         result['uid'] = 'Number of threads is too high'
-
-    if level:
-        msg = 'Number of threads is too high: %d' % avg_thread
-        eco = j.errorconditionhandler.getErrorConditionObject(msg=msg, category='monitoring', level=level, type='OPERATIONS')
-        eco.nid = nid
-        eco.gid = gid
-        eco.process()
 
     return [result]
 
