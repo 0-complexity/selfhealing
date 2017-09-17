@@ -10,12 +10,12 @@ category = "monitor.maintenance"
 license = "bsd"
 version = "1.0"
 interval = (2 * j.application.whoAmI.nid) % 30
-period = "%s, 7, * * *" % (interval)
+period = "%s 7 * * *" % (interval)
 startatboot = False
 order = 1
 enable = True
 async = True
-log = False
+log = True
 queue = 'process'
 roles = ['storagenode']
 
