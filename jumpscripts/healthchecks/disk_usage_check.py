@@ -24,9 +24,19 @@ log = True
 
 
 def action():
+    from collections import namedtuple
+    treshold = namedtuple('treshold', 'warning truncate error')
+    # tresholds for disk usage warning, truncate logs, error
+    # if truncagte logs is negative dont execute truncate logs
+    TRESHOLDS = {
+        'ALBA-CACHE': treshold(8, -1, 5),
+        'ALBA-STORAGE': treshold(10, -1, 5),
+        'DEFAULT': treshold(20, 15, 10),
+    }
     import psutil
     result = dict()
     pattern = None
+    cpunode = 'cpunode' in j.core.grid.roles
 
     if j.application.config.exists('gridmonitoring.disk.pattern'):
         pattern = j.application.config.getStr('gridmonitoring.disk.pattern')
@@ -57,14 +67,23 @@ def action():
             usage = psutil.disk_usage(partition.mountpoint)
         result['message'] = disktoStr(partition, usage)
         if usage is not None:
+            if 'alba-asd' in partition.mountpoint:
+                if cpunode:
+                    tresholds = TRESHOLDS['ALBA-CACHE']
+                else:
+                    tresholds = TRESHOLDS['ALBA-STORAGE']
+            else:
+                tresholds = TRESHOLDS['DEFAULT']
             freepercent = (usage.free / float(usage.total)) * 100
-            if checkusage and (freepercent < 20):
+            if checkusage and tresholds.truncate > 0 and (freepercent < tresholds.truncate):
                 jumpscript = j.clients.redisworker.getJumpscriptFromName('0-complexity', 'logs_truncate')
                 j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
-            if checkusage and (freepercent < 10):
+            if checkusage and (freepercent < tresholds.warning):
+                j.errorconditionhandler.raiseOperationalWarning(result['message'], 'monitoring')
                 result['state'] = 'WARNING'
                 result['uid'] = result['message']
-            if checkusage and (freepercent < 5):
+            if checkusage and (freepercent < tresholds.error):
+                j.errorconditionhandler.raiseOperationalCritical(result['message'], 'monitoring', die=False)
                 result['state'] = 'ERROR'
                 result['uid'] = result['message']
         results.append(result)
