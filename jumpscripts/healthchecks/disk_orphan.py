@@ -36,8 +36,6 @@ def action():
         url = urlparse.urlparse(deviceurl.rsplit('@', 1)[0])
         device = url.path + '.raw'
         devices.append(device)
-        if 'bootdisk' in device:
-            devices.append(device.replace('bootdisk', 'cloud-init'))
         return devices
 
     def get_network_devices(networks):
@@ -48,8 +46,15 @@ def action():
             disks[devicename] = 'DEPLOYED'
         return disks
 
+    def get_cloud_inits(vms):
+        disks = {}
+        for vm in vms:
+            devicename = '/vm-{id}/cloud-init-vm-{id}.raw'.format(id=vm['id'])
+            disks[devicename] = 'DEPLOYED'
+        return disks
+
     vcl = j.clients.osis.getNamespace('vfw', j.core.osis.client)
-    disks = cbcl.disk.search({'$fields': ['status', 'referenceId']}, size=0)[1:]
+    disks = cbcl.disk.search({'$fields': ['status', 'referenceId'], '$query': {'gid': gid}}, size=0)[1:]
     # Map referenceIds and statuses
     diskmap = {}
     for disk in disks:
@@ -57,7 +62,10 @@ def action():
             diskmap[device] = disk['status']
     networks = vcl.virtualfirewall.search({'$fields': ['id'], '$query': {'gid': j.application.whoAmI.gid}}, size=0)[1:]
     diskmap.update(get_network_devices(networks))
-
+    vms = cbcl.vmachine.search({'$fields': ['id'],
+                                '$query': {'status': {'$ne': 'DESTROYED'}}}, size=0)[1:]
+    cloudinits = get_cloud_inits(vms)
+    diskmap.update(cloudinits)
     results = []
 
     for disk in ovscl.get('/vdisks', params={'contents': 'devicename'})['data']:
