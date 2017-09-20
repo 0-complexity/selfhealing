@@ -21,15 +21,6 @@ log = False
 roles = ['storagemaster']
 
 
-def pop_realtime_info(points):
-    pop_points = [k for (k, v) in points.iteritems() if k.endswith("_ps")]
-
-    for point in pop_points:
-        points.pop(point, None)
-
-    return points
-
-
 def format_tags(tags):
     out = ''
     for k, v in tags.iteritems():
@@ -47,14 +38,12 @@ def action():
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
-    all_results = {}
-
     vpools = VPoolList.get_vpools()
     if len(vpools) == 0:
         return
 
     for vpool in vpools:
-        metrics = pop_realtime_info(vpool.statistics)
+        metrics = vpool.statistics
         now = j.base.time.getTimeEpoch()
 
         str_metrics = json.dumps(metrics)
@@ -62,6 +51,8 @@ def action():
         vpool_name = vpool.name
 
         for key, value in metrics.iteritems():
+            if key.endswith('_ps') or not isinstance(value, float):
+                continue
             key = "ovs.vpool.%s@%s" % (key, vpool_name)
             tags = {
                 'gid': j.application.whoAmI.gid,
@@ -70,11 +61,6 @@ def action():
             }
             aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
-        all_results[vpool_name] = metrics
-
-    return all_results
 
 if __name__ == '__main__':
-    result = action()
-    import yaml
-    print yaml.dump(result)
+    action()
