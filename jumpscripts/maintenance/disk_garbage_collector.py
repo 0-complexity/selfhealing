@@ -28,7 +28,6 @@ def action():
     osis = j.clients.osis.getNamespace('system')
     accl = j.clients.agentcontroller.get()
 
-    debug_client = src._debug
     for vpool in VPoolList.get_vpools():
         mountpoint = '/mnt/{0}'.format(vpool.name)
         config_file = Configuration.get_configuration_path('/ovs/vpools/{0}/hosts/{1}/config'.format(vpool.guid, vpool.storagedrivers[0].name))
@@ -49,7 +48,7 @@ def action():
         arakoon_cluster_nodes = [src.ArakoonNodeConfig(str(node['node_id']), str(node['host']), int(node['port'])) for node in config['volume_registry']['vregistry_arakoon_cluster_nodes']]
 
         object_registry_client = src.ObjectRegistryClient(cluster_id, arakoon_cluster_id, arakoon_cluster_nodes)
-        filesystem_metadata_client = debug_client.FileSystemMetaDataClient(cluster_id, arakoon_cluster_id, arakoon_cluster_nodes)
+        filesystem_metadata_client = src.FileSystemMetaDataClient(cluster_id, arakoon_cluster_id, arakoon_cluster_nodes)
         cluster_registery = src.ClusterRegistry(cluster_id, arakoon_cluster_id, arakoon_cluster_nodes)
         volume_locations = get_volumes_by_path(mountpoint, filesystem_metadata_client)
         for volume_id, volume_info in volume_locations.iteritems():
