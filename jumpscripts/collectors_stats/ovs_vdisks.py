@@ -21,15 +21,6 @@ log = False
 roles = ['storagemaster']
 
 
-def pop_realtime_info(points):
-    pop_points = [k for (k, v) in points.iteritems() if k.endswith("_ps")]
-
-    for point in pop_points:
-        points.pop(point, None)
-
-    return points
-
-
 def format_tags(tags):
     out = ''
     for k, v in tags.iteritems():
@@ -57,7 +48,7 @@ def action():
 
     for vdisk in vdisks:
 
-        metrics = pop_realtime_info(vdisk.statistics)
+        metrics = vdisk.statistics
         now = j.base.time.getTimeEpoch()
 
         volume_id = vdisk.volume_id
@@ -84,6 +75,8 @@ def action():
         vpool_name = VPool(vdisk.vpool_guid).name
 
         for key, value in metrics.iteritems():
+            if key.endswith('_ps') or not isinstance(value, float):
+                continue
             stat_key = "ovs.vdisk.%s@%s" % (key, volume_id)
             tags = {
                 'gid': j.application.whoAmI.gid,
@@ -99,11 +92,6 @@ def action():
             else:
                 aggregatorcl.measureDiff(stat_key, format_tags(tags), value, timestamp=now)
 
-        all_results[volume_id] = metrics
-
-    return all_results
 
 if __name__ == '__main__':
-    result = action()
-    import yaml
-    print yaml.dump(result)
+    action()
