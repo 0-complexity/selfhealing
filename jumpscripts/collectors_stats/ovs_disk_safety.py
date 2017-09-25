@@ -57,7 +57,7 @@ def action():
     abms = list(set(abms))
     abl = AlbaBackendList.get_albabackends()
     for ab in abl:
-        service_name = Service(ab.abm_services[0].service_guid).name
+        service_name = Service(ab.abm_cluster.abm_services[0].service_guid).name
         if service_name not in abms:
             continue
 

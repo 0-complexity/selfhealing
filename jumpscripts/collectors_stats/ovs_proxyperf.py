@@ -100,12 +100,13 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
             stats = namespace[1]
 
             for key in ['download', 'upload', 'partial_read_time', 'partial_read_size']:
-                stats_key = stats[key]
-                fields['%s_avg' % key] += float(stats_key['avg'])
-                fields['%s_exp_avg' % key] += float(stats_key['exp_avg'])
-                fields['%s_totaltime' % key] += float(stats_key['avg']) * int(stats_key['n'])
-                fields['%s_exp_totaltime' % key] += float(stats_key['exp_avg']) * int(stats_key['n'])
-                fields['%s_number' % key] += float(stats_key['n'])
+                stats_key = stats.get(key)
+                if stats_key:
+                    fields['%s_avg' % key] += float(stats_key['avg'])
+                    fields['%s_exp_avg' % key] += float(stats_key['exp_avg'])
+                    fields['%s_totaltime' % key] += float(stats_key['avg']) * int(stats_key['n'])
+                    fields['%s_exp_totaltime' % key] += float(stats_key['exp_avg']) * int(stats_key['n'])
+                    fields['%s_number' % key] += float(stats_key['n'])
             fields['fragment_cache_hits'] += float(stats['fragment_cache_hits'])
             fields['fragment_cache_misses'] += float(stats['fragment_cache_misses'])
             fields['manifest_cached'] += float(stats['manifest_cached'])
