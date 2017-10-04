@@ -129,7 +129,11 @@ def action(warntime=300, quarantinetime=600, threshold=0.8):
         if not domain.name().startswith("vm-") or domain.state()[0] != 1:
             continue
         domain_id = domain.name().strip('vm-')
-        vm_dict = cbcl.vmachine.get(int(domain_id))
+        vms = cbcl.vmachine.search({'referenceId': domain.UUIDString()})[1:]
+        if not vms:
+            continue
+        vm_dict = cbcl.vmachine.new()
+        vm_dict.load(vms[0])
         tags = j.core.tags.getObject(vm_dict.tags)
         # calculate cputime_avg
 
