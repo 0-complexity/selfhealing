@@ -83,6 +83,10 @@ def action():
     def process_network(netinfo):
         if netinfo['name'] == 'lo':
             return
+        if netinfo['name'] == 'docker0':
+            return
+        if netinfo['name'].startswith('br-'):
+            return
         for myip, cidr in zip(netinfo['ip'], netinfo['cidr']):
             mynet = netaddr.IPNetwork('{}/{}'.format(myip, cidr)).cidr
             netresults = []
