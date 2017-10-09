@@ -8,9 +8,9 @@ organization = 'cloudscalers'
 author = "foudaa@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
-roles = ['storagedriver']
+roles = ['controller']
 period = 600
-timeout = 60 * 5
+timeout = 60 * 6
 enable = True
 async = True
 queue = 'process'
@@ -18,18 +18,20 @@ log = False
 
 
 def action():
-    from CloudscalerLibcloud import openvstorage
-    results = []
-
+    acl = j.clients.agentcontroller.get()
     longtests = (
-        ('volumedriver', 'Volumedriver', ['dtl-test', 'halted-volumes-test']),
-    )
-
-    for modulename, category, tests in longtests:
-        for test in tests:
-            results.extend(openvstorage.run_healthcheck(modulename, test, category))
-
-    return results
+        ('alba', 'Alba', ['backend-test']),
+        ('arakoon', 'Arakoon', ['integrity-test']),
+     )
+    job = acl.executeJumpscript(
+         'cloudscalers',
+         'ovs_healthcheck_executor',
+         gid=j.application.whoAmI.gid,
+         args={'longtests': longtests},
+         role='storagedriver')
+    if job['state'] != 'OK':
+        raise RuntimeError("Failed to execute alba checks")
+    return job['result']
 
 
 if __name__ == '__main__':
