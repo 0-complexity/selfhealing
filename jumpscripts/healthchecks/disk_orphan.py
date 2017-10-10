@@ -34,7 +34,7 @@ def action():
     def get_devices(deviceurl):
         devices = []
         url = urlparse.urlparse(deviceurl.rsplit('@', 1)[0])
-        device = url.path + '.raw'
+        device = url.path.split(':', 1)[0] + '.raw'
         devices.append(device)
         return devices
 
