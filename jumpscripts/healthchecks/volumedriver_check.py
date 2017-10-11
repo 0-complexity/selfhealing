@@ -15,7 +15,7 @@ startatboot = True
 order = 1
 enable = True
 async = True
-log = False
+log = True
 queue = 'process'
 roles = ['storagedriver']
 
