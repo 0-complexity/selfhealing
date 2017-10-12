@@ -73,6 +73,7 @@ def check_volume_read(ovscl, driver, reasons):
     try to read disk info of few random disks (10% of all disks)
     """
     import random
+    from urlparse import urlparse
 
     print('checking driver {mountpoint}'.format(**driver))
     driver_obj = ovscl.get('/storagedrivers/{}'.format(driver['guid']), {'contents': 'cluster_node_config,vdisks_guids'})
@@ -103,22 +104,26 @@ def check_volume_read(ovscl, driver, reasons):
             continue
 
         print('checking if disk %s is actually in use by ovc' % guid)
-        count = osis.disk.search({
+        dbdisks = osis.disk.search({
             'referenceId': {'$regex': '{}$'.format(guid)},
             'status': {'$ne': 'DESTROYED'},
-        })[0]
+        })[1:]
 
-        if count == 0:
+        if not dbdisks:
             # disk is not used by the system
             print('disk %s is not in use in ovc' % guid)
             continue
+
+        parsedurl = urlparse(dbdisks[0]['referenceId'])
+        path = parsedurl.path.split('@', 1)[0]
+        vdisk['devicepath'] = path
 
         disks.append(vdisk)
         if len(disks) == check_count:
             break
 
     for vdisk in disks:
-        url = '{}{}'.format(base_url, vdisk['devicename'][:-4])
+        url = '{}{}'.format(base_url, vdisk['devicepath'])
 
         try:
             print('qemu-img info {}'.format(url))
@@ -226,7 +231,7 @@ def action():
             check_over_memory(mem, reasons)
             check_volume_read(ovscl, storage_driver, reasons)
             if reasons.messages:
-                message = "\n".join(["Volumedriver {} has some problems:".format(vpool)])
+                message = "\n".join(["Volumedriver {} has some problems:".format(vpool)] + reasons.messages)
                 msg = {'category': 'Volumedriver',
                        'state': 'WARNING',
                        'message': message}
