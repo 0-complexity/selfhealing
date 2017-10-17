@@ -7,13 +7,13 @@ organization = 'cloudscalers'
 author = "support@gig.tech"
 version = "1.0"
 category = "monitor.maintenance"
-timeout = 60
+timeout = 600
 startatboot = False
 order = 1
 enable = True
 async = True
 queue = 'process'
-log = False
+log = True
 roles = ['storagemaster', ]
 
 def action():
