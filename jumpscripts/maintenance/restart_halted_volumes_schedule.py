@@ -17,7 +17,7 @@ log = False
 
 def action():
     acl = j.clients.agentcontroller.get()
-    acl.executeJumpscript('greenitglobe', 'restart_halted_voumes', role='storagemaster', gid=j.application.whoAmI.gid)
+    acl.executeJumpscript('greenitglobe', 'restart_halted_volumes', role='storagemaster', gid=j.application.whoAmI.gid)
 
 if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')
