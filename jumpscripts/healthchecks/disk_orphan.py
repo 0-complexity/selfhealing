@@ -30,6 +30,7 @@ def action():
     ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
     ovscl = j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
     DISK_FOUND = 'Deleting disk %s at %s'
+    DISK_WITH_EDGE = 'Orphen disk: %s with connected edge'
 
     def get_devices(deviceurl):
         devices = []
@@ -76,41 +77,50 @@ def action():
             continue
         elif diskmap.get(disk['devicename'], 'DESTROYED') == 'DESTROYED':
             disk = ovscl.get('/vdisks/{}'.format(disk['guid']))
-            deletedisk = False
-            snapshottime = 0
-            for snapshot in disk['snapshots']:
-                if snapshot['label'] == 'orphan':
-                    snapshottime = int(snapshot['timestamp'])
-                    if snapshottime < treshold:
-                        deletedisk = True
-                    break
-            if deletedisk:
-                print('Deleting {}'.format(disk['devicename']))
-                ovscl.delete('/vdisks/{}'.format(disk['guid']))
-                eco_tags = j.core.tags.getObject()
-                eco_tags.tagSet('vdiskGuid', disk['guid'])
-                eco_tags.labelSet('vdisk.delete')
-                eco_tags.labelSet('ovs.diskdelete')
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
-                    category='selfhealing',
-                    tags=str(eco_tags)
-                )
+            edge_client = disk.get('edge_clients')
+            if not edge_client:
+                deletedisk = False
+                snapshottime = 0
+                for snapshot in disk['snapshots']:
+                    if snapshot['label'] == 'orphan':
+                        snapshottime = int(snapshot['timestamp'])
+                        if snapshottime < treshold:
+                            deletedisk = True
+                        break
+                if deletedisk:
+                    print('Deleting {}'.format(disk['devicename']))
+                    ovscl.delete('/vdisks/{}'.format(disk['guid']))
+                    eco_tags = j.core.tags.getObject()
+                    eco_tags.tagSet('vdiskGuid', disk['guid'])
+                    eco_tags.labelSet('vdisk.delete')
+                    eco_tags.labelSet('ovs.diskdelete')
+                    j.errorconditionhandler.raiseOperationalWarning(
+                        message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
+                        category='selfhealing',
+                        tags=str(eco_tags)
+                    )
+                    continue
+                elif snapshottime == 0:
+                    print('Adding snapshot marker')
+                    snapshottime = int(time.time())
+                    params = dict(name='orphan', timestamp=snapshottime, sticky=True)
+                    ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
+                    eco_tags = j.core.tags.getObject()
+                    eco_tags.tagSet('vdiskGuid', disk['guid'])
+                    eco_tags.labelSet('vdisk.snapshot')
+                    eco_tags.labelSet('ovs.snapshot')
+                    j.errorconditionhandler.raiseOperationalWarning(
+                        message='create snapshot of ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
+                        category='selfhealing',
+                        tags=str(eco_tags)
+                    )
+            else:
+                results.append({'state': 'WARNING',
+                    'category': 'Orphanage',
+                    'message': DISK_WITH_EDGE % (disk['devicename']),
+                    'uid': disk['devicename']
+                    })
                 continue
-            elif snapshottime == 0:
-                print('Adding snapshot marker')
-                snapshottime = int(time.time())
-                params = dict(name='orphan', timestamp=snapshottime, sticky=True)
-                ovscl.post('/vdisks/{}/create_snapshot'.format(disk['guid']), data=json.dumps(params))
-                eco_tags = j.core.tags.getObject()
-                eco_tags.tagSet('vdiskGuid', disk['guid'])
-                eco_tags.labelSet('vdisk.snapshot')
-                eco_tags.labelSet('ovs.snapshot')
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message='create snapshot of ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
-                    category='selfhealing',
-                    tags=str(eco_tags)
-                )
             results.append({'state': 'WARNING',
                             'category': 'Orphanage',
                             'message': DISK_FOUND % (disk['devicename'], "{{ts: %s}}" % (snapshottime + deltatime)),
