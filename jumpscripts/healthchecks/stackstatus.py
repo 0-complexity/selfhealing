@@ -31,26 +31,28 @@ def action():
                  'state': 'ERROR'}
                 ]
     stack = stacks[0]
+    uid = 'stack_status{}'.format(stack['status'])
     if stack['status'] == 'ERROR':
         return [{'message': 'Node is in error state',
-                 'uid': 'Node is in error state',
+                 'uid': uid,
                  'category': category,
                  'state': 'ERROR'}
                 ]
     elif stack['status'] == 'ENABLED':
         return [{'message': 'Node is enabled',
                  'category': category,
-                 'state': 'OK'}
+                 'state': 'OK',
+                 'uid': uid}
                 ]
     elif stack['status'] in ['MAINTENANCE', 'DECOMISSIONED']:
         return [{'message': 'Node state is %s' % stack['status'],
-                 'uid': 'Node state is %s' % stack['status'],
+                 'uid': uid,
                  'category': category,
                  'state': 'SKIPPED'}
                 ]
     else:
         return [{'message': 'Node has an invalid state %s' % stack['status'],
-                 'uid': 'Node has an invalid state %s' % stack['status'],
+                 'uid': uid,
                  'category': category,
                  'state': 'ERROR'}
                 ]

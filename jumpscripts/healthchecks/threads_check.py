@@ -38,11 +38,11 @@ def action():
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
-
+    uid = "Thread_check"
     if stat is None:
         result['state'] = 'WARNING'
         result['message'] = 'Number of threads is not available'
-        result['uid'] = result['message']
+        result['uid'] = uid 
         return [result]
 
     avg_thread = int(stat.h_avg)
@@ -50,11 +50,11 @@ def action():
 
     if avg_thread > 20000:
         result['state'] = 'ERROR'
-        result['uid'] = 'Number of threads is too high'
+        result['uid'] = uid
 
     elif avg_thread > 18000:
         result['state'] = 'WARNING'
-        result['uid'] = 'Number of threads is too high'
+        result['uid'] = uid
 
     return [result]
 

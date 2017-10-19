@@ -49,7 +49,7 @@ def action():
                 j.errorconditionhandler.raiseOperationalWarning(message, 'monitoring')
                 result['state'] = 'HALTED'
                 result['message'] = message
-                result['uid'] = message
+                result['uid'] = "{}:{}:{}".format(ays.domain, ays.name, ays.instance)
         results.append(result)
 
     return results

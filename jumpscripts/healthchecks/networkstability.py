@@ -64,8 +64,8 @@ def ping(ip):
     elif avg > 200:
         status = 'ERROR'
     msg = 'Ping to {} {}% with average of {} ms'.format(ip, percent, avg if avg != -1 else 'NA')
-    return {'message': msg, 'state': status, 'category': 'Network'}
-
+    uid = "ping {}".format(ip)
+    return {'message': msg, 'state': status, 'category': 'Network', 'uid': uid}
 
 def action():
     from multiprocessing import Pool
@@ -98,13 +98,15 @@ def action():
                 for result in pool.map(ping, pinglist):
                     netresults.append(result)
             else:
+                uid = "ping {}".format(myip)
                 netresults.append({'message': 'Found IP {} ({}) in strange network'.format(
-                    myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network'})
+                    myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network', 'uid': uid})
             if mtulist is not None:
+                uid = "mtu {}".format(myip)
                 if len(set(mtulist)) > 1:
-                    results.append({'message': 'All MTUs in network: {}/{} need to be configured the same'.format(myip, cidr), 'state': 'WARNING', 'category': 'Network'})
+                    results.append({'message': 'All MTUs in network: {}/{} need to be configured the same'.format(myip, cidr), 'state': 'WARNING', 'category': 'Network', 'uid': uid})
                 else:
-                    results.append({'message': 'All MTUs all configured the same in network: {}/{}'.format(myip,cidr), 'state': 'OK', 'category': 'Network'})
+                    results.append({'message': 'All MTUs all configured the same in network: {}/{}'.format(myip,cidr), 'state': 'OK', 'category': 'Network', 'uid': uid})
 
             results.extend(netresults)
 

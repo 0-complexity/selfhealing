@@ -25,17 +25,19 @@ def action():
     osiscl = j.clients.osis.getByInstance('main')
     status = osiscl.getStatus()
     results = list()
+    mongo_status = 'MongoDB Status'
+    influx_status = 'Influxdb Status'
     if status['mongodb'] is False:
         j.errorconditionhandler.raiseOperationalCritical('MongoDB halted', 'monitoring', die=False)
-        results.append({'message': 'MongoDB halted', 'uid': 'MongoDB halted', 'state': 'HALTED', 'category': 'Databases'})
+        results.append({'message': 'MongoDB halted', 'uid': mongo_status, 'state': 'HALTED', 'category': 'Databases'})
     else:
-        results.append({'message': 'MongoDB running', 'state': 'OK', 'category': 'Databases'})
+        results.append({'message': 'MongoDB running', 'uid': mongo_status, 'state': 'OK', 'category': 'Databases'})
 
     if status['influxdb'] is False:
         j.errorconditionhandler.raiseOperationalCritical('InfluxDB halted', 'monitoring', die=False)
-        results.append({'message': 'InfluxDB halted', 'uid': 'InfluxDB halted', 'state': 'HALTED', 'category': 'Databases'})
+        results.append({'message': 'InfluxDB halted', 'uid': influx_status, 'state': 'HALTED', 'category': 'Databases'})
     else:
-        results.append({'message': 'InfluxDB is running', 'state': 'OK', 'category': 'Databases'})
+        results.append({'message': 'InfluxDB is running','uid': influx_status, 'state': 'OK', 'category': 'Databases'})
     return results
 
 

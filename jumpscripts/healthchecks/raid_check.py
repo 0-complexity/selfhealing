@@ -28,6 +28,7 @@ def action():
 
     for name, device in stats['devices'].iteritems():
         faultydisks = []
+        uid = "raid_check {}".format(name)
         result = {'state': 'OK', 'category': category}
         if device['active']:
             for diskname, disk in device['disks'].iteritems():
@@ -52,7 +53,7 @@ def action():
         else:
             result['state'] = 'WARNING'
             msg = 'RAID device {} is inactive'.format(name)
-        result['uid'] = msg
+        result['uid'] = uid
         result['message'] = msg
         results.append(result)
     return results

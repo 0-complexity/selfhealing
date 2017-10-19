@@ -40,16 +40,16 @@ def action():
         if percent > 95:
             results.append(dict(state='ERROR', category=category,
                                 message="Used External IPs on {name} passed the dangerous threshold. ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent)))
+                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
         elif percent > 80:
             results.append(dict(state='WARNING', category=category,
                                 message="Used External IPs on {name} passed the critical threshold. ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent)))
+                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
 
         else:
             results.append(dict(state='OK', category=category,
                                 message="Used External IPs on {name} ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent)))
+                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
 
     return results
 

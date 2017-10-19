@@ -40,22 +40,20 @@ def action():
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
-
+    result['uid'] = 'CPU context switch'
+    
     if stat is None:
         result['state'] = 'WARNING'
         result['message'] = 'CPU context switch is not collected yet'
-        result['uid'] = result['message']
         return [result]
 
     avgctx = stat.h_avg
     result['message'] = 'Number of CPU context switches per second: %.2f/s' % avgctx
     if avgctx > 1000000:
         result['state'] = 'ERROR'
-        result['uid'] = 'Number of CPU context switches per second is too high'
 
     elif avgctx > 600000:
         result['state'] = 'WARNING'
-        result['uid'] = 'Number of CPU context switches per second is too high'
 
     return [result]
 

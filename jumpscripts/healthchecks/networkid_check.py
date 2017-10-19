@@ -40,7 +40,7 @@ def action():
             state = 'WARNING'
         else:
             message = "Used networkids on location {locationname} {percent:.0f}%"
-        results.append(dict(state=state, category=category, message=message.format(locationname=location['name'], percent=percent)))
+        results.append(dict(state=state, category=category, uid=location['name'], message=message.format(locationname=location['name'], percent=percent)))
 
     return results
 

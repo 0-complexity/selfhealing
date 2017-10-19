@@ -65,9 +65,9 @@ Power Supply Inactive
                     id_ = id_.strip("Status").strip("_").strip()  # clean the power supply name.
                     if linehaserrmsg(line):
                         if psu_redun_in_out and is_fully_redundant:
-                            results.append(dict(state='SKIPPED', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
+                            results.append(dict(state='SKIPPED', category=category, uid=id_, message="Power redundancy problem on %s (%s)" % (id_, presence)))
                         else:
-                            results.append(dict(state='WARNING', category=category, message="Power redundancy problem on %s (%s)" % (id_, presence)))
+                            results.append(dict(state='WARNING', category=category, uid=id_, message="Power redundancy problem on %s (%s)" % (id_, presence)))
             if len(results) == 0:
                 results.append(dict(state='OK', category=category, message="Power supplies are OK"))
 

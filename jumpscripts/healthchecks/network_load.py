@@ -37,6 +37,7 @@ def action():
 
         percent = (stat.m_last / float(nicspeed)) * 100
         message['message'] = 'Nic {} {} bandwith is {:.2f}%'.format(nic, direction, percent)
+        message['uid'] = "{}_{}".format(nic, direction)
         if percent > 80:
             results.append(message)
             message['state'] = 'WARNING'

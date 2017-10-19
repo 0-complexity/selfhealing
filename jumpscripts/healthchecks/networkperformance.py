@@ -93,7 +93,7 @@ class NetworkPerformance(object):
     def getClusterBandwidths(self):
         final = []
         for ip in self.nodes:
-            result = {'category': 'Bandwidth Test'}
+            result = {'category': 'Bandwidth Test', 'uid': ip}
             sshclient = j.remote.cuisine.connect(ip, 22)
             sshclient.fabric.api.env['abort_on_prompts'] = True
             sshclient.fabric.api.env['abort_exception'] = RuntimeError
@@ -106,7 +106,6 @@ class NetworkPerformance(object):
                     data = json.loads(output)
                 except:
                     result['message'] = 'Failed to parse json data from iperf'
-                    result['uid'] = result['message']
                     result['state'] = 'ERROR'
                     final.append(result)
                     continue
@@ -124,7 +123,6 @@ class NetworkPerformance(object):
             except NetworkError:
                 result['state'] = 'ERROR'
                 result['message'] = 'Failed to connect to %s' % (ip)
-                result['uid'] = result['message']
                 final.append(result)
         if not final:
             return [{'message': 'Single node', 'state': 'OK', 'category': 'Bandwidth Test'}]

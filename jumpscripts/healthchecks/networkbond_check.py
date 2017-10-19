@@ -22,11 +22,12 @@ def action():
     category = "Hardware"
     rc, output = j.system.process.execute('ovs-appctl bond/show', dieOnNonZeroExitCode=False)
     results = []
+    uid = "ovc-appctl"
     if rc == 127:
         return []
     elif rc != 0:
         msg = 'Failed to execute ovs-appctl'
-        results.append({'message': msg, 'uid': msg, 'category': category, 'state': 'ERROR'})
+        results.append({'message': msg, 'uid': uid, 'category': category, 'state': 'ERROR'})
     else:
         bonds = []
         bond = {}
@@ -53,7 +54,7 @@ def action():
             else:
                 msg = 'Bond: {}, all slave are ok'.format(bond['name'])
 
-            result = {'message': msg, 'category': category, 'uid': msg + str(j.application.whoAmI), 'state': state}
+            result = {'message': msg, 'category': category, 'uid': uid + bond['name'], 'state': state}
             results.append(result)
     return results
 

@@ -88,6 +88,7 @@ def action():
         packetsps = packetsin5min / float(300)
         message = tmessage.copy()
         message['message'] = 'VM nic {} has {:.2f} packets/s'.format(nic, packetsps)
+        message['uid'] = 'VM_nic_{}'.format(nic)
         if packetsps > ERROR_TRESHHOLD:
             message['state'] = 'ERROR'
         elif packetsps > WARNING_TRESHHOLD:

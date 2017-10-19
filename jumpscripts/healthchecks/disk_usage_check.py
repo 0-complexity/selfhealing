@@ -80,10 +80,10 @@ def action():
                 j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
             if checkusage and (freepercent < tresholds.warning):
                 result['state'] = 'WARNING'
-                result['uid'] = result['message']
+                result['uid'] = partition.device
             if checkusage and (freepercent < tresholds.error):
                 result['state'] = 'ERROR'
-                result['uid'] = result['message']
+                result['uid'] = partition.device
         results.append(result)
 
     if not results:

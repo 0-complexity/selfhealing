@@ -45,7 +45,7 @@ def action():
     if stat is None or memstat is None:
         result['state'] = 'WARNING'
         result['message'] = 'Swap used value is not available'
-        result['uid'] = result['message']
+        result['uid'] = "swap_status"
         return [result]
 
     avg_swap_used = stat.h_avg
@@ -54,11 +54,11 @@ def action():
     if memstat.h_avg / totalmemory > 0.8:
         if avg_swap_used > 14000:
             result['state'] = 'ERROR'
-            result['uid'] = 'Swap used value is too large'
+            result['uid'] = 'swap_status'
 
         elif avg_swap_used > 10000:
             result['state'] = 'WARNING'
-            result['uid'] = 'Swap used value is too large'
+            result['uid'] = 'swap_status'
 
     return [result]
 

@@ -38,22 +38,19 @@ def action():
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
-
+    result['uid'] = 'CPU interrupts'
     if stat is None:
         result['state'] = 'WARNING'
         result['message'] = 'Number of interrupts per second is not collected yet'
-        result['uid'] = result['message']
         return [result]
 
     avg_inter = int(stat.h_avg)
     result['message'] = 'Number of interrupts per second is: %d/s' % avg_inter
     if avg_inter > 198000:
         result['state'] = 'ERROR'
-        result['uid'] = 'Number of interrupts per second is too high'
 
     elif avg_inter > 180000:
         result['state'] = 'WARNING'
-        result['uid'] = 'Number of interrupts per second is too high'
 
     return [result]
 

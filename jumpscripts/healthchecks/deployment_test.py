@@ -36,13 +36,14 @@ def action():
         pass
 
     def check_stack():
+        uid = "Stack Status"
         stack = ccl.stack.search({'referenceId': str(j.application.whoAmI.nid), 'gid': j.application.whoAmI.gid})[1]
         if stack['status'] != 'ENABLED':
             msg = 'Disabling test, stack is not enabled'
-            messages.append({'message': msg, 'uid': msg, 'category': category, 'state': 'SKIPPED'})
+            messages.append({'message': msg, 'uid': uid, 'category': category, 'state': 'SKIPPED'})
             raise DeployMentTestFailure(msg)
         else:
-            messages.append({'message': 'Stack is in status ENABLED', 'uid': 'Stack is in status ENABLED', 'category': category, 'state': 'OK'})
+            messages.append({'message': 'Stack is in status ENABLED', 'uid': uid, 'category': category, 'state': 'OK'})
         return stack
 
     def get_image(stack):
@@ -219,7 +220,7 @@ def action():
                                   output, re.MULTILINE).group('speed').split()
                 speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
                 msg = 'Measured write speed on disk was %sMB/s' % (speed)
-                uid = 'write test on on Node %s' % (stack['name'])
+                uid = 'write test on Node %s' % (stack['name'])
                 status = 'OK'
                 j.console.echo(msg, log=True)
                 if speed < 50:
@@ -231,7 +232,7 @@ def action():
                 messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
 
     def execute_ping_test(connection):
-        uid = 'ping public ip %s' % connection.host
+        uid = 'ping public ip'
         try:
             j.console.echo('Perfoming internet test', log=True)
             connection.run('ping -c 1 8.8.8.8')

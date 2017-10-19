@@ -39,7 +39,6 @@ def action():
         memoryresult['state'] = 'WARNING'
         memoryresult['category'] = category
         memoryresult['message'] = 'Average memory load is not collected yet'
-        memoryresult['uid'] = memoryresult['message']
     else:
         totalram = psutil.phymem_usage().total
         avgmempercent = (stat.h_avg / float(totalram)) * 100
@@ -61,6 +60,8 @@ def action():
         cpuavg = cpupercent / float(count)
         cpuresult = get_results('cpu', cpuavg)
 
+    memoryresult['uid'] = "Memory Load"
+    cpuresult['uid'] = "CPU Load"
     return [memoryresult, cpuresult]
 
 
