@@ -12,7 +12,8 @@ version = "1.0"
 
 enable = True
 async = True
-period = 3600  # 1 hrs
+period = "30 3 * * *"
+timeout = 3600
 roles = ['controller', ]
 queue = 'process'
 
