@@ -235,9 +235,9 @@ def action():
         try:
             j.console.echo('Perfoming internet test', log=True)
             connection.run('ping -c 1 8.8.8.8')
-            messages.append({'message': "Pinged 8.8.8.8 from vm", 'category': category, 'state': 'OK'})
+            messages.append({'message': "Pinged 8.8.8.8 from vm", 'category': category, 'state': 'OK', 'uid': uid})
         except:
-            messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': uid})
+            messages.append({'message': 'Failed to ping 8.8.8.8 from vm', 'category': category, 'state': 'ERROR', 'uid': uid})
 
     try:
         stack = check_stack()
