@@ -26,8 +26,12 @@ def action():
         nic = stat.tagObject.tagGet('nic')
         direction = stat.key.split('@')[0].split('.')[2]
         message = tmessage.copy()
+        if nic.startswith(('spc-', 'space-', 'pub-', 'ext-', 'vm-')):
+            pnic = 'backplane1'
+        else:
+            pnic = nic
         try:
-            nicspeed = j.system.net.getNicSpeed(nic) / 8.  # nic speed is expressed in mbit but we want mbytes
+            nicspeed = j.system.net.getNicSpeed(pnic) / 8.  # nic speed is expressed in mbit but we want mbytes
         except:
             continue
 
