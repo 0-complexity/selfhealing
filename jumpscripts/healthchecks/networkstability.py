@@ -75,10 +75,13 @@ def action():
     networks = {}
     networksmtu = {}
     results = []
+    mynode = None
     for node in nodes:
         if node['id'] != j.application.whoAmI.nid:
             updateNetwork(node['netaddr'], networks)
             getMTUSubnet(node['netaddr'], networksmtu)
+        else:
+            mynode = node
 
     def process_network(netinfo):
         if netinfo['name'] == 'lo':
@@ -111,10 +114,19 @@ def action():
             results.extend(netresults)
 
     threads = []
-    for netinfo in j.system.net.getNetworkInfo():
+    nodechanges = False
+    nodenetwork = j.system.net.getNetworkInfo()
+    getMTUSubnet(nodenetwork, networksmtu)
+    for netinfo in nodenetwork:
         thread = Thread(target=process_network, args=(netinfo,))
         thread.start()
         threads.append(thread)
+        for netmodel in mynode['netaddr']:
+            if netmodel['name'] == netinfo['name'] and netmodel['mtu'] != netinfo['mtu']:
+                netmodel['mtu'] = netinfo['mtu']
+                nodechanges = True
+    if nodechanges:
+        scl.node.set(mynode)
 
     for thread in threads:
         thread.join()
