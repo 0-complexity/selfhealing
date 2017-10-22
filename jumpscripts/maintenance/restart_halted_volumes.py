@@ -3,7 +3,7 @@ descr = """
 This script to restart halted volumes
 """
 
-organization = 'cloudscalers'
+organization = 'greenitglobe'
 author = "support@gig.tech"
 version = "1.0"
 category = "monitor.maintenance"
@@ -15,6 +15,7 @@ async = True
 queue = 'process'
 log = True
 roles = ['storagemaster', ]
+
 
 def action():
     import sys
@@ -30,6 +31,7 @@ def action():
             try:
                 my_id = my_id.strip()
                 vdisk = VDiskList.get_vdisk_by_volume_id(my_id)
+                print("Restarting volume {} {}".format())
                 client = vdisk.storagedriver_client
                 client.stop_object(str(vdisk.volume_id), False)
                 client.restart_object(str(vdisk.volume_id), False)
