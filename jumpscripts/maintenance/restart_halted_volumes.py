@@ -31,13 +31,20 @@ def action():
             try:
                 my_id = my_id.strip()
                 vdisk = VDiskList.get_vdisk_by_volume_id(my_id)
-                print("Restarting volume {} {}".format())
+                msg = "Restarting volume {} {}".format(vdisk.name, my_id)
+                print(msg)
                 client = vdisk.storagedriver_client
                 client.stop_object(str(vdisk.volume_id), False)
                 client.restart_object(str(vdisk.volume_id), False)
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message=msg,
+                    category='selfhealing',
+                )
             except RuntimeError:
                 continue
             except AttributeError:
                 continue
+
+
 if __name__ == '__main__':
     action()
