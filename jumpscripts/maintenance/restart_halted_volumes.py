@@ -28,22 +28,16 @@ def action():
     for disk in x['result']['volumedriver-halted-volumes-test']['messages']['error']:
         ids = disk['message'].split(':')[-1]
         for my_id in ids.split(","):
-            try:
-                my_id = my_id.strip()
-                vdisk = VDiskList.get_vdisk_by_volume_id(my_id)
-                msg = "Restarting volume {} {}".format(vdisk.name, my_id)
-                print(msg)
-                client = vdisk.storagedriver_client
-                client.stop_object(str(vdisk.volume_id), False)
-                client.restart_object(str(vdisk.volume_id), False)
-                j.errorconditionhandler.raiseOperationalWarning(
-                    message=msg,
-                    category='selfhealing',
-                )
-            except RuntimeError:
-                continue
-            except AttributeError:
-                continue
+            my_id = my_id.strip()
+            vdisk = VDiskList.get_vdisk_by_volume_id(my_id)
+            msg = "Restarting volume {} {}".format(vdisk.name, my_id)
+            print(msg)
+            client = vdisk.storagedriver_client
+            client.restart_object(str(vdisk.volume_id), False)
+            j.errorconditionhandler.raiseOperationalWarning(
+                message=msg,
+                category='selfhealing',
+            )
 
 
 if __name__ == '__main__':
