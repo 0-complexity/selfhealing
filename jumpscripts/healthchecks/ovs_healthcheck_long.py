@@ -20,13 +20,19 @@ log = True
 
 def action():
     from CloudscalerLibcloud import openvstorage
-    results = []
+    from ovs.extensions.generic.configuration import Configuration
+    externalarakoon = bool(Configuration.get('/ovs/framework/external_config'))
 
+    results = []
+    arakoontests = ['collapse-test']
     longtests = (
         ('alba', 'Alba', ['disk-safety-test']),
         ('ovs', 'OpenvStorage', ['dns-test', 'model-test', 'packages-test', 'directories-test', 'log-files-test', 'zombie-processes-test'],),
-        ('arakoon', 'Arakoon', ['collapse-test', 'consistency-test']),
+        ('arakoon', 'Arakoon', arakoontests),
     )
+
+    if not externalarakoon:
+        arakoontests.append('consistency-test')
 
     for modulename, category, tests in longtests:
         for test in tests:
