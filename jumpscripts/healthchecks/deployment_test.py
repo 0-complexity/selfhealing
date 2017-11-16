@@ -127,24 +127,36 @@ def action():
                              'state': 'SKIPPED'})
         else:
             j.console.echo('Deploying VM', log=True)
-            messages.append({'category': category,
-                             'message': 'VM deyployment',
-                             'state': 'OK'})
-            try:
-                vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
-                                                                          imageId=imageId, sizeId=sizeId,
-                                                                          disksize=diskSize, stackid=stack['id'],
-                                                                          datadisks=[10])
-                vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
-            except Exception as e:
-                eco = j.errorconditionhandler.processPythonExceptionObject(e)
-                eco.process()
-                msg = "Failed to create VM [eco|/grid/error condition?id={}]".format(eco.guid)
-                j.errorconditionhandler.parsePythonErrorObject(e)
-                messages.append({'category': category,
-                                 'message': msg,
-                                 'state': 'ERROR'})
+            from CloudscalerLibcloud.utils import libvirtutil
+            con = libvirtutil.LibvirtUtil()
+            reserved = con.config.get('reserved_mem')
+            total = int(con.memory_usage()[0])/1024
+            usage = int(con.memory_usage()[1])/1024
+            free = total-usage
+            if free <= reserved:
+                status = 'WARNING'
+                msg = "Faild to create Deployment VM, not enought ram for it"
+                messages.append({'message': msg, 'category': category, 'state': status})
                 raise DeployMentTestFailure(msg)
+            else:
+                try:
+                    vmachineId = pcl.actors.cloudbroker.machine.createOnStack(cloudspaceId=cloudspace['id'], name=name,
+                                                                              imageId=imageId, sizeId=sizeId,
+                                                                              disksize=diskSize, stackid=stack['id'],
+                                                                              datadisks=[10])
+                    vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
+                    messages.append({'category': category,
+                                     'message': 'VM deyployment',
+                                     'state': 'OK'})
+                except Exception as e:
+                    eco = j.errorconditionhandler.processPythonExceptionObject(e)
+                    eco.process()
+                    msg = "Failed to create VM [eco|/grid/error condition?id={}]".format(eco.guid)
+                    j.errorconditionhandler.parsePythonErrorObject(e)
+                    messages.append({'category': category,
+                                     'message': msg,
+                                     'state': 'ERROR'})
+                    raise DeployMentTestFailure(msg)
         return vmachine
 
     def create_fwd(vmachine, externalip):
