@@ -22,11 +22,13 @@ log = True
 def action():
     category = "Network"
     results = []
+    account_pool_state = {}
     ccl = j.clients.osis.getNamespace('cloudbroker')
     pools = ccl.externalnetwork.search(query={})[1:]  # ignore the count of search result.
 
     for pool in pools:
         ips = pool['ips']
+        accountId = pool['accountId']
         ips_count = len(ips)
         usedips_count = ccl.cloudspace.count({'externalnetworkId': pool['id'], 'status': 'DEPLOYED'})
         for vm in ccl.vmachine.search({'nics.type': 'PUBLIC', 'status': {'$nin': ['ERROR', 'DESTROYED']}})[1:]:
@@ -36,21 +38,30 @@ def action():
                     if int(tagObj.tags.get('externalnetworkId', '0')) == pool['id']:
                         usedips_count += 1
 
-        percent = (float(usedips_count) / (usedips_count + ips_count)) * 100
+        account_pool_state.setdefault(accountId, {'used':0, 'total':0})
+        account_pool_state[accountId]['used'] += usedips_count
+        account_pool_state[accountId]['total'] += usedips_count + ips_count
+
+    for account_id, data in account_pool_state.items():
+        percent = (float(data['used']) / data['total']) * 100
+        accounts = ccl.account.search({'id': account_id})[1:]
+        if accounts:
+            account = accounts[0]['name']
+        else:
+            account = "Default"
         if percent > 95:
             results.append(dict(state='ERROR', category=category,
-                                message="Used External IPs on {name} passed the dangerous threshold. ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
+                                message="Used External IPs on account: {name} passed the dangerous threshold. ({percent:.0f}%)"
+                                .format(name=account, percent=percent), uid='pub_ips_{}'.format(account)))
         elif percent > 80:
             results.append(dict(state='WARNING', category=category,
-                                message="Used External IPs on {name} passed the critical threshold. ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
+                                message="Used External IPs on account: {name} passed the critical threshold. ({percent:.0f}%)"
+                                .format(name=account, percent=percent), uid='pub_ips_{}'.format(account)))
 
         else:
             results.append(dict(state='OK', category=category,
-                                message="Used External IPs on {name} ({percent:.0f}%)"
-                                .format(name=pool['name'], percent=percent), uid='pub_ips_{}'.format(pool['name'])))
-
+                                message="Used External IPs on account:{name} ({percent:.0f}%)"
+                                .format(name=account, percent=percent), uid='pub_ips_{}'.format(account)))
     return results
 
 if __name__ == "__main__":
