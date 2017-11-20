@@ -84,10 +84,15 @@ def action(locations=['/opt/jumpscale7/var/log/', '/var/log/'], freespace_needed
     errors = list()
     for partition, logfiles in logfiles_per_partition.iteritems():
         errors.extend(_cleanup_logs_in_partition(partition, logfiles, freespace_needed, logarchiver))
-
     # In case any error occurred raise error
     if errors:
         raise RuntimeError("Failures in log cleanup:\n\n{}".format('\n\n'.join(errors)))
+    nginx_services = j.atyourservice.findServices(name="nginx")
+    for service in nginx_services:
+        service.restart()
+    for service, status in j.system.platform.ubuntu.listServices().items():
+        if "nginx" in service:
+            j.system.platform.ubuntu.restartService(service)
 
 
 def _cleanup_logs_in_partition(partition, logfiles, freespace_needed, logarchiver):
