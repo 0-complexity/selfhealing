@@ -129,7 +129,7 @@ def action():
             j.console.echo('Deploying VM', log=True)
             from CloudscalerLibcloud.utils import libvirtutil
             con = libvirtutil.LibvirtUtil()
-            reserved = con.config.get('reserved_mem')
+            reserved = int(con.config.get('reserved_mem'))/1024
             total = int(con.memory_usage()[0])/1024
             usage = int(con.memory_usage()[1])/1024
             free = total-usage
