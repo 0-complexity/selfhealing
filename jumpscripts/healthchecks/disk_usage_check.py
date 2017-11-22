@@ -34,6 +34,7 @@ def action():
         'DEFAULT': treshold(20, 15, 10),
     }
     import psutil
+    import os
     result = dict()
     pattern = None
     cpunode = 'cpunode' in j.core.grid.roles
@@ -59,8 +60,16 @@ def action():
 
         result = {'category': 'Disks'}
         result['path'] = j.system.fs.getBaseName(partition.device)
+        # Check if it is a cache partition
+        is_cache = False
+        for dir_name in os.listdir(partition.mountpoint):
+            name_list = dir_name.split('_')
+            if len(name_list) > 2 and name_list[1] == 'write':
+                is_cache = True
+                break
+
         checkusage = not (partition.mountpoint and
-                          j.system.fs.exists(j.system.fs.joinPaths(partition.mountpoint, '.dontreportusage')))
+                          j.system.fs.exists(j.system.fs.joinPaths(partition.mountpoint, '.dontreportusage')) or is_cache)
         result['state'] = 'OK'
         usage = None
         if partition.mountpoint:
