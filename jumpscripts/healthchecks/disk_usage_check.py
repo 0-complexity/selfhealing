@@ -62,11 +62,14 @@ def action():
         result['path'] = j.system.fs.getBaseName(partition.device)
         # Check if it is a cache partition
         is_cache = False
-        for dir_name in os.listdir(partition.mountpoint):
-            name_list = dir_name.split('_')
-            if len(name_list) > 2 and name_list[1] == 'write':
-                is_cache = True
-                break
+        try:
+            for dir_name in os.listdir(partition.mountpoint):
+                name_list = dir_name.split('_')
+                if len(name_list) > 2 and name_list[1] == 'write':
+                    is_cache = True
+                    break
+        except OSError:
+            pass
 
         checkusage = not (partition.mountpoint and
                           j.system.fs.exists(j.system.fs.joinPaths(partition.mountpoint, '.dontreportusage')) or is_cache)
@@ -93,6 +96,8 @@ def action():
             if checkusage and (freepercent < tresholds.error):
                 result['state'] = 'ERROR'
                 result['uid'] = partition.device
+        if not checkusage:
+            result['state'] = 'SKIPPED'
         results.append(result)
 
     if not results:
