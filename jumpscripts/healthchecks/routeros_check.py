@@ -1,5 +1,6 @@
 from JumpScale import j
 from gevent.pool import Pool
+import gevent
 
 
 descr = """
@@ -31,9 +32,13 @@ def action():
         if not vcl.virtualfirewall.exists(vfwid):
             return dict(state='ERROR', category=category, message="RouterOS {vfwid} doesn't exist on {spacelink}".format(vfwid=vfwid, spacelink=spacelink))
         vfw = vcl.virtualfirewall.get(vfwid)
+        client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password)
         try:
-            client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password)
-            ok = client.ping('8.8.8.8')
+            for _ in range(5):
+                ok = client.ping('8.8.8.8')
+                if ok:
+                    break
+                gevent.sleep(1)
             if not ok:
                 return dict(state='ERROR', category=category, message="Couldn't ping 8.8.8.8 on {roslink} for {spacelink}".format(roslink=roslink, spacelink=spacelink))
             leases = len(client.do('/ip/dhcp-server/lease/print'))
@@ -47,6 +52,8 @@ def action():
             print("Failed to connect to {vfwid} {csname} error {err}".format(vfwid=vfwid, csname=c['name'], err=e))
             return dict(state='ERROR', category=category,
                         message="RouterOS {roslink} on {spacelink} died".format(roslink=roslink, spacelink=spacelink))
+        finally:
+            client.close()
 
     pool = Pool(10)
     results = pool.map(checkros, cloudspaces)
