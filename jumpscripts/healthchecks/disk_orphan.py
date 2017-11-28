@@ -16,13 +16,12 @@ roles = ['storagedriver']
 queue = 'process'
 
 
-def action():
+def action(deltatime=3600*24*7):
     import time
     import json
     import urlparse
     nid = j.application.whoAmI.nid
     gid = j.application.whoAmI.gid
-    deltatime = 3600 * 24 * 7
     treshold = time.time() - deltatime
 
     scl = j.clients.osis.getNamespace('system')
@@ -130,6 +129,10 @@ def action():
     return results
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--deltatime', type=int, default=3600*7*24, help='Time to keep orphans defaults to 7days, value is in seconds')
+    options = parser.parse_args()
     j.core.osis.client = j.clients.osis.getByInstance('main')
     import yaml
-    print(yaml.safe_dump(action(), default_flow_style=False))
+    print(yaml.safe_dump(action(options.deltatime), default_flow_style=False))
