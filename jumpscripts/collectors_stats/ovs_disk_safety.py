@@ -36,12 +36,11 @@ def action():
     from ovs.dal.hybrids.service import Service
     from ovs.dal.hybrids.servicetype import ServiceType
     from ovs.dal.lists.albabackendlist import AlbaBackendList
-    from ovs.extensions.plugins.albacli import AlbaCLI
+    from ovs.extensions.healthcheck.helpers.albacli import AlbaCLI
     import ast
 
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
-
     all_results = {
         'disk_lost': {},
         'disk_safety': {},
@@ -61,6 +60,7 @@ def action():
         if service_name not in abms:
             continue
 
+        service_name = service_name.replace('arakoon-', '')
         config = "arakoon://config/ovs/arakoon/{0}/" \
                  "config?ini=%2Fopt%2FOpenvStorage%2Fconfig%2Farakoon_cacc.ini".format(service_name)
 
