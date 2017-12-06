@@ -88,6 +88,8 @@ def action():
             return
         if netinfo['name'] == 'docker0':
             return
+        if netinfo['name'] == 'gw_mgmt':
+            return
         if netinfo['name'].startswith('br-'):
             return
         for myip, cidr in zip(netinfo['ip'], netinfo['cidr']):
