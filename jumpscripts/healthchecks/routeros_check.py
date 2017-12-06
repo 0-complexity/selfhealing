@@ -21,10 +21,20 @@ log = True
 def action():
     category = "Network"
     ccl = j.clients.osis.getNamespace('cloudbroker')
-    cloudspaces = ccl.cloudspace.simpleSearch({'status': 'DEPLOYED'})
+    cloudspaces = ccl.cloudspace.simpleSearch({'status': 'DEPLOYED'}) 
+
+    def check_ping(client, ip):
+        ok = False
+        for _ in range(5):
+                ok = client.ping(ip)
+                if ok:
+                    break
+                gevent.sleep(1)
+        return ok
 
     def checkros(c):
         vcl = j.clients.osis.getNamespace('vfw')
+        external_network = ccl.externalnetwork.get(c['externalnetworkId'])
         vfwid = '{gid}_{networkId}'.format(gid=c['gid'], networkId=c['networkId'])
         roslink = '[{vfwid}|/cbgrid/private network?id={id}&gid={gid}]'.format(
             vfwid=vfwid, id=c['networkId'], gid=c['gid'])
@@ -34,13 +44,12 @@ def action():
         vfw = vcl.virtualfirewall.get(vfwid)
         client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password)
         try:
-            for _ in range(5):
-                ok = client.ping('8.8.8.8')
+            for ip in external_network.pingips:
+                ok = check_ping(client, ip)
                 if ok:
                     break
-                gevent.sleep(1)
-            if not ok:
-                return dict(state='ERROR', category=category, message="Couldn't ping 8.8.8.8 on {roslink} for {spacelink}".format(roslink=roslink, spacelink=spacelink))
+            else:
+                return dict(state='ERROR', category=category, message="Couldn't reach network on {roslink} for {spacelink}".format(roslink=roslink, spacelink=spacelink))
             leases = len(client.do('/ip/dhcp-server/lease/print'))
             if leases > 200:
                 return dict(state='WARNING', category=category, message="Running out of leases ({leases}/250) on {roslink} for {spacelink}".format(leases=leases, roslink=roslink, spacelink=spacelink))
