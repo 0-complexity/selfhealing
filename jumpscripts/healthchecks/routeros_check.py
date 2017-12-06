@@ -23,14 +23,12 @@ def action():
     ccl = j.clients.osis.getNamespace('cloudbroker')
     cloudspaces = ccl.cloudspace.simpleSearch({'status': 'DEPLOYED'}) 
 
-    def check_ping(client, ip):
-        ok = False
+    def check_ping(client, ip):    
         for _ in range(5):
-                ok = client.ping(ip)
-                if ok:
-                    break
-                gevent.sleep(1)
-        return ok
+            if client.ping(ip):
+                return True
+            gevent.sleep(1)
+        return False
 
     def checkros(c):
         vcl = j.clients.osis.getNamespace('vfw')
