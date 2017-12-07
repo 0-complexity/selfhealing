@@ -21,9 +21,9 @@ log = True
 def action():
     category = "Network"
     ccl = j.clients.osis.getNamespace('cloudbroker')
-    cloudspaces = ccl.cloudspace.simpleSearch({'status': 'DEPLOYED'}) 
+    cloudspaces = ccl.cloudspace.simpleSearch({'status': 'DEPLOYED'})
 
-    def check_ping(client, ip):    
+    def check_ping(client, ip):
         for _ in range(5):
             if client.ping(ip):
                 return True
@@ -40,7 +40,7 @@ def action():
         if not vcl.virtualfirewall.exists(vfwid):
             return dict(state='ERROR', category=category, message="RouterOS {vfwid} doesn't exist on {spacelink}".format(vfwid=vfwid, spacelink=spacelink))
         vfw = vcl.virtualfirewall.get(vfwid)
-        client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password)
+        client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password, timeout=5)
         try:
             for ip in external_network.pingips:
                 ok = check_ping(client, ip)
