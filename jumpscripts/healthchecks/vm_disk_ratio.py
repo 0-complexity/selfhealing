@@ -5,32 +5,41 @@ descr = """
 Check if number of disks exceeded 6 times machines
 """
 
-organization = 'jumpscale'
+organization = 'cloudscalers'
 name = 'vm_disk_ratio'
 author = "foudaa@greenitglobe.com"
 version = "1.0"
-category = "monitor.healthcheck"
+category = "monitor"
 queue = 'process'
-period = 3600 * 2  # 2 hrs
-enable = False
+enable = True
 async = True
-roles = ['master', ]
-log = False
+roles = ['storagedriver']
 
 
 def action(gid=None):
+    scl = j.clients.osis.getNamespace('system')
+    cbcl = j.clients.osis.getNamespace('cloudbroker')
+    ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
+    ovscl = j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
+
     result = dict()
     result['state'] = 'OK'
-    result['category'] = 'healthcheck'
+    result['category'] = 'VMs-Disks ratio'
     result['uid'] = 'vm disk ratio'
-    result['message'] = 'Disks number less than 6 times than machines number'
 
-    cbcl = j.clients.osis.getNamespace('cloudbroker')
-    vmachines_count = cbcl.vmachine.count()
-    disks_count = cbcl.disk.count()
-    if vmachines_count > 0 and  disks_count / vmachines_count >= 6:
-        result['message'] = 'Disks number exceeded 6 times more than machines number'
-        result['state'] = 'WARNING'
+
+    vmachines_count = cbcl.vmachine.count({'status': {'$nin': ['ERROR', 'DESTROYED']}})
+    disks_count = len(ovscl.get('/vdisks', params={})['data'])
+    if vmachines_count > 0:
+        ratio = disks_count / vmachines_count
+        if ratio >= 6:
+            result['message'] = 'Disks number are {ratio} times more than machines number'.format(ratio=ratio)
+            result['state'] = 'WARNING'
+        else:
+            result['message'] = 'Disks number are {ratio} times than machines number'.format(ratio=ratio)
+    else:
+        result['state'] = 'SKIPPED'
+        result['message'] = 'No machines found'
     return [result]
 
 
