@@ -31,12 +31,12 @@ def action(gid=None):
     vmachines_count = cbcl.vmachine.count({'status': {'$nin': ['ERROR', 'DESTROYED']}})
     disks_count = len(ovscl.get('/vdisks', params={})['data'])
     if vmachines_count > 0:
-        ratio = disks_count / vmachines_count
+        ratio = round(disks_count / float(vmachines_count), 2)
         if ratio >= 6:
-            result['message'] = 'Disks number are {ratio} times more than machines number'.format(ratio=ratio)
+            result['message'] = 'Disks to VMs ratio is {ratio}%'.format(ratio=ratio*100)
             result['state'] = 'WARNING'
         else:
-            result['message'] = 'Disks number are {ratio} times than machines number'.format(ratio=ratio)
+            result['message'] = 'Disks to VMs ratio is {ratio}%'.format(ratio=ratio*100)
     else:
         result['state'] = 'SKIPPED'
         result['message'] = 'No machines found'
