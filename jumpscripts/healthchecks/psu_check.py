@@ -20,6 +20,8 @@ log = True
 def action():
     category = "Hardware"
     results = []
+    if j.system.platformtype.isVirtual():
+        return results
     ps_errmsgs = """
 Power Supply AC lost
 Failure detected

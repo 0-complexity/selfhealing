@@ -20,6 +20,8 @@ log = True
 def action():
     category = "Hardware"
     results = []
+    if j.system.platformtype.isVirtual():
+        return results
     rc, out = j.system.process.execute("""ipmitool sdr type "Fan" """, dieOnNonZeroExitCode=False)
     if rc == 0:  # 127 is command not found
         if out:

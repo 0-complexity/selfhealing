@@ -19,6 +19,8 @@ log = True
 
 def action():
     results = []
+    if j.system.platformtype.isVirtual():
+        return results
     cputempresults = []
     disktempresults = []
     category = "Temperature"
