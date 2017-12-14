@@ -59,7 +59,7 @@ def action():
         return images[0]
 
     def get_account():
-        with ccl.account.lock(ACCOUNTNAME):
+        with ccl.account.lock(ACCOUNTNAME+'test'):
             accounts = ccl.account.search({'name': ACCOUNTNAME, 'status': {'$ne': 'DESTROYED'}})[1:]
             if not accounts:
                 j.console.echo('Creating Account', log=True)
@@ -77,7 +77,7 @@ def action():
                 return account['id']
 
     def get_cloudspace(accountId):
-        lockname = '%s_%s' % (ACCOUNTNAME, CLOUDSPACENAME)
+        lockname = '%s_%s_test' % (ACCOUNTNAME, CLOUDSPACENAME)
         with ccl.cloudspace.lock(lockname, timeout=120):
             cloudspaces = ccl.cloudspace.search({'accountId': accountId, 'name': CLOUDSPACENAME,
                                                  'gid': j.application.whoAmI.gid,
@@ -160,15 +160,8 @@ def action():
         return vmachine
 
     def create_fwd(vmachine, externalip):
-        now = time.time()
         try:
             ip = vmachine['interfaces'][0]['ipAddress']
-            while now + 180 > time.time() and ip == 'Undefined':
-                j.console.echo('Waiting for IP', log=True)
-                time.sleep(5)
-                vmachine = pcl.actors.cloudapi.machines.get(vmachine['id'])
-                ip = vmachine['interfaces'][0]['ipAddress']
-
             j.console.echo('Got IP %s' % ip, log=True)
             publicports = []
             publicport = 0
@@ -221,6 +214,19 @@ def action():
             messages.append({'message': msg, 'category': category, 'state': "ERROR"})
             raise DeployMentTestFailure(msg)
 
+    def waitforspace(cloudspace):
+        now = time.time()
+        while cloudspace['status'] != 'DEPLOYED' and now + 300 > time.time():
+            time.sleep(5)
+            cloudspace = ccl.cloudspace.get(cloudspace['id']).dump()
+        if cloudspace['status'] == 'DEPLOYED':
+            messages.append({'message': 'Cloudspace in DEPLOYED state', 'category': category, 'state': "OK"})
+        else:
+            msg = 'Cloudspace failed to deploy in 5min'
+            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            j.console.echo(msg, log=True)
+            raise DeployMentTestFailure(msg)
+
     def execute_dd_test(connection):
         output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=4k count=128k || echo $?")
         if output == '124':  # this means timeout happend
@@ -259,6 +265,7 @@ def action():
         cloudspace = get_cloudspace(accountId)
         vmachine = get_create_vm(stack, cloudspace, image['id'])
         externalip = str(netaddr.IPNetwork(cloudspace['externalnetworkip']).ip)
+        waitforspace(cloudspace)
         publicport = create_fwd(vmachine, externalip)
         wait_for_connection(externalip, publicport)
 
