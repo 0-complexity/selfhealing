@@ -249,14 +249,22 @@ def action():
                 msg = "Failed to parse dd speed %s, failed with %s" % (output, e)
                 messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
 
-    def execute_ping_test(connection):
+    def execute_ping_test(cloudspace, connection):
+        pool = ccl.externalnetwork.get(cloudspace['externalnetworkId'])
         uid = 'ping public ip'
-        try:
-            j.console.echo('Perfoming internet test', log=True)
-            connection.run('ping -c 1 8.8.8.8')
-            messages.append({'message': "Pinged 8.8.8.8 from vm", 'category': category, 'state': 'OK', 'uid': uid})
-        except:
-            messages.append({'message': 'Failed to ping 8.8.8.8 from vm', 'category': category, 'state': 'ERROR', 'uid': uid})
+        j.console.echo('Perfoming internet test', log=True)
+        for ip in pool.pingips:
+            try:
+                connection.run('ping -c 1 {}'.format(ip))
+                messages.append({'message': "Pinged {} from vm".format(ip),
+                                 'category': category, 'state': 'OK', 'uid': uid})
+                break
+            except:
+                continue
+        else:
+            messages.append({'message': 'Failed to ping {} from vm'.format(', '.join(pool.pingsips)),
+                             'category': category, 'state': 'ERROR', 'uid': uid})
+
 
     try:
         stack = check_stack()
@@ -276,7 +284,7 @@ def action():
         connection.fabric.api.env['abort_exception'] = RuntimeError
         execute_ssh_command(connection)
         execute_dd_test(connection)
-        execute_ping_test(connection)
+        execute_ping_test(cloudspace, connection)
     except DeployMentTestFailure:
         pass  # exception is already handled
     except Exception as e:
