@@ -40,7 +40,7 @@ def action():
         memoryresult['category'] = category
         memoryresult['message'] = 'Average memory load is not collected yet'
     else:
-        totalram = psutil.phymem_usage().total
+        totalram = psutil.phymem_usage().total / (1024 ** 2)
         avgmempercent = ((totalram - stat.h_avg) / float(totalram)) * 100
         memoryresult = get_results('memory', avgmempercent)
 
