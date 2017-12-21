@@ -51,7 +51,7 @@ def action():
     avg_swap_used = stat.m_avg
     result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
 
-    if memstat.m_avg / totalmemory > 0.8:
+    if memstat.m_avg / totalmemory < 0.2:
         if avg_swap_used > 14000:
             result['state'] = 'ERROR'
             result['uid'] = 'swap_status'
