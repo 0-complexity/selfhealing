@@ -1,5 +1,4 @@
 from JumpScale import j
-import time
 
 descr = """
 Check if number of disks exceeded 6 times machines
@@ -33,10 +32,10 @@ def action(gid=None):
     if vmachines_count > 0:
         ratio = round(disks_count / float(vmachines_count), 2)
         if ratio >= 6:
-            result['message'] = 'Disks to VMs ratio is {ratio}%'.format(ratio=ratio*100)
+            result['message'] = 'Disks to VMs ratio is {ratio}'.format(ratio=ratio)
             result['state'] = 'WARNING'
         else:
-            result['message'] = 'Disks to VMs ratio is {ratio}%'.format(ratio=ratio*100)
+            result['message'] = 'Disks to VMs ratio is {ratio}'.format(ratio=ratio)
     else:
         result['state'] = 'SKIPPED'
         result['message'] = 'No machines found'

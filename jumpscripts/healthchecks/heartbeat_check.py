@@ -30,6 +30,7 @@ def _getHeartBeats():
     return heartbeats
 
 def action():
+    category = 'JSAgent'
     results = []
     osiscl = j.clients.osis.getByInstance('main')
     nodecl = j.clients.osis.getCategory(osiscl, 'system', 'node')
@@ -43,7 +44,7 @@ def action():
         if heartbeat['nid'] not in nids_active and heartbeat['nid'] not in nids_non_ctive:
             results.append({'message': 'Found heartbeat node(%s: %s) when not in grid nodes.' % (nodes_name[heartbeat['nid']], heartbeat['nid']),
                             'state': 'ERROR',
-                            'category':'Heartbeat',
+                            'category': category,
                             'uid': 'heartbeat_%s'% heartbeat['nid'],
                             'nid': heartbeat['nid']
                            })
@@ -56,16 +57,16 @@ def action():
                 state = 'ERROR'
             else:
                 state = 'OK'
-            results.append({'message': 'Heartbeat node (%s: %s) lastchecked %s' % (nodes_name[nid], nid, lastchecked),
+            results.append({'message': 'Heartbeat lastchecked {{ts:%s}}' % (lastchecked),
                             'state': state,
-                            'category': 'Heartbeat',
+                            'category': category,
                             'uid': 'heartbeat_%s'% nid,
                             'nid': nid
                            })
         else:
             results.append({'message': 'Found heartbeat node when not in grid nodes.',
                             'state':'ERROR',
-                            'category': "Hearbeat",
+                            'category': category,
                             'uid': 'heartbeat_%s'% nid,
                             'nid': nid
                            })

@@ -42,7 +42,7 @@ def getMTUSubnet(node, networks):
             continue
         for ip, cidr in zip(netinfo['ip'], netinfo['cidr']):
             net = netaddr.IPNetwork('{}/{}'.format(ip, cidr)).cidr
-            networks.setdefault(net, []).append(netinfo['mtu'])
+            networks.setdefault(net, {}).setdefault(netinfo['mtu'], []).append(ip)
     return networks
 
 
@@ -108,10 +108,14 @@ def action():
                     myip, netinfo['name']), 'state': 'WARNING', 'category': 'Network', 'uid': uid})
             if mtulist is not None:
                 uid = "mtu {}".format(myip)
-                if len(set(mtulist)) > 1:
-                    results.append({'message': 'All MTUs in network: {}/{} need to be configured the same'.format(myip, cidr), 'state': 'WARNING', 'category': 'Network', 'uid': uid})
+                if len(mtulist) > 1:
+                    msg = 'All MTUs in network: {}/{} need to be configured the same\n'.format(myip, cidr)
+                    for mtu, ips in mtulist.iteritems():
+                        msg += "  MTU {} has following IPs: {}\n".format(mtu, ', '.join(ips))
+                    msg = msg.strip()
+                    results.append({'message': msg, 'state': 'WARNING', 'category': 'Network', 'uid': uid})
                 else:
-                    results.append({'message': 'All MTUs all configured the same in network: {}/{}'.format(myip,cidr), 'state': 'OK', 'category': 'Network', 'uid': uid})
+                    results.append({'message': 'All MTUs are configured to {} in network: {}/{}'.format(mtulist.keys()[0], myip,cidr), 'state': 'OK', 'category': 'Network', 'uid': uid})
 
             results.extend(netresults)
 
