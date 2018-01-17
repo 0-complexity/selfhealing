@@ -16,6 +16,7 @@ queue = 'process'
 roles = ['master']
 enable = True
 period = 600
+timeout = 60
 
 log = True
 

@@ -18,6 +18,7 @@ async = True
 log = False
 queue = 'process'
 roles = ['cpunode', 'storagenode', 'storagedriver', ]
+timeout = 10
 
 
 def action():

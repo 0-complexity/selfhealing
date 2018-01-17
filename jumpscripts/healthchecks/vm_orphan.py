@@ -16,6 +16,7 @@ enable = True
 async = True
 roles = ['cpunode']
 queue = 'process'
+timeout = 60
 
 
 def action():

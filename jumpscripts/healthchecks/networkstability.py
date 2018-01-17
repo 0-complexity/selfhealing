@@ -24,7 +24,7 @@ queue = 'process'
 period = 300
 roles = ['storagenode', 'storagedriver', 'cpunode']
 category = "monitor.healthcheck"
-
+timeout = 60
 
 def updateNetwork(node, networks):
     for netinfo in node:
@@ -68,7 +68,6 @@ def ping(ip):
     return {'message': msg, 'state': status, 'category': 'Network', 'uid': uid}
 
 def action():
-    from multiprocessing import Pool
     from threading import Thread
     scl = j.clients.osis.getNamespace('system')
     nodes = scl.node.search({'gid': j.application.whoAmI.gid, 'active': True, 'roles': {'$in': roles}})[1:]
@@ -98,10 +97,8 @@ def action():
             iplist = networks.get(mynet)
             mtulist = networksmtu.get(mynet)
             if iplist is not None:
-                pool = Pool()
-                pinglist = random.sample(iplist, int(math.log(len(iplist)) + 1))
-                for result in pool.map(ping, pinglist):
-                    netresults.append(result)
+                for ip in random.sample(iplist, int(math.log(len(iplist)) + 1)):
+                    netresults.append(ping(ip))
             else:
                 uid = "ping {}".format(myip)
                 netresults.append({'message': 'Found IP {} ({}) in strange network'.format(

@@ -21,7 +21,7 @@ enable = True
 period = 60
 roles = ['node']
 log = True
-
+timeout = 20
 
 def action():
     from collections import namedtuple

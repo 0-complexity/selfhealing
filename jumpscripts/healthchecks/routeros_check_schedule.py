@@ -15,6 +15,7 @@ async = True
 period = 15 * 60  # 15mins.
 roles = ['controller']
 queue = 'process'
+timeout = 60
 
 
 def action():

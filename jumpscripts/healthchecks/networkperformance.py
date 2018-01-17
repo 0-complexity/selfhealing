@@ -24,6 +24,7 @@ interval = (2 * j.application.whoAmI.nid) % 30
 period = "%s,%s * * * *" % (interval, interval + 30)
 roles = ['storagenode', 'storagedriver', 'cpunode']
 category = "monitor.healthcheck"
+timeout = 60
 
 
 class NetworkPerformance(object):

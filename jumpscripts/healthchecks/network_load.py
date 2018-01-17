@@ -13,6 +13,7 @@ queue = 'process'
 period = 180
 roles = ['storagenode', 'storagedriver', 'cpunode']
 category = "monitor.healthcheck"
+timeout = 60
 
 
 def action():

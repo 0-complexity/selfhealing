@@ -18,6 +18,7 @@ async = True
 log = True
 queue = 'process'
 roles = ['storagenode']
+timeout = 60 * 5
 
 
 def action():

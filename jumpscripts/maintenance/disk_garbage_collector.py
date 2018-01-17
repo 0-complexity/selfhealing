@@ -17,6 +17,7 @@ enable = True
 async = True
 roles = ['storagedriver']
 queue = 'process'
+timeout = 60 * 10
 
 def action():
     sys.path.append('/opt/OpenvStorage')

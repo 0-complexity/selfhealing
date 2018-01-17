@@ -25,6 +25,7 @@ log = True
 queue = 'io'
 roles = ['storagenode']
 logfile = '/var/log/ovs/arakoon_collapse.log'
+timeout = 60 * 60 * 2
 
 
 def systemdProperty(service, property):

@@ -12,6 +12,7 @@ version = "1.0"
 enable = True
 async = False
 queue = 'process'
+timeout = 60 * 10
 
 def action(vpool, storagedriver, volume_id):
     import sys

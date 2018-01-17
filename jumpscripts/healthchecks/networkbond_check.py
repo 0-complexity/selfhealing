@@ -11,11 +11,12 @@ author = "deboeckj@greenitglobe.com"
 version = "1.0"
 category = "monitor.healthcheck"
 roles = ['node']
-period = 60  # 1min
+period = 60 * 5
 enable = True
 async = True
 queue = 'process'
 log = True
+timeout = 60
 
 
 def action():

@@ -15,6 +15,7 @@ async = True
 log = False
 queue = 'process'
 roles = ['storagedriver']
+timeout = 60
 
 
 def action(vpool):
