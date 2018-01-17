@@ -228,9 +228,9 @@ def action():
             raise DeployMentTestFailure(msg)
 
     def execute_dd_test(connection):
-        output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=4k count=128k || echo $?")
+        output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=8k count=128k || echo $?")
         if output == '124':  # this means timeout happend
-            msg = 'Executing dd command with bs 4k and count 128k failed to execute in 2minutes'
+            msg = 'Executing dd command with bs 8k and count 128k failed to execute in 2minutes'
             messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': msg})
         else:
             try:
