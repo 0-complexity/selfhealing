@@ -16,6 +16,7 @@ roles = ['node']
 queue = 'process'
 period = 600
 log = True
+timeout = 60
 
 
 def action():

@@ -18,6 +18,7 @@ roles = []
 enable = True
 
 log = True
+timeout = 60 * 10
 
 
 def action(vmname):

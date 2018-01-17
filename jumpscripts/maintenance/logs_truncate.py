@@ -22,6 +22,7 @@ roles = []
 enable = True
 
 log = True
+timeout = 60 * 5
 
 
 class LogArchiver:

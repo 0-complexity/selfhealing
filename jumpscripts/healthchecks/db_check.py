@@ -11,7 +11,7 @@ author = "zains@codescalers.com"
 category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
-
+timeout = 60
 async = True
 queue = 'process'
 roles = ['master']

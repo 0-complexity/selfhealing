@@ -14,6 +14,7 @@ enable = True
 async = True
 queue = 'process'
 log = False
+timeout = 30
 
 
 def action():

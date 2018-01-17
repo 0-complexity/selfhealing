@@ -16,6 +16,7 @@ enable = False
 async = True
 roles = ['master', ]
 log = False
+timeout = 60
 
 
 def action(gid=None):

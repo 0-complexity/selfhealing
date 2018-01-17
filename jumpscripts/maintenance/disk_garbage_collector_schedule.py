@@ -15,11 +15,12 @@ async = True
 period = 3600  # 1 hrs
 roles = ['controller', ]
 queue = 'process'
+timeout = 60
 
 
 def action():
     acl = j.clients.agentcontroller.get()
-    acl.executeJumpscript('greenitglobe', 'disk_garbage_collector', role='storagedriver', gid=j.application.whoAmI.gid)
+    acl.executeJumpscript('greenitglobe', 'disk_garbage_collector', role='storagedriver', gid=j.application.whoAmI.gid, wait=False)
 
 if __name__ == '__main__':
     j.core.osis.client = j.clients.osis.getByInstance('main')

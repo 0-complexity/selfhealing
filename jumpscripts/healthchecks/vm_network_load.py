@@ -15,6 +15,7 @@ queue = 'process'
 period = 180
 roles = ['cpunode']
 category = "monitor.healthcheck"
+timeout = 60
 
 WARNING_TRESHHOLD = 8000
 ERROR_TRESHHOLD = 10000

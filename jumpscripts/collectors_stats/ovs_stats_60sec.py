@@ -10,7 +10,8 @@ version = "1.0"
 
 enable = True
 async = True
-period = 60  # 1 hrs
+period = 60
+timeout = 10
 roles = ['controller', ]
 queue = 'process'
 log = False
