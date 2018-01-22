@@ -36,8 +36,8 @@ def action():
         pass
 
     def check_stack():
-        uid = "Stack Status"
         stack = ccl.stack.search({'referenceId': str(j.application.whoAmI.nid), 'gid': j.application.whoAmI.gid})[1]
+        uid = "deployment_Stack_Status:{}".format(stack['name'])
         if stack['status'] != 'ENABLED':
             msg = 'Disabling test, stack is not enabled'
             messages.append({'message': msg, 'uid': uid, 'category': category, 'state': 'SKIPPED'})
@@ -102,6 +102,7 @@ def action():
         size = ccl.size.search({'memory': 512})[1]
         sizeId = size['id']
         diskSize = min(size['disks'])
+        uid = 'deploymenttest-vm'
         timestamp = time.ctime()
 
         name = '%s on %s' % (timestamp, stack['name'])
@@ -124,7 +125,8 @@ def action():
             deploytime = vms[0]['creationTime'] + 3600 * 24
             messages.append({'category': category,
                              'message': 'VM already deployed redeploying at {{{{ts:{}}}}}'.format(deploytime),
-                             'state': 'SKIPPED'})
+                             'state': 'SKIPPED',
+                             'uid': uid})
         else:
             j.console.echo('Deploying VM', log=True)
             from CloudscalerLibcloud.utils import libvirtutil
@@ -136,7 +138,7 @@ def action():
             if free <= reserved:
                 status = 'WARNING'
                 msg = "Faild to create Deployment VM, not enought ram for it"
-                messages.append({'message': msg, 'category': category, 'state': status})
+                messages.append({'message': msg, 'category': category, 'state': status, uid: uid})
                 raise DeployMentTestFailure(msg)
             else:
                 try:
@@ -147,7 +149,8 @@ def action():
                     vmachine = pcl.actors.cloudapi.machines.get(vmachineId)
                     messages.append({'category': category,
                                      'message': 'VM deyployment',
-                                     'state': 'OK'})
+                                     'state': 'OK',
+                                      uid: uid})
                 except Exception as e:
                     eco = j.errorconditionhandler.processPythonExceptionObject(e)
                     eco.process()
@@ -165,11 +168,12 @@ def action():
             j.console.echo('Got IP %s' % ip, log=True)
             publicports = []
             publicport = 0
+            uid = 'createfwd'
             for forward in pcl.actors.cloudapi.portforwarding.list(cloudspace['id']):
                 if forward['localIp'] == ip and forward['localPort'] == '22':
                     publicport = forward['publicPort']
                     messages.append({'message': "Found port forward {}".format(publicport),
-                                     'category': category, 'state': "OK"})
+                                     'category': category, 'state': "OK", uid: uid})
                     return publicport
                 publicports.append(int(forward['publicPort']))
             if publicport == 0:
@@ -180,65 +184,68 @@ def action():
                 pcl.actors.cloudapi.portforwarding.create(cloudspace['id'], cloudspace['externalnetworkip'],
                                                           publicport, vmachine['id'], 22, 'tcp')
                 messages.append({'message': "Created port forward {}".format(publicport),
-                                 'category': category, 'state': "OK"})
+                                 'category': category, 'state': "OK", uid: uid})
                 return publicport
         except Exception as e:
             eco = j.errorconditionhandler.processPythonExceptionObject(e)
             eco.process()
             msg = "Failed to create port forward [eco|/grid/error condition?id={}]".format(eco.guid)
-            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            messages.append({'message': msg, 'category': category, 'state': "ERROR", uid: uid})
             raise DeployMentTestFailure(msg)
 
     def wait_for_connection(externalip, publicport):
+        uid = "deployment:connectvm"
         if not j.system.net.waitConnectionTest(externalip, publicport, 60):
             msg = 'Could not connect to VM over public interface'
-            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            messages.append({'message': msg, 'category': category, 'state': "ERROR", uid: uid})
             j.console.echo('Failed to get public connection %s:%s' % (externalip, publicport), log=True)
             raise DeployMentTestFailure(msg)
 
         msg = 'TCP port {}:{} reachable'.format(externalip, publicport)
-        messages.append({'message': msg, 'category': category, 'state': "OK"})
+        messages.append({'message': msg, 'category': category, 'state': "OK", uid: uid})
 
     def execute_ssh_command(connection):
+        uid = "deployment:ssh"
         error = ''
         for x in range(5):
             try:
                 connection.sudo("ls")
-                messages.append({'message': 'Logged in via SSH and executed command', 'category': category, 'state': "OK"})
+                messages.append({'message': 'Logged in via SSH and executed command', 'category': category, 'state': "OK", uid: uid})
                 break
             except Exception as error:
                 print("Retrying, Failed to run dd command. Login error? %s" % error)
                 time.sleep(5)
         else:
             msg = 'Failed to execute SSH command. Login error? %s' % error
-            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            messages.append({'message': msg, 'category': category, 'state': "ERROR", uid: uid})
             raise DeployMentTestFailure(msg)
 
     def waitforspace(cloudspace):
+        uid = "deployment:waitspace"
         now = time.time()
         while cloudspace['status'] != 'DEPLOYED' and now + 300 > time.time():
             time.sleep(5)
             cloudspace = ccl.cloudspace.get(cloudspace['id']).dump()
         if cloudspace['status'] == 'DEPLOYED':
-            messages.append({'message': 'Cloudspace in DEPLOYED state', 'category': category, 'state': "OK"})
+            messages.append({'message': 'Cloudspace in DEPLOYED state', 'category': category, 'state': "OK", uid: uid})
         else:
             msg = 'Cloudspace failed to deploy in 5min'
-            messages.append({'message': msg, 'category': category, 'state': "ERROR"})
+            messages.append({'message': msg, 'category': category, 'state': "ERROR", uid:uid})
             j.console.echo(msg, log=True)
             raise DeployMentTestFailure(msg)
 
     def execute_dd_test(connection):
+        uid = "deployment:dd_test"
         output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=8k count=128k || echo $?")
         if output == '124':  # this means timeout happend
             msg = 'Executing dd command with bs 8k and count 128k failed to execute in 2minutes'
-            messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': msg})
+            messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': uid})
         else:
             try:
                 match = re.search('^\d+.*copied,.*?, (?P<speed>.*?)B/s$',
                                   output, re.MULTILINE).group('speed').split()
                 speed = j.tools.units.bytes.toSize(float(match[0]), match[1], 'M')
                 msg = 'Measured write speed on disk was %sMB/s' % (speed)
-                uid = 'write test on Node %s' % (stack['name'])
                 status = 'OK'
                 j.console.echo(msg, log=True)
                 if speed < 50:
@@ -251,7 +258,7 @@ def action():
 
     def execute_ping_test(cloudspace, connection):
         pool = ccl.externalnetwork.get(cloudspace['externalnetworkId'])
-        uid = 'ping public ip'
+        uid = 'deployement:ping public ip'
         j.console.echo('Perfoming internet test', log=True)
         for ip in pool.pingips:
             try:

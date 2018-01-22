@@ -57,7 +57,7 @@ def action():
             continue
 
         checked_devices.append(partition.device)
-
+        result['uid'] = "{}:{}".format(partition.device, partition.mountpoint)
         result = {'category': 'Disks'}
         result['path'] = j.system.fs.getBaseName(partition.device)
         # Check if it is a cache partition
@@ -92,10 +92,8 @@ def action():
                 j.clients.redisworker.execJumpscript(jumpscript=jumpscript, freespace_needed=40.0)
             if checkusage and (freepercent < tresholds.warning):
                 result['state'] = 'WARNING'
-                result['uid'] = partition.device
             if checkusage and (freepercent < tresholds.error):
                 result['state'] = 'ERROR'
-                result['uid'] = partition.device
         if not checkusage:
             result['state'] = 'SKIPPED'
         results.append(result)

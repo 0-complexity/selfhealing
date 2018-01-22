@@ -43,7 +43,7 @@ def action():
         totalram = psutil.phymem_usage().total / (1024 ** 2)
         avgmempercent = ((totalram - stat.h_avg) / float(totalram)) * 100
         memoryresult = get_results('memory', avgmempercent)
-
+    memoryresult['uid'] = "Memory Load"
     cpupercent = 0
     count = 0
     for percent in statsclient.statsByPrefix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
@@ -55,12 +55,9 @@ def action():
         cpuresult['state'] = 'WARNING'
         cpuresult['category'] = category
         cpuresult['message'] = 'Average CPU load is not collected yet'
-        cpuresult['uid'] = cpuresult['message']
     else:
         cpuavg = cpupercent / float(count)
         cpuresult = get_results('cpu', cpuavg)
-
-    memoryresult['uid'] = "Memory Load"
     cpuresult['uid'] = "CPU Load"
     return [memoryresult, cpuresult]
 
@@ -72,10 +69,8 @@ def get_results(type_, percent):
     result['category'] = 'System Load'
     if percent > 95:
         result['state'] = 'ERROR'
-        result['uid'] = r'Average %s load during last hour was too high' % (type_.upper())
     elif percent > 80:
         result['state'] = 'WARNING'
-        result['uid'] = r'Avergage %s load during last hour was too high' % (type_.upper())
     return result
 
 

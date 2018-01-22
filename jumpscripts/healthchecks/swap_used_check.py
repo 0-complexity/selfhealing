@@ -41,11 +41,10 @@ def action():
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'System Load'
-
+    result['uid'] = "swap_status"
     if stat is None or memstat is None:
         result['state'] = 'WARNING'
         result['message'] = 'Swap used value is not available'
-        result['uid'] = "swap_status"
         return [result]
 
     avg_swap_used = stat.m_avg
@@ -54,11 +53,9 @@ def action():
     if memstat.m_avg / totalmemory < 0.2:
         if avg_swap_used > 14000:
             result['state'] = 'ERROR'
-            result['uid'] = 'swap_status'
 
         elif avg_swap_used > 10000:
             result['state'] = 'WARNING'
-            result['uid'] = 'swap_status'
 
     return [result]
 

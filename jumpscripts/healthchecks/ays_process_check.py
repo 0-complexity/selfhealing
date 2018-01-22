@@ -31,6 +31,7 @@ def action():
         result['state'] = 'OK'
         result['message'] = "Process %s:%s:%s " % (ays.domain, ays.name, ays.instance)
         result['category'] = 'AYS Process'
+        result['uid'] = "{}:{}:{}".format(ays.domain, ays.name, ays.instance)
         if not ays.actions.check_up_local(ays, wait=False):
             message = "Restarted process %s:%s:%s" % (ays.domain, ays.name, ays.instance)
             eco_tags = j.core.tags.getObject()
@@ -49,7 +50,6 @@ def action():
                 j.errorconditionhandler.raiseOperationalWarning(message, 'monitoring')
                 result['state'] = 'HALTED'
                 result['message'] = message
-                result['uid'] = "{}:{}:{}".format(ays.domain, ays.name, ays.instance)
         results.append(result)
 
     return results

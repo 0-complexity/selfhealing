@@ -21,6 +21,8 @@ def action():
     import libvirt
     from multiprocessing.pool import ThreadPool as Pool
     con = libvirt.open()
+    nid = j.application.whoAmI.nid
+    gid = j.application.whoAmI.gid
 
     category = "QEMU Logs"
     vmlogpath = "/var/log/libvirt/qemu/{vm_name}.log"
@@ -41,7 +43,8 @@ def action():
                 last10 = f.readlines()[-1:-10]
                 for line in last10:
                     if 'error' in line.lower():
-                        results.append(dict(state='ERROR', category=category, message=line))
+                        uid = "qemulogs:{}".format(line)
+                        results.append(dict(state='ERROR', category=category, message=line, uid=uid))
         except IOError as e:
             if e.errno != 2:
                 raise

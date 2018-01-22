@@ -46,7 +46,7 @@ def action():
             results.append({'message': 'Found heartbeat node(%s: %s) when not in grid nodes.' % (nodes_name[heartbeat['nid']], heartbeat['nid']),
                             'state': 'ERROR',
                             'category': category,
-                            'uid': 'heartbeat_%s'% heartbeat['nid'],
+                            'uid': 'heartbeat_%s_%s'% (heartbeat['gid'], heartbeat['nid']),
                             'nid': heartbeat['nid']
                            })
 
