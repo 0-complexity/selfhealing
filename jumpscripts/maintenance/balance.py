@@ -22,7 +22,7 @@ timeout = 10
 
 
 def action():
-    j.system.process.execute('nohup /bin/btrfs balance start -dusage=80 / > /dev/null &', useShell=True)
+    j.system.process.execute('nohup /bin/btrfs balance start -dusage=80 / > /dev/null &', useShell=True, noDuplicates=True)
 
 
 if __name__ == '__main__':

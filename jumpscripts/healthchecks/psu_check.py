@@ -34,7 +34,7 @@ Power Supply Inactive
     """.splitlines()
     ps_errmsgs = [x.lower() for x in ps_errmsgs if x.strip()]
     linehaserrmsg = lambda line: any([x in line for x in ps_errmsgs])
-    rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False)
+    rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False, noDuplicates=True)
     if rc != 127:
         if out:
             # SAMPLE 1:

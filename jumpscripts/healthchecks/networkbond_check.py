@@ -21,7 +21,7 @@ timeout = 60
 
 def action():
     category = "Hardware"
-    rc, output = j.system.process.execute('ovs-appctl bond/show', dieOnNonZeroExitCode=False)
+    rc, output = j.system.process.execute('ovs-appctl bond/show', dieOnNonZeroExitCode=False, noDuplicates=True)
     results = []
     uid = "ovc-appctl"
     if rc == 127:
