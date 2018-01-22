@@ -40,7 +40,7 @@ def action():
         else:
             j.errorconditionhandler.raiseOperationalCritical(result['message'], 'monitoring', die=False)
             result['state'] = 'ERROR'
-            result['uid'] = '*%s is inactive' % (queue.upper())
+            result['uid'] = "queue:{}".format(queue.upper())
 
         results.append(result)
     return results

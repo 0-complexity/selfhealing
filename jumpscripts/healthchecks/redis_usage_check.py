@@ -64,7 +64,7 @@ def action():
                     state = 'WARNING'
 
             result['state'] = state
-            result['uid'] = errmsg
+            result['uid'] = "redis:{}:port:{}".format(instance, port)
             results.append(result)
             print results
 

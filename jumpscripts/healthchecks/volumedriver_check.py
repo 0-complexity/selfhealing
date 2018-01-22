@@ -230,17 +230,20 @@ def action():
             check_over_threads(len(process.threads()), reasons)
             check_over_memory(mem, reasons)
             check_volume_read(ovscl, storage_driver, reasons)
+            uid = vpool
             if reasons.messages:
                 message = "\n".join(["Volumedriver {} has some problems:".format(vpool)] + reasons.messages)
                 msg = {'category': 'Volumedriver',
                        'state': 'WARNING',
-                       'message': message}
+                       'message': message,
+                       'uid': uid}
                 results.append(msg)
             else:
                 message = "Volumedriver {} has no problems.".format(vpool)
                 msg = {'category': 'Volumedriver',
                        'state': 'OK',
-                       'message': message}
+                       'message': message,
+                       'uid': uid}
                 results.append(msg)
         except psutil.NoSuchProcess:
             pass  # process has stopped no need to monitor it

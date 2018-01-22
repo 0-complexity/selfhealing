@@ -37,7 +37,6 @@ class NetworkPerformance(object):
         self.nic = 'backplane1'
         self._nodes = []
         self.scl = j.clients.osis.getNamespace('system')
-
         # appened opverstorage to python path
         j.system.platform.ubuntu.checkInstall('iperf3', 'iperf3')
 

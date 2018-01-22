@@ -24,7 +24,7 @@ def action(gid=None):
     result = dict()
     result['state'] = 'OK'
     result['category'] = 'VMs-Disks ratio'
-    result['uid'] = 'vm disk ratio'
+    result['uid'] = 'vm_disk_ratio'
 
 
     vmachines_count = cbcl.vmachine.count({'status': {'$nin': ['ERROR', 'DESTROYED']}})

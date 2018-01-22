@@ -1,3 +1,4 @@
+from JumpScale import j
 descr = """
 Checks whether all configured RAID devices are still healthy.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
@@ -29,7 +30,7 @@ def action():
 
     for name, device in stats['devices'].iteritems():
         faultydisks = []
-        uid = "raid_check {}".format(name)
+        uid = "raid_check:{}".format(name)
         result = {'state': 'OK', 'category': category}
         if device['active']:
             for diskname, disk in device['disks'].iteritems():
