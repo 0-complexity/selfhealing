@@ -23,7 +23,7 @@ def action():
     results = []
     if j.system.platformtype.isVirtual():
         return results
-    rc, out = j.system.process.execute("""ipmitool sdr type "Fan" """, dieOnNonZeroExitCode=False)
+    rc, out = j.system.process.execute("""ipmitool sdr type "Fan" """, dieOnNonZeroExitCode=False, noDuplicates=True)
     if rc == 0:  # 127 is command not found
         if out:
             # SAMPLE:

@@ -43,7 +43,7 @@ def action():
     def disktemp(disk):
         cmd = 'smartctl -A /dev/{disk}'.format(disk=disk)
         pat = "^(190|194).*?(?P<temp>\d+)(?:\(.*\))?$"
-        rc, out = j.system.process.execute(cmd, dieOnNonZeroExitCode=False)
+        rc, out = j.system.process.execute(cmd, dieOnNonZeroExitCode=False, noDuplicates=True)
         if rc == 0 and out:
             for match in re.finditer(pat, out, re.M):
                 current = int(match.group('temp'))
