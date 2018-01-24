@@ -70,17 +70,17 @@ def ping(ip):
 def action():
     from threading import Thread
     scl = j.clients.osis.getNamespace('system')
-    nodes = scl.node.search({'gid': j.application.whoAmI.gid, 'active': True, 'roles': {'$in': roles}})[1:]
+    nodes = scl.node.search({'gid': j.application.whoAmI.gid,
+                             'active': True,
+                             'roles': {'$in': roles},
+                             'id': {'$ne': j.application.whoAmI.nid}})[1:]
     networks = {}
     networksmtu = {}
     results = []
-    mynode = None
+    mynode = scl.node.get(j.application.whoAmI.nid)
     for node in nodes:
-        if node['id'] != j.application.whoAmI.nid:
-            updateNetwork(node['netaddr'], networks)
-            getMTUSubnet(node['netaddr'], networksmtu)
-        else:
-            mynode = node
+        updateNetwork(node['netaddr'], networks)
+        getMTUSubnet(node['netaddr'], networksmtu)
 
     def process_network(netinfo):
         if netinfo['name'] == 'lo':
@@ -124,10 +124,12 @@ def action():
         thread = Thread(target=process_network, args=(netinfo,))
         thread.start()
         threads.append(thread)
-        for netmodel in mynode['netaddr']:
-            if netmodel['name'] == netinfo['name'] and netmodel['mtu'] != netinfo['mtu']:
-                netmodel['mtu'] = netinfo['mtu']
-                nodechanges = True
+        for netmodel in mynode.netaddr:
+            if netmodel['name'] == netinfo['name']:
+                for cat in ['mtu', 'ip']:
+                    if netmodel[cat] != netinfo[cat]:
+                        netmodel[cat] = netinfo[cat]
+                        nodechanges = True
     if nodechanges:
         scl.node.set(mynode)
 
