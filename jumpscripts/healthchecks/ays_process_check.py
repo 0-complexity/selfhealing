@@ -23,6 +23,10 @@ roles = ['node']
 
 
 def action():
+
+    # skippingjumpscript for  jsagent  as it is run outside of ays and would crash this jumpscript
+    if (1 in j.system.process.getProcessPid('jsagent')):
+        return
     results = list()
     for ays in j.atyourservice.findServices():
         if not ays.getProcessDicts():
