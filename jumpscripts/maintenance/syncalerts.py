@@ -20,7 +20,7 @@ queue = 'process'
 roles = ['master']
 enable = True
 
-log = True
+log = False
 
 
 def get_alerts(config, envname, headers):
