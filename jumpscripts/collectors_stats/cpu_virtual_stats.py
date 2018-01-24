@@ -22,22 +22,21 @@ roles = ['cpunode']
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     import libvirt
 
     connection = libvirt.open()
-    scl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "stack")
     vmcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "vmachine")
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 
     # search stackid of the node where we execute this script
-    stack = scl.search({'referenceId': str(j.application.whoAmI.nid)})[1]
     # list all vms running in this node
     domains = connection.listAllDomains()
 
     all_results = {}
     for domain in domains:
-        result = {}
 
         vm = next(iter(vmcl.search({'referenceId': domain.UUIDString()})[1:]), None)
         if vm is None:

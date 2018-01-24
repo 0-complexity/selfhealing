@@ -32,6 +32,8 @@ NAMEFINDER = dict(volumedriver_fs=[[re.compile(r"^/mnt/(\w+)$")]],
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     import psutil
 
     rediscl = j.clients.redis.getByInstance('system')

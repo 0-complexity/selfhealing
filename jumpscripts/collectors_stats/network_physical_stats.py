@@ -24,6 +24,8 @@ log = False
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     rediscl = j.clients.redis.getByInstance('system')
     aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
 

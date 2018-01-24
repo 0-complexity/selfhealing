@@ -18,6 +18,8 @@ timeout = 30
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     from multiprocessing import Process
     import glob
     import re

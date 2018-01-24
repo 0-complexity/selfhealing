@@ -33,6 +33,8 @@ roles = ['node']
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     import psutil
 
     dcl = j.clients.osis.getCategory(j.core.osis.client, "system", "disk")
