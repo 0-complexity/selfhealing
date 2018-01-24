@@ -1,5 +1,6 @@
 from JumpScale import j
 
+
 descr = """
 Checks Redis server status.
 Result will be shown in the "Redis" section of the Grid Portal / Status Overview / Node Status page.
@@ -47,12 +48,12 @@ def action():
                     result['state'] = 'ERROR'
                     result['message'] = 'Failed to ping redis.'
                     continue
-            except ConnectionError:
+            except redis.ConnectionError:
                 result['state'] = 'ERROR'
                 result['message'] = errmsg
                 continue
 
-            maxmemory = float(rcl.config_get('maxmemory').get('maxmemory', 0))
+            maxmemory = float(rcl.config_get('maxmemory').get('maxmemory', 100))
             used_memory = rcl.info()['used_memory']
             size, unit = j.tools.units.bytes.converToBestUnit(used_memory)
             msize, munit = j.tools.units.bytes.converToBestUnit(maxmemory)
