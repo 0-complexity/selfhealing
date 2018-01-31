@@ -67,15 +67,17 @@ def action(deltatime=3600*24*7):
     cloudinits = get_cloud_inits(vms)
     diskmap.update(cloudinits)
     results = []
-
-    for disk in ovscl.get('/vdisks', params={'contents': 'devicename'})['data']:
+    def delete_if_orphan(guid):
+        try:
+            disk = ovscl.get('/vdisks/{}'.format(guid))
+        except:
+            # This disk removed in an ealry  step
+            return
         devicename = disk['devicename']
-        if devicename.startswith('/templates'):
-            continue
-        elif devicename.startswith('/archive'):
-            continue
+        if devicename.startswith('/templates') or devicename.startswith('/archive'):
+            return
+
         elif diskmap.get(disk['devicename'], 'DESTROYED') == 'DESTROYED':
-            disk = ovscl.get('/vdisks/{}'.format(disk['guid']))
             edge_client = disk.get('edge_clients')
             if not edge_client:
                 deletedisk = False
@@ -87,18 +89,37 @@ def action(deltatime=3600*24*7):
                             deletedisk = True
                         break
                 if deletedisk:
+                    deleted = False
                     print('Deleting {}'.format(disk['devicename']))
-                    ovscl.delete('/vdisks/{}'.format(disk['guid']))
-                    eco_tags = j.core.tags.getObject()
-                    eco_tags.tagSet('vdiskGuid', disk['guid'])
-                    eco_tags.labelSet('vdisk.delete')
-                    eco_tags.labelSet('ovs.diskdelete')
-                    j.errorconditionhandler.raiseOperationalWarning(
-                        message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
-                        category='selfhealing',
-                        tags=str(eco_tags)
-                    )
-                    continue
+                    if disk['child_vdisks_guids']:
+                        for child in disk['child_vdisks_guids']:
+                            print("Disk clones found, deleting {}".format(child))
+                            delete_if_orphan(child)
+                    try:
+                        ovscl.delete('/vdisks/{}'.format(disk['guid']))
+                    except Exception as e:
+                        print('Can not delete vdisk {}, {}'.format(disk['guid'], e))
+
+                    for i in range(20):
+                        try:
+                            ovscl.get('/vdisks/{}'.format(disk['guid']))
+                        except:
+                            deleted = True
+                            break
+                        time.sleep(5)
+                    else:
+                        print('Can not delete vdisk {}'.format(disk['guid']))
+                    if deleted:
+                        eco_tags = j.core.tags.getObject()
+                        eco_tags.tagSet('vdiskGuid', disk['guid'])
+                        eco_tags.labelSet('vdisk.delete')
+                        eco_tags.labelSet('ovs.diskdelete')
+                        j.errorconditionhandler.raiseOperationalWarning(
+                            message='delete ovs disk %s on nid:%s gid:%s' % (disk['guid'], nid, gid),
+                            category='selfhealing',
+                            tags=str(eco_tags)
+                        )
+                        return
                 elif snapshottime == 0:
                     print('Adding snapshot marker')
                     snapshottime = int(time.time())
@@ -119,13 +140,15 @@ def action(deltatime=3600*24*7):
                     'message': DISK_WITH_EDGE % (disk['devicename']),
                     'uid': disk['devicename']
                     })
-                continue
+                return
             results.append({'state': 'WARNING',
                             'category': 'Orphanage',
                             'message': DISK_FOUND % (disk['devicename'], "{{ts: %s}}" % (snapshottime + deltatime)),
                             'uid': disk['devicename']
                             })
 
+    for disk_guid in ovscl.get('/vdisks')['data']:
+        delete_if_orphan(disk_guid)
     return results
 
 if __name__ == '__main__':
