@@ -29,7 +29,7 @@ def action(deltatime=3600*24*7):
     ovs = scl.grid.get(j.application.whoAmI.gid).settings['ovs_credentials']
     ovscl = j.clients.openvstorage.get(ovs['ips'], (ovs['client_id'], ovs['client_secret']))
     DISK_FOUND = 'Deleting disk %s at %s'
-    DISK_WITH_EDGE = 'Orphen disk: %s with connected edge'
+    DISK_WITH_EDGE = 'Orphan disk: %s with connected edge'
 
     def get_devices(deviceurl):
         devices = []

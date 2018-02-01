@@ -23,7 +23,9 @@ def action():
 
     results = []
     job = acl.executeJumpscript('cloudscalers', 'disk_orphan', role='storagedriver', gid=j.application.whoAmI.gid)
-    if job['state'] == 'OK':
+    if job['state'] != 'OK':
+        results.append({'state': 'ERROR', 'category': 'Orphanage', 'message': 'disk_orphan healthcheck failed check [job | job?id=%s]' % job['guid']})
+    else:
         results.extend(job['result'])
 
     if not results:
