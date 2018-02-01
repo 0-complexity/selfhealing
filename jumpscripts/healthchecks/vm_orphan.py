@@ -24,6 +24,7 @@ def action():
     nid = j.application.whoAmI.nid
     gid = j.application.whoAmI.gid
     result = []
+    pcl = j.clients.portal.getByInstance('main')
     cbcl = j.clients.osis.getNamespace('cloudbroker', j.core.osis.client)
     vcl = j.clients.osis.getNamespace('vfw', j.core.osis.client)
     stacks = cbcl.stack.search({'gid': j.application.whoAmI.gid, 'referenceId': str(j.application.whoAmI.nid)})[1:]
@@ -31,50 +32,65 @@ def action():
     networkids = {vfw['id'] for vfw in vfws}
     if not stacks:
         return result  # not registered as a stack
-    vms = cbcl.vmachine.search({'stackId': stacks[0]['id'], 'status': {'$ne': 'DESTROYED'}})[1:]
+    stack = stacks[0]
+    invalidstack = stack['status'] != 'ENABLED'
+    vms = cbcl.vmachine.search({'stackId': stack['id'], 'status': {'$ne': 'DESTROYED'}}, size=0)[1:]
     vmsbyguid = {vm['referenceId']: vm for vm in vms}
     con = libvirt.open()
     networkorphan = "Found orphan network %s"
-    networkwrongloc = "Found network %s which should be at node %s"
     vmorphan = "Found orphan %s"
-    vmwrongloc = "Found %s which should be at stack %s"
     messages = []
     try:
         domains = con.listAllDomains()
         for domain in domains:
             name = domain.name()
+            domainuuid = domain.UUIDString()
+            print('Processing {}'.format(name))
             if name.startswith('routeros'):
                 networkid = int(name.split('_')[-1], 16)
+                if invalidstack:
+                    # migrate this vm away
+                    print('\tFound RouterOS while stack is in status {} moving it'.format(stack['status']))
+                    vfw = next(iter(vcl.virtualfirewall.search({"id": networkid})[1:]), None)
+                    vcl.virtualfirewall.updateSearch({'guid': vfw['guid']}, {'$set': {'nid': j.application.whoAmI.nid}})
+                    pcl.actors.cloudbroker.cloudspace.moveVirtualFirewallToFirewallNode(int(vfw['domain']))
+                    continue
                 if networkid not in networkids:
                     vfw = next(iter(vcl.virtualfirewall.search({"id": networkid})[1:]), None)
                     if vfw:
-                        messages.append(networkwrongloc % (networkid, vfw['nid']))
+                        vcl.virtualfirewall.updateSearch({'guid': vfw['guid']}, {'$set': {'nid': j.application.whoAmI.nid}})
                     else:
                         messages.append(networkorphan % networkid)
-            elif domain.UUIDString() not in vmsbyguid:
-                vm = next(iter(cbcl.vmachine.search({"referenceId": domain.UUIDString()})[1:]), None)
-                if vm and vm['status'] == 'DESTROYED':
-                    try:
-                        j.console.warning('Destroying domain {}'.format(domain.name()))
-                        eco_tags = j.core.tags.getObject()
-                        if domain.ID() != -1:
-                            domain.destroy()
-                            eco_tags.labelSet('domain.destroy')
-                        domain.undefine()
-                        eco_tags.tagSet('domainname', domain.name())
-                        eco_tags.labelSet('domain.undefine')
-                        j.errorconditionhandler.raiseOperationalWarning(
-                            message='undefine orphan libvirt domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
-                            category='selfhealing',
-                            tags=str(eco_tags)
-                        )
-                    except libvirt.libvirtError:
-                        pass
-                    messages.append(vmorphan % (domain.name()))
-                elif not vm:
-                    messages.append(vmorphan % (domain.name()))
+            else:
+                if domainuuid not in vmsbyguid:
+                    vm = next(iter(cbcl.vmachine.search({"referenceId": domainuuid})[1:]), None)
+                    if vm and vm['status'] == 'DESTROYED':
+                        try:
+                            j.console.warning('Destroying domain {}'.format(domain.name()))
+                            eco_tags = j.core.tags.getObject()
+                            if domain.ID() != -1:
+                                domain.destroy()
+                                eco_tags.labelSet('domain.destroy')
+                            eco_tags.tagSet('domainname', domain.name())
+                            eco_tags.labelSet('domain.undefine')
+                            j.errorconditionhandler.raiseOperationalWarning(
+                                message='undefine orphan libvirt domain %s on nid:%s gid:%s' % (domain.name(), nid, gid),
+                                category='selfhealing',
+                                tags=str(eco_tags)
+                            )
+                        except libvirt.libvirtError:
+                            pass
+                    elif not vm:
+                        messages.append(vmorphan % (domain.name()))
+                elif invalidstack:
+                    # first update stack info then try to migrate it
+                    vm = vmsbyguid[domainuuid]
+                    print('\tFound VM while stack is in status {} moving it'.format(stack['status']))
+                    cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
+                    pcl.actors.cloudbroker.machine.moveToDifferentComputeNode(vm['id'], reason='Found VM on stack in status {}'.format(stack['status']), force=False)
                 else:
-                    messages.append(vmwrongloc % (domain.name(), vm['stackId']))
+                    print('\tFound vm that should be somewhere else moving it')
+                    cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
     finally:
         con.close()
 
