@@ -57,8 +57,8 @@ def action():
             continue
 
         checked_devices.append(partition.device)
-        result['uid'] = "{}:{}".format(partition.device, partition.mountpoint)
         result = {'category': 'Disks'}
+        result['uid'] = "{}:{}".format(partition.device, partition.mountpoint)
         result['path'] = j.system.fs.getBaseName(partition.device)
         # Check if it is a cache partition
         is_cache = False
