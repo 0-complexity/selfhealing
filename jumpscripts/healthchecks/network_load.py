@@ -36,7 +36,7 @@ def action():
         except:
             continue
 
-        percent = (stat.m_last / float(nicspeed)) * 100
+        percent = ((stat.m_last / 300.) / float(nicspeed)) * 100
         message['message'] = 'Nic {} {} bandwith is {:.2f}%'.format(nic, direction, percent)
         message['uid'] = "{}_{}".format(nic, direction)
         if percent > 80:
