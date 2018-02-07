@@ -22,7 +22,6 @@ enable = True
 
 log = False
 
-
 def get_alerts(config, envname, headers):
     alerts = []
     status_list = ['open','ack']
@@ -70,7 +69,7 @@ def action():
     alerts_dict = {}
     jobs = []
     health_checks = ocl.health.search({}, size=0)[1:]
-
+    sent_alerts = []
     nodes_cache = {}
     for nid in nids:
         nodes_cache[str(nid)] = ocl.node.get(nid).name
@@ -92,15 +91,19 @@ def action():
                 uid = hashlib.md5('{}:{}'.format(health_check['guid'], message['uid'])).hexdigest()
             else:
                 uid = hashlib.md5("{}:{}:{}".format(health_check['guid'], message['message'], message['category'])).hexdigest()
+            if uid in sent_alerts:
+                continue
             if uid in alerts_dict:
                 alert = alerts_dict[uid]
                 if message['state'] in ok_states:
                     jobs.append(gevent.spawn(close_alert, config, headers, alert['id']))
+                    sent_alerts.append(uid)
                 elif message['state'] != alert['severity'] or message['message'] != alert['text']:
                     data = dict(attributes={}, resource=uid,
                         text=message['message'], environment=envname, service=["{} - {}".format(nodename, health_check['cmd'])],
                         tags=[], severity=message['state'], event=message['category'])
                     jobs.append(gevent.spawn(create_alert, config, headers, data))
+                    sent_alerts.append(uid)
                 del alerts_dict[uid]
             else:
                 # if state not ok, send alert
@@ -109,6 +112,7 @@ def action():
                         text=message['message'], environment=envname, service=["{} - {}".format(nodename, health_check['cmd'])],
                         tags=[], severity=message['state'], event=message['category'])
                     jobs.append(gevent.spawn(create_alert, config, headers, data))
+                    sent_alerts.append(uid)
 
     # close other unreported alerts
     for nid, alert in alerts_dict.items():
