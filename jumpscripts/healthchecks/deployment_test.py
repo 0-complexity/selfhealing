@@ -236,9 +236,9 @@ def action():
 
     def execute_dd_test(connection):
         uid = "deployment:dd_test"
-        output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=8k count=128k || echo $?")
+        output = connection.sudo("timeout 120 dd if=/dev/zero of=/dev/vdb bs=8k count=64k || echo $?")
         if output == '124':  # this means timeout happend
-            msg = 'Executing dd command with bs 8k and count 128k failed to execute in 2minutes'
+            msg = 'Executing dd command with bs 8k and count 64k failed to execute in 2minutes'
             messages.append({'message': msg, 'category': category, 'state': 'ERROR', 'uid': uid})
         else:
             try:
@@ -248,7 +248,7 @@ def action():
                 msg = 'Measured write speed on disk was %sMB/s' % (speed)
                 status = 'OK'
                 j.console.echo(msg, log=True)
-                if speed < 50:
+                if speed < 40:
                     status = 'WARNING'
                 messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
             except Exception as e:
