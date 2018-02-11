@@ -90,6 +90,7 @@ def action():
                     pcl.actors.cloudbroker.machine.moveToDifferentComputeNode(vm['id'], reason='Found VM on stack in status {}'.format(stack['status']), force=False)
                 else:
                     print('\tFound vm that should be somewhere else moving it')
+                    vm = vmsbyguid[domainuuid]
                     cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
     finally:
         con.close()
