@@ -11,6 +11,7 @@
 #### version: 1.0
 #### async: True
 #### roles: ['node']
+#### timeout: 60
 #### descr: 
 ```
 Checks Redis server status.

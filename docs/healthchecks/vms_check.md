@@ -14,6 +14,7 @@ Check status of virtual machine.
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/vms_check.py
 #### version: 1.0
 #### roles: ['master']
+#### timeout: 60
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

@@ -15,6 +15,7 @@ Result will be shown in the "System Load" section of the Grid Portal / Status Ov
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/openfd_check.py
 #### version: 1.0
+#### timeout: 10
 #### async: True
 #### organization: greenitglobe
 #### action_docstring: None

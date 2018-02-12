@@ -15,6 +15,7 @@ Result will be shown in the "Network" section of the Grid Portal / Status Overvi
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/networkid_check.py
 #### version: 1.0
+#### timeout: 60
 #### async: True
 #### organization: cloudscalers
 #### action_docstring: None

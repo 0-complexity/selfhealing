@@ -13,6 +13,7 @@ Scheduler that runs on controller to collect OpenvStorage stats
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/ovs_stats_150sec.py
 #### version: 1.0
+#### timeout: 10
 #### async: True
 #### organization: greenitglobe
 #### action_docstring: None
