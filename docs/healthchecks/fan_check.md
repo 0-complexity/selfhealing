@@ -11,10 +11,10 @@ Result will be shown in the "Hardware" section of the Grid Portal / Status Overv
 
 ```
 #### author: thabeta@codescalers.com
-#### period: 60
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/fan_check.py
 #### version: 1.0
+#### timeout: 20
 #### async: True
 #### organization: cloudscalers
 #### action_docstring: None

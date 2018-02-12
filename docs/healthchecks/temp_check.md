@@ -14,6 +14,7 @@ Result will be shown in the "Temperature" section of the Grid Portal / Status Ov
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/temp_check.py
 #### version: 1.0
+#### timeout: 60
 #### async: True
 #### organization: cloudscalers
 #### action_docstring: None

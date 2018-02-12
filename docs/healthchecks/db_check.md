@@ -7,7 +7,7 @@
 #### name: info_gather_db
 #### descr: 
 ```
-Checks status of MongoDB and InfluxDB databases on Master. If not running an error condition is thrown.
+Checks status of MongoDB database on Master. If not running an error condition is thrown.
 Result will be shown in the "Databases" section of the Grid Portal / Status Overview / Node Status page.
 
 ```
@@ -17,6 +17,7 @@ Result will be shown in the "Databases" section of the Grid Portal / Status Over
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/db_check.py
 #### version: 1.0
 #### roles: ['master']
+#### timeout: 60
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

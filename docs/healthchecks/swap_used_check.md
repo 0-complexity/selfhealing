@@ -9,8 +9,8 @@
 Checks the amount of swap used by the system, and throws an error if higher than expected.
 
 Currently throws:
-- WARNING if more than 1 GB
-- ERROR if more than 2 GB
+- WARNING if more than 10 GB
+- ERROR if more than 14 GB
 
 Result will be shown in the "System Load" section of the Grid Portal / Status Overview / Node Status page.
 

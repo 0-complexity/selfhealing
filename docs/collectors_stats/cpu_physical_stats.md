@@ -21,7 +21,7 @@ Statistics are writen to Redis.
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/cpu_physical_stats.py
 #### version: 1.0
-#### roles: []
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

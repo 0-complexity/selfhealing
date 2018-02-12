@@ -17,6 +17,7 @@ Generates an error if bandwidth is below 10% of the maximum speed
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/networkperformance.py
 #### roles: ['storagenode', 'storagedriver', 'cpunode']
+#### timeout: 60
 #### async: True
 #### organization: cloudscalers
 #### action_docstring: None

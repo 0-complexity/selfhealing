@@ -16,6 +16,7 @@ If orphan disks exist, WARNING is shown in the "Orphanage" section of the Grid P
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/vm_orphan.py
 #### version: 1.0
 #### roles: ['cpunode']
+#### timeout: 60
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None

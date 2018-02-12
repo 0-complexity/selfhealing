@@ -1,5 +1,5 @@
 
-# JumpScript: disk_orphan_schedule.py
+# JumpScript: disk_garbage_collector_schedule.py
         
 #### category: monitor.healthcheck
 #### enable: True
@@ -10,12 +10,12 @@ Scheduler that runs on controller to check for orphan disks on specific volume d
 Generates warning if orphan disks exist on the specified volumes.
 
 ```
-#### author: deboeckj@codescalers.com
-#### period: 30 3 * * *
+#### author: geert@greenitglobe.com
+#### period: 3600
 #### queue: process
-#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/healthchecks/disk_orphan_schedule.py
+#### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/maintenance/disk_garbage_collector_schedule.py
 #### version: 1.0
-#### timeout: 3600
+#### timeout: 60
 #### async: True
-#### organization: cloudscalers
+#### organization: greenitglobe
 #### action_docstring: None

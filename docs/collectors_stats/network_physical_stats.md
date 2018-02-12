@@ -18,7 +18,7 @@ Gathers following network statistics from the physical machines:
 #### queue: process
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/collectors_stats/network_physical_stats.py
 #### version: 1.0
-#### roles: []
+#### roles: ['node']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None
