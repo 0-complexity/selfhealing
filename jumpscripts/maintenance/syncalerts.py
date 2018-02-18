@@ -57,6 +57,7 @@ def action():
     ocl = j.clients.osis.getNamespace('system')
     gids = ocl.grid.list()
     nids = ocl.node.list()
+    nodes = ocl.node.search({'$fields': ['nid', 'name', 'id', 'status']}, size=0)[1:]
     config = j.application.config.getDictFromPrefix("system.alerta")
     ok_states = ['OK', 'SKIPPED']
     if not config:
@@ -71,11 +72,15 @@ def action():
     health_checks = ocl.health.search({}, size=0)[1:]
     sent_alerts = []
     nodes_cache = {}
-    for nid in nids:
-        nodes_cache[str(nid)] = ocl.node.get(nid).name
+    inactive_nodes = []
+    not_fixed_alerts = []
+    for node in nodes:
+        nodes_cache[node['id']] = node['name']
+        if node.get('status') == 'MAINTENANCE':
+            inactive_nodes.append(node['id'])
     grid_cache = {}
     for gid in gids:
-        grid_cache[str(gid)] = ocl.grid.get(gid).name
+        grid_cache[gid] = ocl.grid.get(gid).name
 
     for gid in gids:
         envname = ocl.grid.get(gid).name
@@ -84,9 +89,25 @@ def action():
             alerts_dict[alert['resource']] = alert
    
     for health_check in health_checks:
+        envname = grid_cache.get(health_check['gid'])
+        nodename = nodes_cache.get(health_check['nid'])
+        # if node not active send an alert for this, then close all its alerts
+        if health_check['nid'] in inactive_nodes:
+            message = "Node in maintenance"
+            uid = hashlib.md5("{}_{}".format(nodename, message)).hexdigest()
+            if uid in alerts_dict:
+                if uid not in not_fixed_alerts:
+                    not_fixed_alerts.append(uid)
+                continue
+            if uid in sent_alerts:
+                continue
+
+            data = dict(attributes={}, resource=uid,text=message, environment=envname, service=[nodename],
+                        tags=[], severity='WARNING', event="Maintenance")
+            jobs.append(gevent.spawn(create_alert, config, headers, data))
+            sent_alerts.append(uid)
+            continue
         for message in health_check['messages']:
-            envname = grid_cache.get(health_check['guid'].split('_')[0])
-            nodename = nodes_cache.get('_'.join(health_check['guid'].split('_')[0:2]))
             if message.get('uid'):
                 uid = hashlib.md5('{}:{}'.format(health_check['guid'], message['uid'])).hexdigest()
             else:
@@ -113,7 +134,10 @@ def action():
                         tags=[], severity=message['state'], event=message['category'])
                     jobs.append(gevent.spawn(create_alert, config, headers, data))
                     sent_alerts.append(uid)
-
+    # delete not fixed alerts before closing 
+    for uid in not_fixed_alerts:
+        if uid in alerts_dict:
+            del alerts_dict[uid]
     # close other unreported alerts
     for nid, alert in alerts_dict.items():
         jobs.append(gevent.spawn(close_alert, config, headers, alert['id']))

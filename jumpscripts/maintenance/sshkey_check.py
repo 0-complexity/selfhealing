@@ -38,8 +38,8 @@ def action():
     nid = j.application.whoAmI.nid
     ncl = j.clients.osis.getNamespace('system').node
     current_node = ncl.get(nid).dump()
-    nodes = ncl.search({'roles': {'$in': roles}, 'active': True, 'gid': gid, 'id': {'$ne': nid}})[1:]
-    nodes += ncl.search({'roles': {'$in': ['reflector']}, 'active': True})[1:]
+    nodes = ncl.search({'roles': {'$in': roles}, 'status': 'ENABLED', 'gid': gid, 'id': {'$ne': nid}})[1:]
+    nodes += ncl.search({'roles': {'$in': ['reflector']}, 'status': 'ENABLED'})[1:]
 
     # make sure we actually have ssh key
     if not j.system.fs.exists('/root/.ssh/id_rsa'):

@@ -48,7 +48,7 @@ def action():
         os.chmod(authorizedfile, 0o600)
         os.chown(authorizedfile, guest.pw_uid, guest.pw_gid)
 
-    nodes = ncl.search({'roles': {'$in': roles}, 'active': True})[1:]
+    nodes = ncl.search({'roles': {'$in': roles}, 'status': 'ENABLED'})[1:]
 
     # update the hostkey in the db
     if j.system.fs.exists('/etc/ssh/ssh_host_rsa_key.pub'):

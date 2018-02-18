@@ -71,7 +71,7 @@ def action():
     from threading import Thread
     scl = j.clients.osis.getNamespace('system')
     nodes = scl.node.search({'gid': j.application.whoAmI.gid,
-                             'active': True,
+                             'status': 'ENABLED',
                              'roles': {'$in': roles},
                              'id': {'$ne': j.application.whoAmI.nid}})[1:]
     networks = {}
