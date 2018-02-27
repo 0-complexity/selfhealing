@@ -32,7 +32,7 @@ def action():
     else:
         bonds = []
         bond = {}
-        for match in re.finditer('(?:---- (?P<bondname>\w+) ----)?.+?\n(?:slave (?:(?P<slavename>\w+): (?P<state>\w+)))', output, re.DOTALL):
+        for match in re.finditer('(?:---- (?P<bondname>[\w-]+) ----)?.+?\n(?:slave (?:(?P<slavename>\w+): (?P<state>\w+)))', output, re.DOTALL):
             groups = match.groupdict()
             slave = {'name': groups['slavename'], 'state': groups['state']}
             if groups['bondname']:
