@@ -37,8 +37,8 @@ def action():
     nodecl = j.clients.osis.getCategory(osiscl, 'system', 'node')
     nodes = nodecl.simpleSearch({})
     nodes_name = {node['id']: node['name'] for node in nodes}
-    nids_active = [node['id'] for node in nodes if node["active"]]
-    nids_non_ctive = [node['id'] for node in nodes if not node["active"]]
+    nids_active = [node['id'] for node in nodes if node["status"] == 'ENABLED']
+    nids_non_ctive = [node['id'] for node in nodes if node["status"] != 'ENABLED']
 
     heartbeats = _getHeartBeats()
     for heartbeat in heartbeats:
