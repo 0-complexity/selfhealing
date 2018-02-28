@@ -29,6 +29,8 @@ roles = ['node']
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     nodekey = '{}_{}'.format(gid, nid)

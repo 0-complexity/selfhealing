@@ -27,6 +27,8 @@ queue = 'process'
 
 
 def action():
+    if j.system.platformtype.isVirtual():
+        return
     import psutil
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
