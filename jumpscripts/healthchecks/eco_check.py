@@ -8,7 +8,7 @@ and into error state if it exceeds 10 per hour
 
 organization = "cloudscalers"
 author = "chaddada@greenitglobe.com"
-category = "System Load"
+category = "monitor.healthcheck"
 license = "bsd"
 version = "1.0"
 period = 60 * 60  # always in sec
@@ -31,7 +31,7 @@ def action():
         state = 'ERROR'
     elif eco_count > 5:
        state = 'WARNING'
-    result = [{'state': state, 'category': category, 'message': message % eco_count, 'uid': 'ecorate'}]
+    result = [{'state': state, 'category': "System Load", 'message': message % eco_count, 'uid': 'ecorate'}]
     return result
 
 if __name__ == '__main__':
