@@ -21,7 +21,7 @@ roles = ['master']
 
 
 def action():
-    message = '%s number of ecos were filed in last hour'
+    message = '%s ecos were filled within last hour'
     state = 'OK'
     current_time = int(time.time())
     limit_time = current_time - period
