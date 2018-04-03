@@ -40,8 +40,9 @@ def action():
         if not vcl.virtualfirewall.exists(vfwid):
             return dict(state='ERROR', category=category, message="RouterOS {vfwid} doesn't exist on {spacelink}".format(vfwid=vfwid, spacelink=spacelink))
         vfw = vcl.virtualfirewall.get(vfwid)
-        client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password, timeout=5)
+        client = None
         try:
+            client = j.clients.routeros.get(vfw.host, vfw.username, vfw.password, timeout=5)
             for ip in external_network.pingips:
                 ok = check_ping(client, ip)
                 if ok:
@@ -60,7 +61,8 @@ def action():
             return dict(state='ERROR', category=category,
                         message="RouterOS {roslink} on {spacelink} died".format(roslink=roslink, spacelink=spacelink))
         finally:
-            client.close()
+            if client:
+                client.close()
 
     pool = Pool(10)
     results = pool.map(checkros, cloudspaces)
