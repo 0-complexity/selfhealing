@@ -21,12 +21,15 @@ timeout = 60
 
 
 def action():
-    j.system.process.run('apt-get -y install cgroup-bin cgroup-lite cgroup-tools', showOutput=False, captureOutput=True, stopOnError=False)
     scl = j.clients.osis.getNamespace('system')
     grid = scl.grid.get(j.application.whoAmI.gid)
-    limits = grid.settings['limits']
-    mem = limits['ovs']['memory'] # should be in Mega
-    cpu = limits['ovs']['cpu']
+    ovslimits = grid.settings.get('limits', {}).get('ovs')
+    if not ovslimits:
+        return
+
+    mem = ovslimits['memory'] # should be in Mega
+    cpu = ovslimits['cpu']
+    j.system.process.run('apt-get -y install cgroup-bin cgroup-lite cgroup-tools', showOutput=False, captureOutput=True, stopOnError=False)
     j.system.platform.cgroups.create('ovs')
     j.system.platform.cgroups.set_mem_limit('ovs', mem)
     j.system.platform.cgroups.set_cpu_cores('ovs', cpu)

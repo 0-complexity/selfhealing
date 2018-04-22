@@ -64,7 +64,7 @@ def action():
             else:
                 if domainuuid not in vmsbyguid:
                     vm = next(iter(cbcl.vmachine.search({"referenceId": domainuuid})[1:]), None)
-                    if vm and vm['status'] == 'DESTROYED':
+                    if vm and vm['status'] in ['DESTROYED', 'DELETED']:
                         try:
                             j.console.warning('Destroying domain {}'.format(domain.name()))
                             eco_tags = j.core.tags.getObject()
@@ -80,7 +80,10 @@ def action():
                             )
                         except libvirt.libvirtError:
                             pass
-                    elif not vm:
+                    elif vm:
+                        print('\tFound vm that should be somewhere else moving it')
+                        cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
+                    else:
                         messages.append(vmorphan % (domain.name()))
                 elif invalidstack:
                     # first update stack info then try to migrate it
@@ -88,10 +91,6 @@ def action():
                     print('\tFound VM while stack is in status {} moving it'.format(stack['status']))
                     cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
                     pcl.actors.cloudbroker.machine.moveToDifferentComputeNode(vm['id'], reason='Found VM on stack in status {}'.format(stack['status']), force=False)
-                else:
-                    print('\tFound vm that should be somewhere else moving it')
-                    vm = vmsbyguid[domainuuid]
-                    cbcl.vmachine.updateSearch({'id': vm['id']}, {'$set': {'stackId': stack['id']}})
     finally:
         con.close()
 
