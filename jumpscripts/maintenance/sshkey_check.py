@@ -17,7 +17,7 @@ enable = True
 async = True
 log = False
 queue = 'process'
-roles = ['cpunode', 'storagenode', 'storagedriver', ]
+roles = ['cpunode', 'storagenode', 'storagedriver', 'controllernode']
 
 
 def cleanup_list(l):
@@ -38,7 +38,7 @@ def action():
     nid = j.application.whoAmI.nid
     ncl = j.clients.osis.getNamespace('system').node
     current_node = ncl.get(nid).dump()
-    nodes = ncl.search({'roles': {'$in': roles}, 'status': 'ENABLED', 'gid': gid, 'id': {'$ne': nid}})[1:]
+    nodes = ncl.search({'roles': {'$in': roles}, 'status': 'ENABLED', 'gid': gid})[1:]
     nodes += ncl.search({'roles': {'$in': ['reflector']}, 'status': 'ENABLED'})[1:]
 
     # make sure we actually have ssh key
@@ -60,7 +60,7 @@ def action():
         key2 = key.split(' ')[:-1]
         current_node['hostkey'] = ' '.join(key2)
     else:
-        print "node %s doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub" % current_node['name']
+        print("Current node doesn't have host key file at /etc/ssh/ssh_host_rsa_key.pub")
     # save node to db
     ncl.set(current_node)
 
@@ -87,27 +87,26 @@ def action():
     known_hosts = cleanup_list(known_hosts.splitlines())
     authorized_keys = cleanup_list(authorized_keys.splitlines())
 
+    allnodes = set(node['name'] for node in nodes)
     changes = {
-        'public': False,
-        'host': False
+        'public': set(),
+        'host': set()
     }
     for node in nodes:
         # deal with public keys
         if len(node['publickeys']) <= 0:
-            print "node %s doesn't have keys from node %s" % (current_node['name'], node['name'])
+            print("Node {} doesn't have public keys configured.".format(node['name']))
         else:
             for key in node['publickeys']:
                 key = key.strip()
                 if key not in authorized_keys:
                     authorized_keys.append(key)
-                    changes['public'] = True
-
-            print "node %s have keys from node %s" % (current_node['name'], node['name'])
+                    changes['public'].add(node['name'])
 
         # deal with host keys
         hostkey = node['hostkey'].strip()
-        if hostkey == '' and hostkey not in known_hosts:
-            print "node %s doesn't have host key from node %s" % (current_node['name'], node['name'])
+        if hostkey == '':
+            print("Node {} does not have his host key configured".format(node['name']))
         else:
             nodeips = []
             for net in node['netaddr']:
@@ -118,16 +117,19 @@ def action():
             entry = '{} {}'.format(','.join(sorted(nodeips)), node['hostkey'])
             if entry not in known_hosts:
                 known_hosts.append(entry)
-                changes['host'] = True
+                changes['host'].add(node['name'])
 
-                print "node %s have host key from node %s" % (current_node['name'], node['name'])
-
-    if changes['public'] is True:
-        print 'Writing authorized_keys'
+    if allnodes - changes['public']:
+        print('Found public keys for {}'.format(', '.join(allnodes - changes['public'])))
+    if changes['public']:
+        print('Adding public keys for {}'.format(', '.join(changes['public'])))
         authorized_keys.append('')
         j.system.fs.writeFile('/root/.ssh/authorized_keys', '\n'.join(authorized_keys))
-    if changes['host'] is True:
-        print 'Writing known_hosts'
+
+    if allnodes - changes['host']:
+        print('Found host keys for {}'.format(', '.join(allnodes - changes['host'])))
+    if changes['host']:
+        print('Adding known hosts for {}'.format(', '.join(changes['host'])))
         known_hosts.append('')
         j.system.fs.writeFile('/root/.ssh/known_hosts', '\n'.join(known_hosts))
 
