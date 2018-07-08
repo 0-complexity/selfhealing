@@ -5,7 +5,6 @@ checks nodes heartbeats.
 """
 
 organization = "cloudscalers"
-name = 'heartbeat check'
 author = "foudaa@greenitglobe.com.com"
 category = "monitor.healthcheck"
 license = "bsd"
