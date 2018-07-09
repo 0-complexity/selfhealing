@@ -23,7 +23,11 @@ timeout = 60
 def action():
     scl = j.clients.osis.getNamespace('system')
     grid = scl.grid.get(j.application.whoAmI.gid)
-    ovslimits = grid.settings.get('limits', {}).get('ovs')
+ 
+    limits = grid.settings.get('limits', {})
+    if not limits:
+        return
+    ovslimits = limits.get('ovs')
     if not ovslimits:
         return
 
