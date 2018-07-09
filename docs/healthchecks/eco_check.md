@@ -1,7 +1,7 @@
 
 # JumpScript: eco_check.py
         
-#### category: System Load
+#### category: monitor.healthcheck
 #### enable: True
 #### descr: 
 ```

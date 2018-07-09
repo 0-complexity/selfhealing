@@ -15,7 +15,7 @@ This script checks if all the nodes have the sshkey from the other nodes authori
 #### startatboot: True
 #### scriptname: /opt/code/github/0-complexity/selfhealing/jumpscripts/maintenance/sshkey_check.py
 #### version: 1.0
-#### roles: ['cpunode', 'storagenode', 'storagedriver']
+#### roles: ['cpunode', 'storagenode', 'storagedriver', 'controllernode']
 #### async: True
 #### organization: jumpscale
 #### action_docstring: None
