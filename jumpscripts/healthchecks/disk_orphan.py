@@ -77,7 +77,7 @@ def action(deltatime=3600*24*7):
         if devicename.startswith('/templates') or devicename.startswith('/archive'):
             return
 
-        elif diskmap.get(disk['devicename'], 'DESTROYED') == 'DESTROYED':
+        elif diskmap.get(disk['devicename'], 'TOBEDELETED') == 'TOBEDELETED':
             edge_client = disk.get('edge_clients')
             if not edge_client:
                 deletedisk = False
