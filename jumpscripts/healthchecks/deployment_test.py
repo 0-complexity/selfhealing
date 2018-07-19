@@ -114,7 +114,7 @@ def action():
             try:
                 if time.time() - vm['creationTime'] > 3600 * 24:
                     j.console.echo('Deleting %s' % vm['name'], log=True)
-                    pcl.actors.cloudapi.machines.delete(vm['id'])
+                    pcl.actors.cloudapi.machines.delete(vm['id'], permanently=True)
             except Exception as e:
                 j.console.echo('Failed to delete vm %s' % e, log=True)
         vms = ccl.vmachine.search({'stackId': stack['id'], 'cloudspaceId': cloudspace['id'], 'status': 'RUNNING'})[1:]
