@@ -29,19 +29,19 @@ def action():
     ovscl = get_ovs_client()
     ccl = j.clients.osis.getNamespace('cloudbroker')
     storagedrivers = ovscl.get('/storagedrivers', params={'contents': 'vpool,storagerouter'})['data']
-
-    for diskId in ccl.disk.list():
-        disk = ccl.disk.get(diskId)
-        guid = get_vdisk_guid(disk.referenceId)
+    
+    disks = ccl.disk.search({'status':{'$in':['CREATED', 'ASSIGNED']}}, size=0)[1:]
+    for disk in disks:
+        guid = get_vdisk_guid(disk['referenceId'])
         vdisk = ovscl.get('/vdisks/{}'.format(guid), params={'contents':'vpool,storagerouter_guid'})
         storagedriver = get_vdisk_storagedriver(ovscl, vdisk, storagedrivers)
 
-        disk_url = re.findall(r'[0-9]+(?:\.[0-9]+){3}:[0-9]+', disk.referenceId)[0]
+        disk_url = re.findall(r'[0-9]+(?:\.[0-9]+){3}:[0-9]+', disk['referenceId'])[0]
         vdisk_url = '{}:{}'.format(storagedriver['cluster_ip'], storagedriver['ports']['edge'])
 
         if disk_url != vdisk_url:
-            referenceId = disk.referenceId.replace(disk_url, vdisk_url)
-            ccl.disk.updateSearch({'id': disk.id}, {'$set': {'referenceId': referenceId}})
+            referenceId = disk['referenceId'].replace(disk_url, vdisk_url)
+            ccl.disk.updateSearch({'id': disk['id']}, {'$set': {'referenceId': referenceId}})
 
             j.errorconditionhandler.raiseOperationalWarning(
                 message="Vdisk is moved to storagedriver: {}, the original storagedriver might be down".format(storagedriver['name']),
