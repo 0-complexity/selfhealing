@@ -94,12 +94,12 @@ def action(deltatime=3600*24*7):
                     if disk['child_vdisks_guids']:
                         for child in disk['child_vdisks_guids']:
                             print("Disk clones found, deleting {}".format(child))
-                            delete_if_orphan(child)
-                    try:
-                        ovscl.delete('/vdisks/{}'.format(disk['guid']))
-                    except Exception as e:
-                        print('Can not delete vdisk {}, {}'.format(disk['guid'], e))
-
+                            deleted = delete_if_orphan(child)
+                            if not deleted:
+                                return
+                                
+                    ovscl.delete('/vdisks/{}'.format(disk['guid']))
+                   
                     for i in range(20):
                         try:
                             ovscl.get('/vdisks/{}'.format(disk['guid']))
@@ -119,7 +119,7 @@ def action(deltatime=3600*24*7):
                             category='selfhealing',
                             tags=str(eco_tags)
                         )
-                        return
+                        return True
                 elif snapshottime == 0:
                     print('Adding snapshot marker')
                     snapshottime = int(time.time())
