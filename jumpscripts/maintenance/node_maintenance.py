@@ -42,9 +42,7 @@ def action():
                     except socket.error:
                         connection_ok = False
                     if not connection_ok or exit_code != 0:
-                        pcl.actors.cloudbroker.computenode.maintenance(id=stack['id'], gid=stack['gid'],
-                                                                        vmaction='move',
-                                                                        message='Agent down, putting node into maintenance')
+                        pcl.actors.cloudbroker.node.maintenance(nid=stack['referenceId'], vmaction='move')
                         msg = 'Node: %s is put in maintenance mode' % (stack['referenceId'])
                     else:
                         msg = 'Jsagent for node: %s has been restarted' % (stack['referenceId'])
