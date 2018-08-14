@@ -32,6 +32,8 @@ def action(deltatime=3600*24*7):
     DISK_WITH_EDGE = 'Orphan disk: %s with connected edge'
 
     def get_devices(deviceurl):
+        if not deviceurl:
+            return []
         devices = []
         url = urlparse.urlparse(deviceurl.rsplit('@', 1)[0])
         device = url.path.split(':', 1)[0] + '.raw'
