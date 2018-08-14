@@ -248,7 +248,7 @@ def action():
                 msg = 'Measured write speed on disk was %sMB/s' % (speed)
                 status = 'OK'
                 j.console.echo(msg, log=True)
-                if speed < 10:
+                if speed < 5:
                     status = 'WARNING'
                 messages.append({'message': msg, 'category': category, 'state': status, 'uid': uid})
             except Exception as e:
