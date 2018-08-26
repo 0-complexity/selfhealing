@@ -42,7 +42,7 @@ def action():
         domaindisks = list(connection.get_domain_disks(domain))
 
         # get all the disks attached to a vm
-        disks = dcl.search({'id': {'$in': vm['disks']}})[1:]
+        disks = dcl.search({'referenceId': {'$ne': None}, 'id': {'$in': vm['disks']}})[1:]
 
         # get statistics for each disks
         for disk in disks:
