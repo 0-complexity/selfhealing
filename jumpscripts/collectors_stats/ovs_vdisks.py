@@ -15,14 +15,14 @@ timeout = 60
 order = 1
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = False
 
-roles = ['storagemaster']
+roles = ["storagemaster"]
 
 
 def format_tags(tags):
-    out = ''
+    out = ""
     for k, v in tags.iteritems():
         out += "%s:%s " % (k, v)
     return out.strip()
@@ -32,13 +32,15 @@ def action():
     """
     Send vdisks statistics to DB
     """
-    sys.path.append('/opt/OpenvStorage')
+    sys.path.append("/opt/OpenvStorage")
     from ovs.dal.lists.vdisklist import VDiskList
     from ovs.dal.hybrids.vpool import VPool
     from ovs.dal.hybrids.storagerouter import StorageRouter
 
-    rediscl = j.clients.redis.getByInstance('system')
-    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+    rediscl = j.clients.redis.getByInstance("system")
+    aggregatorcl = j.tools.aggregator.getClient(
+        rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    )
 
     all_results = {}
 
@@ -56,18 +58,18 @@ def action():
             continue
 
         disk_name = vdisk.name
-        failover_mode = vdisk.info.get('failover_mode')
+        failover_mode = vdisk.info.get("failover_mode")
 
-        if failover_mode in ['OK_STANDALONE', 'OK_SYNC']:
+        if failover_mode in ["OK_STANDALONE", "OK_SYNC"]:
             failover_status = 0
-        elif failover_mode == 'CATCHUP':
+        elif failover_mode == "CATCHUP":
             failover_status = 1
-        elif failover_mode == 'DEGRADED':
+        elif failover_mode == "DEGRADED":
             failover_status = 2
         else:
             failover_status = 3
 
-        metrics['failover_mode_status'] = failover_status
+        metrics["failover_mode_status"] = failover_status
 
         str_metrics = json.dumps(metrics)
         metrics = json.loads(str_metrics, parse_int=float)
@@ -75,23 +77,25 @@ def action():
         vpool_name = VPool(vdisk.vpool_guid).name
 
         for key, value in metrics.iteritems():
-            if key.endswith('_ps') or not isinstance(value, float):
+            if key.endswith("_ps") or not isinstance(value, float):
                 continue
             stat_key = "ovs.vdisk.%s@%s" % (key, volume_id)
             tags = {
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
-                'disk_name': disk_name,
-                'volume_id': volume_id,
-                'storagerouter_name': StorageRouter(vdisk.storagerouter_guid).name,
-                'vpool_name': vpool_name,
-                'failover_mode': vdisk.info['failover_mode']
+                "gid": j.application.whoAmI.gid,
+                "nid": j.application.whoAmI.nid,
+                "disk_name": disk_name,
+                "volume_id": volume_id,
+                "storagerouter_name": StorageRouter(vdisk.storagerouter_guid).name,
+                "vpool_name": vpool_name,
+                "failover_mode": vdisk.info["failover_mode"],
             }
-            if key == 'failover_mode_status':
+            if key == "failover_mode_status":
                 aggregatorcl.measure(stat_key, format_tags(tags), value, timestamp=now)
             else:
-                aggregatorcl.measureDiff(stat_key, format_tags(tags), value, timestamp=now)
+                aggregatorcl.measureDiff(
+                    stat_key, format_tags(tags), value, timestamp=now
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     action()

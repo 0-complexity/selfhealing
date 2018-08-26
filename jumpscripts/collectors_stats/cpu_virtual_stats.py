@@ -15,10 +15,10 @@ period = 60  # always in sec
 timeout = period * 0.2
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = False
 
-roles = ['cpunode']
+roles = ["cpunode"]
 
 
 def action():
@@ -28,8 +28,10 @@ def action():
 
     connection = libvirt.open()
     vmcl = j.clients.osis.getCategory(j.core.osis.client, "cloudbroker", "vmachine")
-    rediscl = j.clients.redis.getByInstance('system')
-    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+    rediscl = j.clients.redis.getByInstance("system")
+    aggregatorcl = j.tools.aggregator.getClient(
+        rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    )
 
     # search stackid of the node where we execute this script
     # list all vms running in this node
@@ -38,25 +40,32 @@ def action():
     all_results = {}
     for domain in domains:
 
-        vm = next(iter(vmcl.search({'referenceId': domain.UUIDString()})[1:]), None)
+        vm = next(iter(vmcl.search({"referenceId": domain.UUIDString()})[1:]), None)
         if vm is None:
             continue
 
         state, maxMem, memory, nrVirtCpu, cpuTime, = domain.info()
         now = j.base.time.getTimeEpoch()
 
-        key = 'machine.CPU.utilisation@virt.%d' % vm['id']
+        key = "machine.CPU.utilisation@virt.%d" % vm["id"]
         value = int(cpuTime / pow(10, 9))
-        tags = 'gid:%d nid:%d vmid:%s type:virtual' % (j.application.whoAmI.gid, j.application.whoAmI.nid, vm['id'])
+        tags = "gid:%d nid:%d vmid:%s type:virtual" % (
+            j.application.whoAmI.gid,
+            j.application.whoAmI.nid,
+            vm["id"],
+        )
         aggregatorcl.measureDiff(key, tags, value, timestamp=now)
 
-        all_results[vm['id']] = value
+        all_results[vm["id"]] = value
 
     return all_results
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import JumpScale.grid.osis
-    j.core.osis.client = j.clients.osis.getByInstance('main')
+
+    j.core.osis.client = j.clients.osis.getByInstance("main")
     results = action()
     import yaml
+
     print yaml.dump(results)

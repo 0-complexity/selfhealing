@@ -16,14 +16,18 @@ order = 1
 enable = True
 async = True
 log = False
-queue = 'process'
-roles = ['cpunode', 'storagenode', 'storagedriver', ]
+queue = "process"
+roles = ["cpunode", "storagenode", "storagedriver"]
 timeout = 10
 
 
 def action():
-    j.system.process.execute('nohup /bin/btrfs balance start -dusage=80 / > /dev/null &', useShell=True, noDuplicates=True)
+    j.system.process.execute(
+        "nohup /bin/btrfs balance start -dusage=80 / > /dev/null &",
+        useShell=True,
+        noDuplicates=True,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     action()

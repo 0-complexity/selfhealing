@@ -4,15 +4,15 @@ descr = """
 Inspects the qemu log files of running VMs and reports if there was any errors.
 """
 
-organization = 'cloudscalers'
+organization = "cloudscalers"
 author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
-roles = ['cpunode']
+roles = ["cpunode"]
 period = 300  # 5 mins
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = True
 timeout = 60
 
@@ -20,6 +20,7 @@ timeout = 60
 def action():
     import libvirt
     from multiprocessing.pool import ThreadPool as Pool
+
     con = libvirt.open()
     nid = j.application.whoAmI.nid
     gid = j.application.whoAmI.gid
@@ -42,9 +43,13 @@ def action():
             with open(logpath) as f:
                 last10 = f.readlines()[-1:-10]
                 for line in last10:
-                    if 'error' in line.lower():
+                    if "error" in line.lower():
                         uid = "qemulogs:{}".format(line)
-                        results.append(dict(state='ERROR', category=category, message=line, uid=uid))
+                        results.append(
+                            dict(
+                                state="ERROR", category=category, message=line, uid=uid
+                            )
+                        )
         except IOError as e:
             if e.errno != 2:
                 raise
@@ -53,11 +58,12 @@ def action():
     pool.map(report_domain, domains_list)
 
     if len(results) == 0:
-        results.append(dict(state='OK', category=category, message="QEMU Logs are OK."))
+        results.append(dict(state="OK", category=category, message="QEMU Logs are OK."))
 
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))

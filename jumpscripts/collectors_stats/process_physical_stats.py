@@ -19,16 +19,28 @@ timeout = period * 0.2
 order = 1
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = False
 
-roles = ['node']
+roles = ["node"]
 
-NAMEFINDER = dict(volumedriver_fs=[[re.compile(r"^/mnt/(\w+)$")]],
-                  arakoon=[[re.compile("^arakoon://config/ovs/arakoon/(.+?)/config.*$")],
-                           [re.compile("^/opt/(OpenvStorage)/config/arakoon_config\\.ini$")]],
-                  alba=[[re.compile("^(asd\\-start)$"), re.compile("^arakoon://config/ovs/alba/asds/(.*?)\\?.*$")],
-                        [re.compile("^(proxy\\-start)$"), re.compile("^arakoon://config/ovs/vpools/(.*?)\\?.*$")]])
+NAMEFINDER = dict(
+    volumedriver_fs=[[re.compile(r"^/mnt/(\w+)$")]],
+    arakoon=[
+        [re.compile("^arakoon://config/ovs/arakoon/(.+?)/config.*$")],
+        [re.compile("^/opt/(OpenvStorage)/config/arakoon_config\\.ini$")],
+    ],
+    alba=[
+        [
+            re.compile("^(asd\\-start)$"),
+            re.compile("^arakoon://config/ovs/alba/asds/(.*?)\\?.*$"),
+        ],
+        [
+            re.compile("^(proxy\\-start)$"),
+            re.compile("^arakoon://config/ovs/vpools/(.*?)\\?.*$"),
+        ],
+    ],
+)
 
 
 def action():
@@ -36,8 +48,10 @@ def action():
         return
     import psutil
 
-    rediscl = j.clients.redis.getByInstance('system')
-    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+    rediscl = j.clients.redis.getByInstance("system")
+    aggregatorcl = j.tools.aggregator.getClient(
+        rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    )
 
     now = j.base.time.getTimeEpoch()
     results = {}
@@ -73,22 +87,39 @@ def action():
 
         # VmRSS
         value = memory_info.rss
-        key = 'process.memory.vmrss@phys.%d.%d.%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
-        tags = 'gid:%d nid:%d process:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
+        key = "process.memory.vmrss@phys.%d.%d.%s" % (
+            j.application.whoAmI.gid,
+            j.application.whoAmI.nid,
+            executable,
+        )
+        tags = "gid:%d nid:%d process:%s type:physical" % (
+            j.application.whoAmI.gid,
+            j.application.whoAmI.nid,
+            executable,
+        )
         aggregatorcl.measure(key, tags, value, timestamp=now)
         results[key] = value
 
         # VmSize
         value = memory_info.vms
-        key = 'process.memory.vmsize@phys.%d.%d.%s' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
-        tags = 'gid:%d nid:%d process:%s type:physical' % (j.application.whoAmI.gid, j.application.whoAmI.nid, executable)
+        key = "process.memory.vmsize@phys.%d.%d.%s" % (
+            j.application.whoAmI.gid,
+            j.application.whoAmI.nid,
+            executable,
+        )
+        tags = "gid:%d nid:%d process:%s type:physical" % (
+            j.application.whoAmI.gid,
+            j.application.whoAmI.nid,
+            executable,
+        )
         aggregatorcl.measure(key, tags, value, timestamp=now)
         results[key] = value
 
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     results = action()
     import yaml
+
     print(yaml.dump(results))

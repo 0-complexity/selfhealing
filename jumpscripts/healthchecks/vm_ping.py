@@ -4,29 +4,29 @@ descr = """
 Checks whether virtual machine is pingable.
 """
 
-organization = 'jumpscale'
-name = 'vm_ping'
+organization = "jumpscale"
+name = "vm_ping"
 author = "zains@codescalers.com"
 version = "1.0"
 category = "monitor.vms"
-queue = 'process'
+queue = "process"
 enable = False
 async = True
 log = False
-roles = ['fw', ]
+roles = ["fw"]
 
 
 def action(vm_ip_address, vm_cloudspace_id):
     import JumpScale.grid.osis
     import JumpScale.lib.routeros
 
-    osiscl = j.clients.osis.getByInstance('main')
-    vfwcl = j.clients.osis.getCategory(osiscl, 'vfw', 'virtualfirewall')
+    osiscl = j.clients.osis.getByInstance("main")
+    vfwcl = j.clients.osis.getCategory(osiscl, "vfw", "virtualfirewall")
 
-    vfws = vfwcl.simpleSearch({'domain': str(vm_cloudspace_id)})
+    vfws = vfwcl.simpleSearch({"domain": str(vm_cloudspace_id)})
     if vfws:
         vfw = vfws[0]
-        routeros = j.clients.routeros.get(vfw['host'], 'vscalers', vfw['password'])
+        routeros = j.clients.routeros.get(vfw["host"], "vscalers", vfw["password"])
         pingable = routeros.ping(vm_ip_address)
         return pingable
     return False

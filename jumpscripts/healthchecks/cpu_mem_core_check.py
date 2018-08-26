@@ -20,62 +20,72 @@ order = 1
 enable = True
 async = True
 log = True
-queue = 'process'
-roles = ['node']
+queue = "process"
+roles = ["node"]
 
 
 def action():
     if j.system.platformtype.isVirtual():
         return
     import psutil
+
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    nodekey = '{}_{}'.format(gid, nid)
-    category = 'System Load'
+    nodekey = "{}_{}".format(gid, nid)
+    category = "System Load"
 
-    rcl = j.clients.redis.getByInstance('system')
+    rcl = j.clients.redis.getByInstance("system")
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet(
+        "machine.memory.ram.available@phys.{}.{}".format(gid, nid)
+    )
     if stat is None:
         memoryresult = {}
-        memoryresult['state'] = 'WARNING'
-        memoryresult['category'] = category
-        memoryresult['message'] = 'Average memory load is not collected yet'
+        memoryresult["state"] = "WARNING"
+        memoryresult["category"] = category
+        memoryresult["message"] = "Average memory load is not collected yet"
     else:
         totalram = psutil.phymem_usage().total / (1024 ** 2)
         avgmempercent = ((totalram - stat.h_avg) / float(totalram)) * 100
-        memoryresult = get_results('memory', avgmempercent)
-    memoryresult['uid'] = "Memory Load"
+        memoryresult = get_results("memory", avgmempercent)
+    memoryresult["uid"] = "Memory Load"
     cpupercent = 0
     count = 0
-    for percent in statsclient.statsByPrefix('machine.CPU.percent@phys.%d.%d' % (j.application.whoAmI.gid, j.application.whoAmI.nid)):
+    for percent in statsclient.statsByPrefix(
+        "machine.CPU.percent@phys.%d.%d"
+        % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    ):
         count += 1
         cpupercent += percent.h_avg
 
     if count == 0:
         cpuresult = {}
-        cpuresult['state'] = 'WARNING'
-        cpuresult['category'] = category
-        cpuresult['message'] = 'Average CPU load is not collected yet'
+        cpuresult["state"] = "WARNING"
+        cpuresult["category"] = category
+        cpuresult["message"] = "Average CPU load is not collected yet"
     else:
         cpuavg = cpupercent / float(count)
-        cpuresult = get_results('cpu', cpuavg)
-    cpuresult['uid'] = "CPU Load"
+        cpuresult = get_results("cpu", cpuavg)
+    cpuresult["uid"] = "CPU Load"
     return [memoryresult, cpuresult]
 
 
 def get_results(type_, percent):
     result = dict()
-    result['state'] = 'OK'
-    result['message'] = r'Average %s load during last hour was: %.2f%%' % (type_.upper(), percent)
-    result['category'] = 'System Load'
+    result["state"] = "OK"
+    result["message"] = r"Average %s load during last hour was: %.2f%%" % (
+        type_.upper(),
+        percent,
+    )
+    result["category"] = "System Load"
     if percent > 95:
-        result['state'] = 'ERROR'
+        result["state"] = "ERROR"
     elif percent > 80:
-        result['state'] = 'WARNING'
+        result["state"] = "WARNING"
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))

@@ -5,15 +5,15 @@ Checks the power redundancy of a node using IPMItool.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 """
 
-organization = 'cloudscalers'
+organization = "cloudscalers"
 author = "thabeta@codescalers.com"
 version = "1.0"
 category = "monitor.healthcheck"
-roles = ['node']
+roles = ["node"]
 period = 60  # 1min
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = True
 timeout = 20
 
@@ -34,7 +34,11 @@ Power Supply Inactive
     """.splitlines()
     ps_errmsgs = [x.lower() for x in ps_errmsgs if x.strip()]
     linehaserrmsg = lambda line: any([x in line for x in ps_errmsgs])
-    rc, out = j.system.process.execute("""ipmitool -c sdr type "Power Supply" """, dieOnNonZeroExitCode=False, noDuplicates=True)
+    rc, out = j.system.process.execute(
+        """ipmitool -c sdr type "Power Supply" """,
+        dieOnNonZeroExitCode=False,
+        noDuplicates=True,
+    )
     if rc != 127:
         if out:
             # SAMPLE 1:
@@ -65,18 +69,40 @@ Power Supply Inactive
                 if "status" in line.lower():
                     parts = [part.strip() for part in line.split(",")]
                     id_, presence = parts[0], parts[-1]
-                    id_ = id_.strip("Status").strip("_").strip()  # clean the power supply name.
+                    id_ = (
+                        id_.strip("Status").strip("_").strip()
+                    )  # clean the power supply name.
                     uid = "PSU:{}".format(id_)
                     if linehaserrmsg(line):
                         if psu_redun_in_out and is_fully_redundant:
-                            results.append(dict(state='SKIPPED', category=category, uid=uid, message="Power redundancy problem on %s (%s)" % (id_, presence)))
+                            results.append(
+                                dict(
+                                    state="SKIPPED",
+                                    category=category,
+                                    uid=uid,
+                                    message="Power redundancy problem on %s (%s)"
+                                    % (id_, presence),
+                                )
+                            )
                         else:
-                            results.append(dict(state='WARNING', category=category, uid=uid, message="Power redundancy problem on %s (%s)" % (id_, presence)))
+                            results.append(
+                                dict(
+                                    state="WARNING",
+                                    category=category,
+                                    uid=uid,
+                                    message="Power redundancy problem on %s (%s)"
+                                    % (id_, presence),
+                                )
+                            )
             if len(results) == 0:
-                results.append(dict(state='OK', category=category, message="Power supplies are OK"))
+                results.append(
+                    dict(state="OK", category=category, message="Power supplies are OK")
+                )
 
     return results
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))

@@ -17,33 +17,36 @@ license = "bsd"
 version = "1.0"
 category = "monitor.healthcheck"
 async = True
-roles = ['node']
-queue = 'process'
+roles = ["node"]
+queue = "process"
 period = 600
 log = True
 timeout = 60
 
 
 def action():
-    rediscl = j.clients.redis.getByInstance('system')
-    timemap = {'default': '-2m', 'io': '-2h', 'hypervisor': '-10m', 'process': '-1m'}
+    rediscl = j.clients.redis.getByInstance("system")
+    timemap = {"default": "-2m", "io": "-2h", "hypervisor": "-10m", "process": "-1m"}
     results = list()
 
-    for queue in ('io', 'hypervisor', 'default', 'process'):
-        result = {'category': 'Workers'}
-        lastactive = float(rediscl.hget('workers:heartbeat', queue) or 0)
+    for queue in ("io", "hypervisor", "default", "process"):
+        result = {"category": "Workers"}
+        lastactive = float(rediscl.hget("workers:heartbeat", queue) or 0)
         timeout = timemap.get(queue)
-        lastactiv = '{{ts:%s}}' % lastactive if lastactive else 'never'
-        result['message'] = '*%s last active*: %s' % (queue.upper(), lastactiv)
+        lastactiv = "{{ts:%s}}" % lastactive if lastactive else "never"
+        result["message"] = "*%s last active*: %s" % (queue.upper(), lastactiv)
         if j.base.time.getEpochAgo(timeout) < lastactive:
-            result['state'] = 'OK'
+            result["state"] = "OK"
         else:
-            j.errorconditionhandler.raiseOperationalCritical(result['message'], 'monitoring', die=False)
-            result['state'] = 'ERROR'
-            result['uid'] = "queue:{}".format(queue.upper())
+            j.errorconditionhandler.raiseOperationalCritical(
+                result["message"], "monitoring", die=False
+            )
+            result["state"] = "ERROR"
+            result["uid"] = "queue:{}".format(queue.upper())
 
         results.append(result)
     return results
+
 
 if __name__ == "__main__":
     print action()

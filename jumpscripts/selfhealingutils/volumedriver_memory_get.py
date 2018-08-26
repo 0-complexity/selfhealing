@@ -13,19 +13,20 @@ order = 1
 enable = True
 async = True
 log = False
-queue = 'process'
-roles = ['storagedriver']
+queue = "process"
+roles = ["storagedriver"]
 timeout = 60
 
 
 def action(vpool):
     import psutil
+
     for process in psutil.process_iter():
-        if process.name() != 'volumedriver_fs':
+        if process.name() != "volumedriver_fs":
             continue
 
-        cmd = ' '.join(process.cmdline())
-        if '--mountpoint /mnt/{}'.format(vpool) not in cmd:
+        cmd = " ".join(process.cmdline())
+        if "--mountpoint /mnt/{}".format(vpool) not in cmd:
             continue
 
         # we found which volumedriver_fs
@@ -34,5 +35,5 @@ def action(vpool):
     return None
 
 
-if __name__ == '__main__':
-    print(action('vmstor'))
+if __name__ == "__main__":
+    print(action("vmstor"))

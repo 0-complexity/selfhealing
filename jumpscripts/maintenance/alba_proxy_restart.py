@@ -16,17 +16,17 @@ order = 1
 enable = True
 async = True
 log = True
-queue = 'process'
-roles = ['storagenode']
+queue = "process"
+roles = ["storagenode"]
 timeout = 60 * 5
 
 
 def action():
     for name, status in j.system.platform.ubuntu.listServices().items():
-        if 'ovs-albaproxy' in name and status == 'enabled':
-            print('Restarting {}'.format(name))
+        if "ovs-albaproxy" in name and status == "enabled":
+            print("Restarting {}".format(name))
             j.system.platform.ubuntu.restartService(name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     action()

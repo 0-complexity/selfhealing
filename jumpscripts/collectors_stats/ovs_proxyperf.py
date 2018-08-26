@@ -15,14 +15,14 @@ timeout = 30
 order = 1
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = False
 
-roles = ['storagedriver']
+roles = ["storagedriver"]
 
 
 def format_tags(tags):
-    out = ''
+    out = ""
     for k, v in tags.iteritems():
         out += "%s:%s " % (k, v)
     return out.strip()
@@ -41,9 +41,9 @@ def get_backends_and_proxy_ports(hostname):
             for storagedriver in sr.storagedrivers:
                 vpool = storagedriver.vpool
                 proxies[vpool.name] = {
-                    'port': service.ports[0],
-                    'ip': storagedriver.storage_ip,
-                    'backend_name': vpool.metadata['backend']['backend_info']['name']
+                    "port": service.ports[0],
+                    "ip": storagedriver.storage_ip,
+                    "backend_name": vpool.metadata["backend"]["backend_info"]["name"],
                 }
     return proxies
 
@@ -52,44 +52,44 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
     from ovs.extensions.plugins.albacli import AlbaCLI
 
     try:
-        output = AlbaCLI.run(command='proxy-statistics', named_params={'host': ip, 'port': port})['ns_stats']
+        output = AlbaCLI.run(
+            command="proxy-statistics", named_params={"host": ip, "port": port}
+        )["ns_stats"]
     except Exception:
-        raise Exception("Could not get statistics from proxy at {0}:{1}".format(ip, port))
+        raise Exception(
+            "Could not get statistics from proxy at {0}:{1}".format(ip, port)
+        )
 
     now = j.base.time.getTimeEpoch()
 
     proxy_id = "%s.%s.%s" % (hostname, vpoolname, backendname)
-    tags = {
-        'server': hostname,
-        'vpool_name': vpoolname,
-        'backend_name': backendname
-    }
+    tags = {"server": hostname, "vpool_name": vpoolname, "backend_name": backendname}
     fields = {
-        'download_totaltime': 0.0,
-        'download_exp_totaltime': 0.0,
-        'download_avg': 0.0,
-        'download_exp_avg': 0.0,
-        'download_number': 0.0,
-        'upload_totaltime': 0.0,
-        'upload_exp_totaltime': 0.0,
-        'upload_avg': 0.0,
-        'upload_exp_avg': 0.0,
-        'upload_number': 0.0,
-        'partial_read_time_totaltime': 0.0,
-        'partial_read_time_exp_totaltime': 0.0,
-        'partial_read_time_avg': 0.0,
-        'partial_read_time_exp_avg': 0.0,
-        'partial_read_time_number': 0.0,
-        'partial_read_size_totaltime': 0.0,
-        'partial_read_size_exp_totaltime': 0.0,
-        'partial_read_size_avg': 0.0,
-        'partial_read_size_exp_avg': 0.0,
-        'partial_read_size_number': 0.0,
-        'fragment_cache_hits': 0.0,
-        'fragment_cache_misses': 0.0,
-        'manifest_cached': 0.0,
-        'manifest_from_nsm': 0.0,
-        'manifest_stale': 0.0
+        "download_totaltime": 0.0,
+        "download_exp_totaltime": 0.0,
+        "download_avg": 0.0,
+        "download_exp_avg": 0.0,
+        "download_number": 0.0,
+        "upload_totaltime": 0.0,
+        "upload_exp_totaltime": 0.0,
+        "upload_avg": 0.0,
+        "upload_exp_avg": 0.0,
+        "upload_number": 0.0,
+        "partial_read_time_totaltime": 0.0,
+        "partial_read_time_exp_totaltime": 0.0,
+        "partial_read_time_avg": 0.0,
+        "partial_read_time_exp_avg": 0.0,
+        "partial_read_time_number": 0.0,
+        "partial_read_size_totaltime": 0.0,
+        "partial_read_size_exp_totaltime": 0.0,
+        "partial_read_size_avg": 0.0,
+        "partial_read_size_exp_avg": 0.0,
+        "partial_read_size_number": 0.0,
+        "fragment_cache_hits": 0.0,
+        "fragment_cache_misses": 0.0,
+        "manifest_cached": 0.0,
+        "manifest_from_nsm": 0.0,
+        "manifest_stale": 0.0,
     }
 
     if len(output) == 0:
@@ -99,21 +99,25 @@ def get_stats_from_proxy(hostname, vpoolname, ip, port, backendname, aggregatorc
         for namespace in output:
             stats = namespace[1]
 
-            for key in ['download', 'upload', 'partial_read_time', 'partial_read_size']:
+            for key in ["download", "upload", "partial_read_time", "partial_read_size"]:
                 stats_key = stats.get(key)
                 if stats_key:
-                    fields['%s_avg' % key] += float(stats_key['avg'])
-                    fields['%s_exp_avg' % key] += float(stats_key['exp_avg'])
-                    fields['%s_totaltime' % key] += float(stats_key['avg']) * int(stats_key['n'])
-                    fields['%s_exp_totaltime' % key] += float(stats_key['exp_avg']) * int(stats_key['n'])
-                    fields['%s_number' % key] += float(stats_key['n'])
-            fields['fragment_cache_hits'] += float(stats['fragment_cache_hits'])
-            fields['fragment_cache_misses'] += float(stats['fragment_cache_misses'])
-            fields['manifest_cached'] += float(stats['manifest_cached'])
-            fields['manifest_from_nsm'] += float(stats['manifest_from_nsm'])
-            fields['manifest_stale'] += float(stats['manifest_stale'])
+                    fields["%s_avg" % key] += float(stats_key["avg"])
+                    fields["%s_exp_avg" % key] += float(stats_key["exp_avg"])
+                    fields["%s_totaltime" % key] += float(stats_key["avg"]) * int(
+                        stats_key["n"]
+                    )
+                    fields["%s_exp_totaltime" % key] += float(
+                        stats_key["exp_avg"]
+                    ) * int(stats_key["n"])
+                    fields["%s_number" % key] += float(stats_key["n"])
+            fields["fragment_cache_hits"] += float(stats["fragment_cache_hits"])
+            fields["fragment_cache_misses"] += float(stats["fragment_cache_misses"])
+            fields["manifest_cached"] += float(stats["manifest_cached"])
+            fields["manifest_from_nsm"] += float(stats["manifest_from_nsm"])
+            fields["manifest_stale"] += float(stats["manifest_stale"])
 
-        keys = ('avg', 'totaltime')
+        keys = ("avg", "totaltime")
 
         for key, value in fields.iteritems():
             if key.endswith(keys):
@@ -132,28 +136,35 @@ def action():
     """
     Send OVS proxy performance statistics to DB
     """
-    sys.path.append('/opt/OpenvStorage')
+    sys.path.append("/opt/OpenvStorage")
 
-    rediscl = j.clients.redis.getByInstance('system')
-    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
+    rediscl = j.clients.redis.getByInstance("system")
+    aggregatorcl = j.tools.aggregator.getClient(
+        rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    )
 
     all_results = {}
 
-    _, out = j.system.process.execute('hostname -s')
+    _, out = j.system.process.execute("hostname -s")
     hostname = out.strip()
     proxies = get_backends_and_proxy_ports(hostname.strip())
 
     for vpool, services in proxies.iteritems():
-        proxy_id, result = get_stats_from_proxy(hostname, vpool, services['ip'],
-                                                services['port'],
-                                                services['backend_name'],
-                                                aggregatorcl)
+        proxy_id, result = get_stats_from_proxy(
+            hostname,
+            vpool,
+            services["ip"],
+            services["port"],
+            services["backend_name"],
+            aggregatorcl,
+        )
         all_results[proxy_id] = result
 
     return all_results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     result = action()
     import yaml
+
     print(yaml.safe_dump(result, default_flow_style=False))

@@ -16,24 +16,33 @@ timeout = 20
 enable = True
 async = True
 log = True
-queue = 'process'
-roles = ['master']
+queue = "process"
+roles = ["master"]
 
 
 def action():
-    message = '%s ecos were filled within last hour'
-    state = 'OK'
+    message = "%s ecos were filled within last hour"
+    state = "OK"
     current_time = int(time.time())
     limit_time = current_time - period
-    scl = j.clients.osis.getNamespace('system')
-    eco_count = scl.eco.count({'pushtime': {'$gte': limit_time, '$lte': current_time}})
+    scl = j.clients.osis.getNamespace("system")
+    eco_count = scl.eco.count({"pushtime": {"$gte": limit_time, "$lte": current_time}})
     if eco_count > 10:
-        state = 'ERROR'
+        state = "ERROR"
     elif eco_count > 5:
-       state = 'WARNING'
-    result = [{'state': state, 'category': "System Load", 'message': message % eco_count, 'uid': 'ecorate'}]
+        state = "WARNING"
+    result = [
+        {
+            "state": state,
+            "category": "System Load",
+            "message": message % eco_count,
+            "uid": "ecorate",
+        }
+    ]
     return result
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))

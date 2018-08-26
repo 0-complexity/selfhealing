@@ -21,46 +21,49 @@ startatboot = True
 order = 1
 enable = True
 async = True
-roles = ['node']
+roles = ["node"]
 log = True
-queue = 'process'
+queue = "process"
 
 
 def action():
     if j.system.platformtype.isVirtual():
         return
     import psutil
+
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    nodekey = '{}_{}'.format(gid, nid)
+    nodekey = "{}_{}".format(gid, nid)
 
-    rcl = j.clients.redis.getByInstance('system')
+    rcl = j.clients.redis.getByInstance("system")
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.memory.swap.used@phys.{}.{}'.format(gid, nid))
-    memstat = statsclient.statGet('machine.memory.ram.available@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet("machine.memory.swap.used@phys.{}.{}".format(gid, nid))
+    memstat = statsclient.statGet(
+        "machine.memory.ram.available@phys.{}.{}".format(gid, nid)
+    )
     totalmemory = psutil.virtual_memory().total / (1024 ** 2)
 
     result = dict()
-    result['state'] = 'OK'
-    result['category'] = 'System Load'
-    result['uid'] = "swap_status"
+    result["state"] = "OK"
+    result["category"] = "System Load"
+    result["uid"] = "swap_status"
     if stat is None or memstat is None:
-        result['state'] = 'WARNING'
-        result['message'] = 'Swap used value is not available'
+        result["state"] = "WARNING"
+        result["message"] = "Swap used value is not available"
         return [result]
 
     avg_swap_used = stat.m_avg
-    result['message'] = 'Swap used value is: %.2fMB' % avg_swap_used
+    result["message"] = "Swap used value is: %.2fMB" % avg_swap_used
 
     if memstat.m_avg / totalmemory < 0.2:
         if avg_swap_used > 14000:
-            result['state'] = 'ERROR'
+            result["state"] = "ERROR"
 
         elif avg_swap_used > 10000:
-            result['state'] = 'WARNING'
+            result["state"] = "WARNING"
 
     return [result]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(action())

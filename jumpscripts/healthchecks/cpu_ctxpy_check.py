@@ -24,8 +24,8 @@ order = 1
 enable = True
 async = True
 log = True
-queue = 'process'
-roles = ['node']
+queue = "process"
+roles = ["node"]
 
 
 def action():
@@ -33,32 +33,32 @@ def action():
         return
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    nodekey = '{}_{}'.format(gid, nid)
+    nodekey = "{}_{}".format(gid, nid)
 
-    rcl = j.clients.redis.getByInstance('system')
+    rcl = j.clients.redis.getByInstance("system")
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.CPU.contextswitch@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet("machine.CPU.contextswitch@phys.{}.{}".format(gid, nid))
 
     result = dict()
-    result['state'] = 'OK'
-    result['category'] = 'System Load'
-    result['uid'] = 'CPU context switch'
-    
+    result["state"] = "OK"
+    result["category"] = "System Load"
+    result["uid"] = "CPU context switch"
+
     if stat is None:
-        result['state'] = 'WARNING'
-        result['message'] = 'CPU context switch is not collected yet'
+        result["state"] = "WARNING"
+        result["message"] = "CPU context switch is not collected yet"
         return [result]
 
     avgctx = stat.h_avg
-    result['message'] = 'Number of CPU context switches per second: %.2f/s' % avgctx
+    result["message"] = "Number of CPU context switches per second: %.2f/s" % avgctx
     if avgctx > 1000000:
-        result['state'] = 'ERROR'
+        result["state"] = "ERROR"
 
     elif avgctx > 600000:
-        result['state'] = 'WARNING'
+        result["state"] = "WARNING"
 
     return [result]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(action())

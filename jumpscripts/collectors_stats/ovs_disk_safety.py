@@ -14,14 +14,14 @@ timeout = 60
 order = 1
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = False
 
-roles = ['storagemaster']
+roles = ["storagemaster"]
 
 
 def format_tags(tags):
-    out = ''
+    out = ""
     for k, v in tags.iteritems():
         out += "%s:%s " % (k, v)
     return out.strip()
@@ -31,7 +31,7 @@ def action():
     """
     Send disk safety for each vpool and the amount of namespaces with the lowest disk safety to DB
     """
-    sys.path.append('/opt/OpenvStorage')
+    sys.path.append("/opt/OpenvStorage")
     from ovs.dal.lists.servicelist import ServiceList
     from ovs.dal.hybrids.service import Service
     from ovs.dal.hybrids.servicetype import ServiceType
@@ -39,13 +39,11 @@ def action():
     from ovs.extensions.healthcheck.helpers.albacli import AlbaCLI
     import ast
 
-    rediscl = j.clients.redis.getByInstance('system')
-    aggregatorcl = j.tools.aggregator.getClient(rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid))
-    all_results = {
-        'disk_lost': {},
-        'disk_safety': {},
-        'bucket': {},
-    }
+    rediscl = j.clients.redis.getByInstance("system")
+    aggregatorcl = j.tools.aggregator.getClient(
+        rediscl, "%s_%s" % (j.application.whoAmI.gid, j.application.whoAmI.nid)
+    )
+    all_results = {"disk_lost": {}, "disk_safety": {}, "bucket": {}}
 
     abms = []
 
@@ -60,23 +58,27 @@ def action():
         if service_name not in abms:
             continue
 
-        service_name = service_name.replace('arakoon-', '')
-        config = "arakoon://config/ovs/arakoon/{0}/" \
-                 "config?ini=%2Fopt%2FOpenvStorage%2Fconfig%2Farakoon_cacc.ini".format(service_name)
+        service_name = service_name.replace("arakoon-", "")
+        config = (
+            "arakoon://config/ovs/arakoon/{0}/"
+            "config?ini=%2Fopt%2FOpenvStorage%2Fconfig%2Farakoon_cacc.ini".format(
+                service_name
+            )
+        )
 
         try:
-            namespaces = AlbaCLI.run('show-namespaces', config=config, to_json=True)[1]
+            namespaces = AlbaCLI.run("show-namespaces", config=config, to_json=True)[1]
         except Exception as ex:
             continue
 
         try:
-            presets = AlbaCLI.run('list-presets', config=config, to_json=True)
+            presets = AlbaCLI.run("list-presets", config=config, to_json=True)
         except Exception:
             continue
 
         max_lost_disks = 0
         for preset_name in presets:
-            for policy in preset_name['policies']:
+            for policy in preset_name["policies"]:
                 if policy[1] > max_lost_disks:
                     max_lost_disks = policy[1]
 
@@ -88,9 +90,9 @@ def action():
         max_disk_safety = 0
         total_objects = 0
         for namespace in namespaces:
-            statistics = namespace['statistics']
-            bucket_counts = statistics['bucket_count']
-            preset_name = namespace['namespace']['preset_name']
+            statistics = namespace["statistics"]
+            bucket_counts = statistics["bucket_count"]
+            preset_name = namespace["namespace"]["preset_name"]
             for bucket_count in bucket_counts:
                 bucket, objects = bucket_count
                 total_objects += objects
@@ -103,93 +105,84 @@ def action():
                     bucket_overview[preset_name] = {}
 
                 if str(bucket) not in bucket_overview[preset_name]:
-                    bucket_overview[preset_name][str(bucket)] = {'objects': 0, 'disk_safety': 0}
+                    bucket_overview[preset_name][str(bucket)] = {
+                        "objects": 0,
+                        "disk_safety": 0,
+                    }
                 if disk_lost not in disk_lost_overview:
                     disk_lost_overview[disk_lost] = 0
                 if disk_safety not in disk_safety_overview:
                     disk_safety_overview[disk_safety] = 0
                 disk_lost_overview[disk_lost] += objects
                 disk_safety_overview[disk_safety] += objects
-                bucket_overview[preset_name][str(bucket)]['objects'] += objects
-                bucket_overview[preset_name][str(bucket)]['disk_safety'] = disk_safety
+                bucket_overview[preset_name][str(bucket)]["objects"] += objects
+                bucket_overview[preset_name][str(bucket)]["disk_safety"] = disk_safety
 
         for disk_lost in xrange(max_lost_disks + 1):
             if disk_lost in disk_lost_overview:
                 continue
             tags = {
-                'backend_name': ab.name,
-                'disk_lost': disk_lost,
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
+                "backend_name": ab.name,
+                "disk_lost": disk_lost,
+                "gid": j.application.whoAmI.gid,
+                "nid": j.application.whoAmI.nid,
             }
-            result = {
-                'total_objects': total_objects,
-                'objects': 0
-            }
+            result = {"total_objects": total_objects, "objects": 0}
             for k, value in result.iteritems():
-                key = 'ovs.disk_lost.%s@%s.%s' % (k, ab.name, disk_lost)
+                key = "ovs.disk_lost.%s@%s.%s" % (k, ab.name, disk_lost)
                 aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
-            all_results['disk_lost']["%s.%s" % (ab.name, disk_lost)] = result
+            all_results["disk_lost"]["%s.%s" % (ab.name, disk_lost)] = result
 
         for disk_lost, objects in disk_lost_overview.iteritems():
             tags = {
-                'backend_name': ab.name,
-                'disk_lost': disk_lost,
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
+                "backend_name": ab.name,
+                "disk_lost": disk_lost,
+                "gid": j.application.whoAmI.gid,
+                "nid": j.application.whoAmI.nid,
             }
-            result = {
-                'total_objects': total_objects,
-                'objects': objects
-            }
+            result = {"total_objects": total_objects, "objects": objects}
             for k, value in result.iteritems():
-                key = 'ovs.disk_lost.%s@%s.%s' % (k, ab.name, disk_lost)
+                key = "ovs.disk_lost.%s@%s.%s" % (k, ab.name, disk_lost)
                 aggregatorcl.measureDiff(key, format_tags(tags), value, timestamp=now)
 
-            all_results['disk_lost']["%s.%s" % (ab.name, disk_lost)] = result
+            all_results["disk_lost"]["%s.%s" % (ab.name, disk_lost)] = result
 
         for disk_safety in xrange(max_disk_safety + 1):
             if disk_safety in disk_safety_overview:
                 continue
             tags = {
-                'backend_name': ab.name,
-                'disk_safety': disk_safety,
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
+                "backend_name": ab.name,
+                "disk_safety": disk_safety,
+                "gid": j.application.whoAmI.gid,
+                "nid": j.application.whoAmI.nid,
             }
-            result = {
-                'total_objects': total_objects,
-                'objects': 0
-            }
+            result = {"total_objects": total_objects, "objects": 0}
             for k, value in result.iteritems():
-                key = 'ovs.disk_safety.%s@%s.%s' % (k, ab.name, disk_safety)
+                key = "ovs.disk_safety.%s@%s.%s" % (k, ab.name, disk_safety)
                 aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
 
-            all_results['disk_safety']["%s.%s" % (ab.name, disk_safety)] = result
+            all_results["disk_safety"]["%s.%s" % (ab.name, disk_safety)] = result
 
         for disk_safety, objects in disk_safety_overview.iteritems():
             tags = {
-                'backend_name': ab.name,
-                'disk_safety': disk_safety,
-                'gid': j.application.whoAmI.gid,
-                'nid': j.application.whoAmI.nid,
+                "backend_name": ab.name,
+                "disk_safety": disk_safety,
+                "gid": j.application.whoAmI.gid,
+                "nid": j.application.whoAmI.nid,
             }
-            result = {
-                'total_objects': total_objects,
-                'objects': objects
-            }
+            result = {"total_objects": total_objects, "objects": objects}
             for k, value in result.iteritems():
-                key = 'ovs.disk_safety.%s@%s.%s' % (k, ab.name, disk_safety)
+                key = "ovs.disk_safety.%s@%s.%s" % (k, ab.name, disk_safety)
                 aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
 
-            all_results['disk_safety']["%s.%s" % (ab.name, disk_safety)] = result
+            all_results["disk_safety"]["%s.%s" % (ab.name, disk_safety)] = result
 
         for preset_name, result in bucket_overview.iteritems():
             policies = []
             for preset in presets:
-                if preset['name'] == preset_name:
-                    policies = preset['policies']
+                if preset["name"] == preset_name:
+                    policies = preset["policies"]
                     break
 
             for bucket_count, bucket_result in result.iteritems():
@@ -205,28 +198,29 @@ def action():
                         used_policy = str(policy)
 
                 tags = {
-                    'backend_name': ab.name,
-                    'bucket': bucket_count,
-                    'disk_safety': disk_safety,
-                    'preset_name': preset_name,
-                    'policy': used_policy,
-                    'gid': j.application.whoAmI.gid,
-                    'nid': j.application.whoAmI.nid,
+                    "backend_name": ab.name,
+                    "bucket": bucket_count,
+                    "disk_safety": disk_safety,
+                    "preset_name": preset_name,
+                    "policy": used_policy,
+                    "gid": j.application.whoAmI.gid,
+                    "nid": j.application.whoAmI.nid,
                 }
                 stat_result = {
-                    'total_objects': total_objects,
-                    'objects': bucket_result['objects']
+                    "total_objects": total_objects,
+                    "objects": bucket_result["objects"],
                 }
                 for k, value in stat_result.iteritems():
-                    key = 'ovs.bucket.%s@%s.%s' % (k, ab.name, bucket_count)
+                    key = "ovs.bucket.%s@%s.%s" % (k, ab.name, bucket_count)
                     aggregatorcl.measure(key, format_tags(tags), value, timestamp=now)
 
-                all_results['bucket']["%s.%s" % (ab.name, bucket_count)] = result
+                all_results["bucket"]["%s.%s" % (ab.name, bucket_count)] = result
 
     return all_results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     result = action()
     import yaml
+
     print yaml.dump(result)

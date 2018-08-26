@@ -1,24 +1,26 @@
 from JumpScale import j
+
 descr = """
 Checks whether all configured RAID devices are still healthy.
 Result will be shown in the "Hardware" section of the Grid Portal / Status Overview / Node Status page.
 """
 
-organization = 'cloudscalers'
+organization = "cloudscalers"
 author = "deboeckj@greenitglobe.com"
 version = "1.0"
 category = "monitor.healthcheck"
-roles = ['node']
+roles = ["node"]
 period = 60 * 5
 enable = True
 async = True
-queue = 'process'
+queue = "process"
 log = True
 timeout = 60
 
 
 def action():
     import mdstat
+
     category = "Hardware"
     results = []
 
@@ -28,39 +30,44 @@ def action():
         if e.errno == 2:
             return []
 
-    for name, device in stats['devices'].iteritems():
+    for name, device in stats["devices"].iteritems():
         faultydisks = []
         uid = "raid_check:{}".format(name)
-        result = {'state': 'OK', 'category': category}
-        if device['active']:
-            for diskname, disk in device['disks'].iteritems():
-                if disk['faulty']:
+        result = {"state": "OK", "category": category}
+        if device["active"]:
+            for diskname, disk in device["disks"].iteritems():
+                if disk["faulty"]:
                     faultydisks.append(diskname)
 
-            status = device['status']
+            status = device["status"]
             if len(faultydisks) != 0:
-                msg = 'RAID device {} type {} has problems with disks ({})'.format(
-                    name, device['personality'], ', '.join(faultydisks))
-                result['uid'] = msg
-                result['state'] = 'ERROR'
-            elif status['non_degraded_disks'] != status['raid_disks']:
-                result['state'] = 'WARNING'
-                msg = 'RAID device {} type {} has atleast one degraded disk'.format(name, device['personality'])
-            elif device['resync']:
-                result['state'] = 'WARNING'
-                msg = 'RAID device {} type {} is syncing {}'.format(
-                    name, device['personality'], device['resync']['progress'])
+                msg = "RAID device {} type {} has problems with disks ({})".format(
+                    name, device["personality"], ", ".join(faultydisks)
+                )
+                result["uid"] = msg
+                result["state"] = "ERROR"
+            elif status["non_degraded_disks"] != status["raid_disks"]:
+                result["state"] = "WARNING"
+                msg = "RAID device {} type {} has atleast one degraded disk".format(
+                    name, device["personality"]
+                )
+            elif device["resync"]:
+                result["state"] = "WARNING"
+                msg = "RAID device {} type {} is syncing {}".format(
+                    name, device["personality"], device["resync"]["progress"]
+                )
             else:
-                msg = 'RAID device {} OK'.format(name)
+                msg = "RAID device {} OK".format(name)
         else:
-            result['state'] = 'WARNING'
-            msg = 'RAID device {} is inactive'.format(name)
-        result['uid'] = uid
-        result['message'] = msg
+            result["state"] = "WARNING"
+            msg = "RAID device {} is inactive".format(name)
+        result["uid"] = uid
+        result["message"] = msg
         results.append(result)
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))

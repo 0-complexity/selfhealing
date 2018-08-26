@@ -22,8 +22,8 @@ order = 1
 enable = True
 async = True
 log = True
-queue = 'process'
-roles = ['node']
+queue = "process"
+roles = ["node"]
 
 
 def action():
@@ -31,35 +31,35 @@ def action():
         return
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
-    nodekey = '{}_{}'.format(gid, nid)
+    nodekey = "{}_{}".format(gid, nid)
 
-    rcl = j.clients.redis.getByInstance('system')
+    rcl = j.clients.redis.getByInstance("system")
     statsclient = j.tools.aggregator.getClient(rcl, nodekey)
-    stat = statsclient.statGet('machine.process.threads@phys.{}.{}'.format(gid, nid))
+    stat = statsclient.statGet("machine.process.threads@phys.{}.{}".format(gid, nid))
 
     result = dict()
-    result['state'] = 'OK'
-    result['category'] = 'System Load'
+    result["state"] = "OK"
+    result["category"] = "System Load"
     uid = "Thread_check"
     if stat is None:
-        result['state'] = 'WARNING'
-        result['message'] = 'Number of threads is not available'
-        result['uid'] = uid 
+        result["state"] = "WARNING"
+        result["message"] = "Number of threads is not available"
+        result["uid"] = uid
         return [result]
 
     avg_thread = int(stat.h_avg)
-    result['message'] = 'Number of threads is: %d' % avg_thread
+    result["message"] = "Number of threads is: %d" % avg_thread
 
     if avg_thread > 20000:
-        result['state'] = 'ERROR'
-        result['uid'] = uid
+        result["state"] = "ERROR"
+        result["uid"] = uid
 
     elif avg_thread > 18000:
-        result['state'] = 'WARNING'
-        result['uid'] = uid
+        result["state"] = "WARNING"
+        result["uid"] = uid
 
     return [result]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(action())

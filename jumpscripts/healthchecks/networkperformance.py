@@ -19,26 +19,25 @@ order = 1
 enable = False
 async = True
 log = True
-queue = 'process'
+queue = "process"
 interval = (2 * j.application.whoAmI.nid) % 30
 period = "%s,%s * * * *" % (interval, interval + 30)
-roles = ['storagenode', 'storagedriver', 'cpunode']
+roles = ["storagenode", "storagedriver", "cpunode"]
 category = "monitor.healthcheck"
 timeout = 60
 
 
 class NetworkPerformance(object):
-
     def __init__(self):
         self._backplaneNet = None
         self._nic = None
         self._speed = None
         self._runingServer = None
-        self.nic = 'backplane1'
+        self.nic = "backplane1"
         self._nodes = []
-        self.scl = j.clients.osis.getNamespace('system')
+        self.scl = j.clients.osis.getNamespace("system")
         # appened opverstorage to python path
-        j.system.platform.ubuntu.checkInstall('iperf3', 'iperf3')
+        j.system.platform.ubuntu.checkInstall("iperf3", "iperf3")
 
     @property
     def backplaneNet(self):
@@ -59,10 +58,10 @@ class NetworkPerformance(object):
     def nodes(self):
         if not self._nodes:
             nodeips = []
-            nodes = self.scl.node.search({'roles': {'$in': roles}})[1:]
+            nodes = self.scl.node.search({"roles": {"$in": roles}})[1:]
             for node in nodes:
-                for net in node['netaddr']:
-                    for ip in net['ip']:
+                for net in node["netaddr"]:
+                    for ip in net["ip"]:
                         if ip in self.backplaneNet and ip != str(self.backplaneNet.ip):
                             nodeips.append(ip)
 
@@ -74,8 +73,8 @@ class NetworkPerformance(object):
         return self._nodes
 
     def runIperfServer(self):
-        j.logger.log('Running iperf server', 1)
-        self._runingServer = j.system.process.executeAsync('iperf3', ['-s'])
+        j.logger.log("Running iperf server", 1)
+        self._runingServer = j.system.process.executeAsync("iperf3", ["-s"])
 
     def stopIperfServer(self):
         if self._runingServer:
@@ -85,47 +84,56 @@ class NetworkPerformance(object):
         """
         """
         if retransmits > 10000:
-            return 'ERROR'
+            return "ERROR"
         elif retransmits > 5000:
-            return 'WARNING'
-        return 'OK'
+            return "WARNING"
+        return "OK"
 
     def getClusterBandwidths(self):
         final = []
         for ip in self.nodes:
-            result = {'category': 'Bandwidth Test', 'uid': ip}
+            result = {"category": "Bandwidth Test", "uid": ip}
             sshclient = j.remote.cuisine.connect(ip, 22)
-            sshclient.fabric.api.env['abort_on_prompts'] = True
-            sshclient.fabric.api.env['abort_exception'] = RuntimeError
+            sshclient.fabric.api.env["abort_on_prompts"] = True
+            sshclient.fabric.api.env["abort_exception"] = RuntimeError
             try:
-                j.logger.log('Installing iperf on %s' % ip, 1)
-                if not sshclient.command_check('iperf3'):
-                    sshclient.run('apt-get install -y iperf3')
-                output = sshclient.run('iperf3 -c %s --format m -k 10000 -b 1G -J' % self.backplaneNet.ip)
+                j.logger.log("Installing iperf on %s" % ip, 1)
+                if not sshclient.command_check("iperf3"):
+                    sshclient.run("apt-get install -y iperf3")
+                output = sshclient.run(
+                    "iperf3 -c %s --format m -k 10000 -b 1G -J" % self.backplaneNet.ip
+                )
                 try:
                     data = json.loads(output)
                 except:
-                    result['message'] = 'Failed to parse json data from iperf'
-                    result['state'] = 'ERROR'
+                    result["message"] = "Failed to parse json data from iperf"
+                    result["state"] = "ERROR"
                     final.append(result)
                     continue
 
-                retransmits = data['end']['sum_sent']['retransmits']
-                msg = "Retransmitted packages between %s and %s was %d" % (self.backplaneNet.ip, ip, retransmits)
-                result['message'] = msg
-                result['state'] = self.getbandwidthState(retransmits)
-                if result['state'] != 'OK':
+                retransmits = data["end"]["sum_sent"]["retransmits"]
+                msg = "Retransmitted packages between %s and %s was %d" % (
+                    self.backplaneNet.ip,
+                    ip,
+                    retransmits,
+                )
+                result["message"] = msg
+                result["state"] = self.getbandwidthState(retransmits)
+                if result["state"] != "OK":
                     print(msg)
                     eco = j.errorconditionhandler.getErrorConditionObject(
-                        msg=msg, category='monitoring', level=1, type='OPERATIONS')
+                        msg=msg, category="monitoring", level=1, type="OPERATIONS"
+                    )
                     eco.process()
                 final.append(result)
             except NetworkError:
-                result['state'] = 'ERROR'
-                result['message'] = 'Failed to connect to %s' % (ip)
+                result["state"] = "ERROR"
+                result["message"] = "Failed to connect to %s" % (ip)
                 final.append(result)
         if not final:
-            return [{'message': 'Single node', 'state': 'OK', 'category': 'Bandwidth Test'}]
+            return [
+                {"message": "Single node", "state": "OK", "category": "Bandwidth Test"}
+            ]
         return final
 
 
@@ -136,6 +144,8 @@ def action():
     ovs.stopIperfServer()
     return results
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import yaml
+
     print(yaml.dump(action(), default_flow_style=False))
