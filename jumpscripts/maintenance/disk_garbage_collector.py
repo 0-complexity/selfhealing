@@ -145,7 +145,7 @@ def heal_volume(
                             vpool=vpool_id,
                             storagedriver=volume_node_id,
                             volume_id=volume_id,
-                        ),
+                        )
                     )
                     print "Volume restarted successfully"
                     j.errorconditionhandler.raiseOperationalWarning(
@@ -153,7 +153,7 @@ def heal_volume(
                         category="selfhealing",
                         tags="GarbageCollector",
                     )
-                except RuntimeError as e:
+                except Exception as e:
                     print "Failed to restart the volume"
                     j.errorconditionhandler.raiseOperationalWarning(
                         message="Failed to restarted stopped volume %s\nError: %s"

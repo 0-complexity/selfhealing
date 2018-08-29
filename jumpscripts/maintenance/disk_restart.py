@@ -26,4 +26,4 @@ def action(vpool, storagedriver, volume_id):
             vpool=vpool, storagedriver=storagedriver
         )
     )
-    client.restart_object(volume_id, False)
+    client.restart_object(str(volume_id), False, req_timeout_secs=30)
