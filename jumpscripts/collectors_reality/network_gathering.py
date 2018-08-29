@@ -20,9 +20,25 @@ log = False
 
 
 def action():
+
+    startswith_filter = ("vx-", "space_", "gw_", "gwm-", "spc-")
     ncl = j.clients.osis.getCategory(j.core.osis.client, "system", "nic")
+    nodecl = j.clients.osis.getCategory(j.core.osis.client, "system", "node")
+    netinfo = j.system.net.getNetworkInfo(startwith_filter=startswith_filter)
+    node = nodecl.get(j.application.whoAmI.nid)
+    change = False
+    node_addr = j.system.net._networkInfoFilter(node.netaddr, startswith_filter)
+    for nodenet in node_addr:
+        for net in netinfo:
+            if nodenet["name"] == net["name"]:
+                if nodenet != net:
+                    change = True
+                    break
+
+    if change:
+        nodecl.updateSearch({'guid': node.guid}, {'$set': {'netaddr': netinfo}})
+
     rediscl = j.clients.redis.getByInstance("system")
-    netinfo = j.system.net.getNetworkInfo()
     results = dict()
     pattern = None
     if j.application.config.exists("nic.pattern"):
