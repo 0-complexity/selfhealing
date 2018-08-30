@@ -35,7 +35,7 @@ def action():
                     change = True
                     break
 
-    if change:
+    if change or not node_addr:
         nodecl.updateSearch({'guid': node.guid}, {'$set': {'netaddr': netinfo}})
 
     rediscl = j.clients.redis.getByInstance("system")
