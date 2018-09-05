@@ -26,7 +26,7 @@ def action():
     current_time = int(time.time())
     limit_time = current_time - period
     scl = j.clients.osis.getNamespace("system")
-    eco_count = scl.eco.count({"pushtime": {"$gte": limit_time, "$lte": current_time}})
+    eco_count = scl.eco.count({"lasttime": {"$gte": limit_time, "$lte": current_time}})
     if eco_count > 10:
         state = "ERROR"
     elif eco_count > 5:
