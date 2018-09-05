@@ -419,7 +419,7 @@ def action():
             messages.append(
                 {
                     "message": "Failed to ping {} from vm".format(
-                        ", ".join(pool.pingsips)
+                        ", ".join(pool.pingips)
                     ),
                     "category": category,
                     "state": "ERROR",
