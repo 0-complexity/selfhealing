@@ -19,6 +19,13 @@ async = True
 queue = "process"
 log = True
 
+def get_memory_stats():
+    from CloudscalerLibcloud.utils import libvirtutil
+    con = libvirtutil.LibvirtUtil()
+    reserved = int(con.config.get("reserved_mem")) / 1024
+    total = int(con.memory_usage()[0]) / 1024
+    usage = int(con.memory_usage()[1]) / 1024
+    return reserved, total, usage
 
 def action():
     import time
@@ -198,12 +205,9 @@ def action():
             )
         else:
             j.console.echo("Deploying VM", log=True)
-            from CloudscalerLibcloud.utils import libvirtutil
-
-            con = libvirtutil.LibvirtUtil()
-            reserved = int(con.config.get("reserved_mem")) / 1024
-            total = int(con.memory_usage()[0]) / 1024
-            usage = int(con.memory_usage()[1]) / 1024
+            reserved, total, usage = j.clients.redisworker.execFunction(
+                get_memory_stats, _queue="hypervisor"
+            )
             free = total - usage
             if free <= reserved:
                 status = "WARNING"
