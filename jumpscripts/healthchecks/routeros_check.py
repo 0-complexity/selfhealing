@@ -22,6 +22,7 @@ def action():
     category = "Network"
     ccl = j.clients.osis.getNamespace("cloudbroker")
     cloudspaces = ccl.cloudspace.simpleSearch({"status": "DEPLOYED"})
+    pcl = j.clients.portal.getByInstance("main")
 
     def check_ping(client, ip):
         for _ in range(5):
@@ -49,6 +50,8 @@ def action():
                 ),
             )
         vfw = vcl.virtualfirewall.get(vfwid)
+        if vfw.state == "STOPPED":
+            return
         client = None
         try:
             client = j.clients.routeros.get(
@@ -91,13 +94,27 @@ def action():
                     vfwid=vfwid, csname=c["name"], err=e
                 )
             )
-            return dict(
-                state="ERROR",
-                category=category,
-                message="RouterOS {roslink} on {spacelink} died".format(
-                    roslink=roslink, spacelink=spacelink
-                ),
-            )
+            message = "RouterOS {roslink} on {spacelink} died. Tried to restart it. The restart failed in the {action} action."
+            try:
+                pcl.actors.cloudbroker.cloudspace.stopVFW(c["id"])
+            except:
+                return dict(
+                    state="ERROR",
+                    category=category,
+                    message=message.format(
+                        roslink=roslink, spacelink=spacelink, action="stop"
+                    ),
+                )
+            try:
+                pcl.actors.cloudbroker.cloudspace.startVFW(c["id"])
+            except:
+                return dict(
+                    state="ERROR",
+                    category=category,
+                    message=message.format(
+                        roslink=roslink, spacelink=spacelink, action="start"
+                    ),
+                )
         finally:
             if client:
                 client.close()
