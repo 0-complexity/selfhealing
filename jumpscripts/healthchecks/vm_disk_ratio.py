@@ -30,7 +30,7 @@ def action(gid=None):
 
     vmachines_count = cbcl.vmachine.count({"status": {"$nin": ["ERROR", "DESTROYED"]}})
     disks_count = len(ovscl.get("/vdisks", params={})["data"])
-    if vmachines_count > 0:
+    if vmachines_count > 0 and disks_count > 100:
         ratio = round(disks_count / float(vmachines_count), 2)
         if ratio >= 6:
             result["message"] = "Disks to VMs ratio is {ratio}".format(ratio=ratio)
