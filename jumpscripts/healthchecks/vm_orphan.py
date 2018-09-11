@@ -45,7 +45,7 @@ def action():
     vmsbyguid = {vm["referenceId"]: vm for vm in vms}
     con = libvirt.open()
     networkorphan = "Found orphan network %s"
-    vmorphan = "Found orphan %s"
+    vmorphan = "Killed orphan %s"
     messages = []
     try:
         domains = con.listAllDomains()
@@ -115,7 +115,11 @@ def action():
                             {"id": vm["id"]}, {"$set": {"stackId": stack["id"]}}
                         )
                     else:
-                        messages.append(vmorphan % (domain.name()))
+                        eco = j.errorconditionhandler.getErrorConditionObject(
+                            msg=vmorphan % (domain.name()), category="monitoring", level=1, type="OPERATIONS"
+                        )
+                        eco.process()
+                        domain.destroy()
                 elif invalidstack:
                     # first update stack info then try to migrate it
                     vm = vmsbyguid[domainuuid]
