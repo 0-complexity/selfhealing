@@ -1,6 +1,7 @@
 from JumpScale import j
 from gevent.pool import Pool
 import gevent
+import time
 
 
 descr = """
@@ -50,7 +51,8 @@ def action():
                 ),
             )
         vfw = vcl.virtualfirewall.get(vfwid)
-        if vfw.state == "STOPPED":
+        wait = int(time.time()) - vfw.moddate < 60 # Vfw may be in another operation at the moment, skip it
+        if vfw.state == "STOPPED" or wait:
             return
         client = None
         try:
