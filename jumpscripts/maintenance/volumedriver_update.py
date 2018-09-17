@@ -35,6 +35,8 @@ def get_vdisk_storagedriver(ovscl, vdisk, storagedrivers):
 
 
 def action():
+    from JumpScale.lib.openvstorage.client import NotFoundException
+
     ovscl = get_ovs_client()
     ccl = j.clients.osis.getNamespace("cloudbroker")
     storagedrivers = ovscl.get(
@@ -44,9 +46,15 @@ def action():
     disks = ccl.disk.search({"status": {"$in": ["CREATED", "ASSIGNED"]}}, size=0)[1:]
     for disk in disks:
         guid = get_vdisk_guid(disk["referenceId"])
-        vdisk = ovscl.get(
-            "/vdisks/{}".format(guid), params={"contents": "vpool,storagerouter_guid"}
-        )
+        try:
+            vdisk = ovscl.get(
+                "/vdisks/{}".format(guid),
+                params={"contents": "vpool,storagerouter_guid"},
+            )
+        except NotFoundException:
+            # skip non existent disks in OVS, in case of a race condition happens (Disk is deleted during the execution time of this script)
+            continue
+
         storagedriver = get_vdisk_storagedriver(ovscl, vdisk, storagedrivers)
 
         disk_url = re.findall(r"[0-9]+(?:\.[0-9]+){3}:[0-9]+", disk["referenceId"])[0]
