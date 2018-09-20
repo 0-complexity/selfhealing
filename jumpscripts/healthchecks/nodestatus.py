@@ -25,9 +25,22 @@ def action():
     gid = j.application.whoAmI.gid
     nid = j.application.whoAmI.nid
     scl = j.clients.osis.getNamespace("system")
-    nodes = scl.node.search({"id": nid, "gid": gid})[1:]
+    node = scl.node.searchOne({"id": nid, "gid": gid})
     category = "Node Status"
-    node = nodes[0]
+    if not node:
+        hostname = j.system.net.getHostname()
+        management_ip = j.system.net.getDefaultIPConfig()[1]
+        out = j.system.fs.fileGetContents("/proc/uptime")
+        uptime = float(out.strip("\n").split(" ")[0]) / 3600 # uptime in hours
+
+        return [
+            {
+                "message": "Can not find a node with id {} and gid {}, hostname: {}, management ip: {},  uptime: {:.2f} H".format(nid, gid, hostname, management_ip, uptime),
+                "uid": category,
+                "category": category,
+                "state": "ERROR",
+            }
+        ]
     if node["status"] == "ERROR":
         return [
             {
