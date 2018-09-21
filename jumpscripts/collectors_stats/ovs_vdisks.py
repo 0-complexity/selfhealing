@@ -48,6 +48,9 @@ def action():
     if len(vdisks) == 0:
         return all_results
 
+    vpools = dict()
+    storage_routers = dict()
+
     for vdisk in vdisks:
 
         metrics = vdisk.statistics
@@ -74,7 +77,15 @@ def action():
         str_metrics = json.dumps(metrics)
         metrics = json.loads(str_metrics, parse_int=float)
 
-        vpool_name = VPool(vdisk.vpool_guid).name
+        vpool_name = vpools.get(vdisk.vpool_guid)
+        if vpool_name is None:
+            vpool_name = VPool(vdisk.vpool_guid).name
+            vpools[vdisk.vpool_guid] = vpool_name
+
+        storage_router_name = storage_routers.get(vdisk.storagerouter_guid)
+        if storage_router_name is None:
+            storage_router_name = StorageRouter(vdisk.storagerouter_guid).name
+            storage_routers[vdisk.storagerouter_guid] = storage_router_name
 
         for key, value in metrics.iteritems():
             if key.endswith("_ps") or not isinstance(value, float):
@@ -85,7 +96,7 @@ def action():
                 "nid": j.application.whoAmI.nid,
                 "disk_name": disk_name,
                 "volume_id": volume_id,
-                "storagerouter_name": StorageRouter(vdisk.storagerouter_guid).name,
+                "storagerouter_name": storage_router_name,
                 "vpool_name": vpool_name,
                 "failover_mode": vdisk.info["failover_mode"],
             }
