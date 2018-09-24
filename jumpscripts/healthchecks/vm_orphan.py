@@ -44,7 +44,7 @@ def action():
     )[1:]
     vmsbyguid = {vm["referenceId"]: vm for vm in vms}
     con = libvirt.open()
-    networkorphan = "Found orphan network %s"
+    networkorphan = "Orphan network %s is Destroyed"
     vmorphan = "Killed orphan %s"
     messages = []
     try:
@@ -83,7 +83,11 @@ def action():
                             {"$set": {"nid": j.application.whoAmI.nid}},
                         )
                     else:
-                        messages.append(networkorphan % networkid)
+                        domain.destroy()
+                        domain.undefine()
+                        j.errorconditionhandler.raiseOperationalWarning(
+                            networkorphan % domain.name()
+                        )
             else:
                 if domainuuid not in vmsbyguid:
                     vm = next(
