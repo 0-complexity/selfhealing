@@ -4,6 +4,7 @@ from urlparse import urlparse, parse_qsl
 from StringIO import StringIO
 import subprocess
 import time
+import psutil
 from datetime import datetime
 
 descr = """
@@ -25,7 +26,7 @@ log = True
 queue = "io"
 roles = ["storagenode"]
 logfile = "/var/log/ovs/arakoon_collapse.log"
-timeout = 60 * 60 * 2
+timeout = 60 * 60 * 23
 
 
 def systemdProperty(service, property):
@@ -41,16 +42,39 @@ def systemdProperty(service, property):
     )
 
 
-def execute(args, raiseonexit=False):
+def execute(args, raiseonexit=False, action=None):
+    action = action or "Cmd: " + " ".join(args)
     with open(logfile, "a+") as stderr:
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=stderr)
-        proc.wait()
+        proc_timeout = 60 * 30
+        for count in xrange(proc_timeout * 2):
+            if proc.poll() is not None:
+                break
+            elif count == proc_timeout:
+                j.errorconditionhandler.raiseOperationalWarning(
+                    message="{} took more than 30 min on gid: {} node: {}".format(
+                        action, j.application.whoAmI.gid, j.application.whoAmI.nid
+                    ),
+                    category="selfhealing",
+                )
+            time.sleep(1)
+        else:
+            j.errorconditionhandler.raiseOperationalCritical(
+                message="{} took more than 60 min on gid: {} node: {}".format(
+                    action,
+                    j.application.whoAmI.gid,
+                    j.application.whoAmI.nid,
+                    die=False,
+                ),
+                category="selfhealing",
+            )
         if raiseonexit and proc.returncode != 0:
             raise RuntimeError(
                 "Failed to execute {}: stdout: {}".format(
                     proc.returncode, proc.stdout.read()
                 )
             )
+
         return proc.stdout.read(), proc.returncode
 
 
@@ -157,7 +181,24 @@ def action():
                 info("Its sunday lets optimize db", 1)
                 execute(["arakoon", "--optimize-db", clustername, araip, araport])
             info("Collapse db", 1)
-            execute(["arakoon", "--copy-db-to-head", clustername, araip, araport, "10"])
+            for proc in psutil.get_process_list():
+                if proc.name() == "arakoon":
+                    cmdline = proc.cmdline()
+                    if "--copy-db-to-head" in cmdline and clustername in cmdline:
+                        j.errorconditionhandler.raiseOperationalWarning(
+                            message="Arakoon collapse still running from previous job on gid: {} nid: {}".format(
+                                j.application.whoAmI.gid,
+                                j.application.whoAmI.nid,
+                                die=False,
+                            ),
+                            category="selfhealing",
+                        )
+                        break
+            else:
+                execute(
+                    ["arakoon", "--copy-db-to-head", clustername, araip, araport, "10"],
+                    action="Arakoon collapse",
+                )
 
         araclient.delete(COLLAPSKEY)
 
