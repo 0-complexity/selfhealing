@@ -83,7 +83,8 @@ def action():
                             {"$set": {"nid": j.application.whoAmI.nid}},
                         )
                     else:
-                        domain.destroy()
+                        if domain.isActive():
+                            domain.destroy()
                         domain.undefine()
                         j.errorconditionhandler.raiseOperationalWarning(
                             networkorphan % domain.name()
