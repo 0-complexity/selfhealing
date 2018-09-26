@@ -22,7 +22,7 @@ log = True
 def action():
     category = "Network"
     ccl = j.clients.osis.getNamespace("cloudbroker")
-    cloudspaces = ccl.cloudspace.simpleSearch({"status": "DEPLOYED"})
+    cloudspaces = ccl.cloudspace.search({"status": "DEPLOYED", "type": "routeros"})[1:]
     pcl = j.clients.portal.getByInstance("main")
 
     def check_ping(client, ip):
