@@ -21,10 +21,11 @@ log = True
 
 
 def action():
+    from CloudscalerLibcloud.gateway import Gateway
+
     vcl = j.clients.osis.getNamespace("vfw")
     pcl = j.clients.portal.getByInstance("main")
     hcategory = "Network"
-    contservices = ["dnsmasq", "caddy", "cloud-init"]
     messages = []
     vfws = vcl.virtualfirewall.search(
         {"nid": j.application.whoAmI.nid, "type": "vgw"}, size=0
@@ -32,6 +33,7 @@ def action():
 
     def start_vfw(vfw):
         try:
+            print('Starting vfw {:04x}'.format(vfw['id']))
             pcl.actors.cloudbroker.cloudspace.startVFW(int(vfw["domain"]))
         except:
             # we are not handeling the exception as the portal will already have this logged
@@ -52,15 +54,19 @@ def action():
             services[servicename] = status
 
     for vfw in vfws:
-        for service in contservices:
+        gw = Gateway(vfw)
+        if not gw.namespace_exists():
+            start_vfw(vfw)
+            continue
+
+        for service in gw.services:
             servicename = "gw-{:04x}-{}.service".format(vfw["id"], service)
             if servicename not in services:
                 # start vfw
                 start_vfw(vfw)
             else:
-                if j.system.platform.ubuntu.statusService(servicename):
-                    services.pop(servicename)
-                else:
+                services.pop(servicename)
+                if not gw.service_status(service):
                     messages.append(
                         {
                             "state": "ERROR",
