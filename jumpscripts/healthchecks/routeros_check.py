@@ -21,6 +21,7 @@ log = True
 
 def action():
     category = "Network"
+    scl = j.clients.osis.getNamespace("system")
     ccl = j.clients.osis.getNamespace("cloudbroker")
     cloudspaces = ccl.cloudspace.search({"status": "DEPLOYED", "type": "routeros"})[1:]
     pcl = j.clients.portal.getByInstance("main")
@@ -97,16 +98,17 @@ def action():
                 )
             )
             message = "RouterOS {roslink} on {spacelink} died. Tried to restart it. The restart failed in the {action} action."
-            try:
-                pcl.actors.cloudbroker.cloudspace.stopVFW(c["id"])
-            except:
-                return dict(
-                    state="ERROR",
-                    category=category,
-                    message=message.format(
-                        roslink=roslink, spacelink=spacelink, action="stop"
-                    ),
-                )
+            if scl.node.get(vfw.nid).status == "ENABLED":
+                try:
+                    pcl.actors.cloudbroker.cloudspace.stopVFW(c["id"])
+                except:
+                    return dict(
+                        state="ERROR",
+                        category=category,
+                        message=message.format(
+                            roslink=roslink, spacelink=spacelink, action="stop"
+                        ),
+                    )
             try:
                 pcl.actors.cloudbroker.cloudspace.startVFW(c["id"])
             except:
