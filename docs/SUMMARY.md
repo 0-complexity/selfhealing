@@ -21,7 +21,6 @@
     - [process_physical_stats.py](collectors_stats/process_physical_stats.md)
     - [temp_stats.py](collectors_stats/temp_stats.md)
 - healthchecks
-    - [ays_process_check.py](healthchecks/ays_process_check.md)
     - [cpu_ctxpy_check.py](healthchecks/cpu_ctxpy_check.md)
     - [cpu_mem_core_check.py](healthchecks/cpu_mem_core_check.md)
     - [db_check.py](healthchecks/db_check.md)

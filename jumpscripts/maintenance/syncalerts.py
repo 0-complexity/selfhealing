@@ -81,7 +81,7 @@ def action():
     gids = ocl.grid.list()
     nids = ocl.node.list()
     nodes = ocl.node.search({"$fields": ["nid", "name", "id", "status"]}, size=0)[1:]
-    config = j.application.config.getDictFromPrefix("system.alerta")
+    config = j.application.config["system"].get("alerta")
     ok_states = ["OK", "SKIPPED"]
     if not config:
         return

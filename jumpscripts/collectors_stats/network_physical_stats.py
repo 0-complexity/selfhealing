@@ -34,8 +34,8 @@ def action():
     counters = psutil.network_io_counters(True)
     now = j.base.time.getTimeEpoch()
     pattern = None
-    if j.application.config.exists("gridmonitoring.nic.pattern"):
-        pattern = j.application.config.getStr("gridmonitoring.nic.pattern")
+    if j.application.config["grid"].get("nic", {}).get("pattern"):
+        pattern = j.application.config["grid"]["nic"]["pattern"]
 
     all_results = {}
     for nic, stat in counters.iteritems():

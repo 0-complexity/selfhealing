@@ -44,7 +44,7 @@ def action():
                             password=None, host=stack_ip
                         )
                         exit_code, _, _ = sshclient.rawExecute(
-                            command="ays restart -n jsagent"
+                            command="systemctl restart openvcloud_jsagent"
                         )
                     except socket.error:
                         connection_ok = False

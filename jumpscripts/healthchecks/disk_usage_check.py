@@ -42,8 +42,8 @@ def action():
     pattern = None
     cpunode = "cpunode" in j.core.grid.roles
 
-    if j.application.config.exists("gridmonitoring.disk.pattern"):
-        pattern = j.application.config.getStr("gridmonitoring.disk.pattern")
+    if j.application.config["grid"].get("disk", {}).get("pattern"):
+        pattern = j.application.config["grid"]["disk"]["pattern"]
 
     def diskfilter(partition):
         return not (pattern and j.codetools.regex.match(pattern, partition.device))

@@ -26,56 +26,51 @@ def action():
     ports = {}
     results = list()
 
-    for instance in j.atyourservice.findServices(name="redis"):
+    for instance in j.core.config.list("redis",):
 
-        if not instance.isInstalled():
+        instance_config = j.core.config.get("redis", instance)
+        port = instance_config["port"]
+        if not j.system.net.tcpPortConnectionTest(instance_config["ip"], instance_config["port"]):
             continue
 
-        for redisport in instance.getTCPPorts():
-            if redisport:
-                ports[instance.instance] = ports.get(instance.instance, [])
-                ports[instance.instance].append(int(redisport))
-
-    for instance, ports_val in ports.iteritems():
-        for port in ports_val:
-            result = {
-                "category": "Redis",
-                "uid": "redis:{}:port:{}".format(instance, port),
-                "state": "OK",
-            }
-            results.append(result)
-            errmsg = "Redis is not operational (halted or not installed)"
-            try:
-                rcl = j.clients.redis.getByInstance(instance)
-                if rcl.ping():
-                    state = "OK"
-                else:
-                    result["state"] = "ERROR"
-                    result["message"] = "Failed to ping redis."
-                    continue
-            except redis.ConnectionError:
+        result = {
+            "category": "Redis",
+            "uid": "redis:{}:port:{}".format(instance, port),
+            "state": "OK",
+        }
+        results.append(result)
+        errmsg = "Redis is not operational (halted or not installed)"
+        try:
+            rcl = j.clients.redis.getByInstance(instance)
+            if rcl.ping():
+                state = "OK"
+            else:
                 result["state"] = "ERROR"
-                result["message"] = errmsg
+                result["message"] = "Failed to ping redis."
                 continue
+        except redis.ConnectionError:
+            result["state"] = "ERROR"
+            result["message"] = errmsg
+            continue
 
-            maxmemory = float(rcl.config_get("maxmemory").get("maxmemory", 100))
-            used_memory = rcl.info()["used_memory"]
-            size, unit = j.tools.units.bytes.converToBestUnit(used_memory)
-            msize, munit = j.tools.units.bytes.converToBestUnit(maxmemory)
-            used_memorymsg = "%.2f %sB" % (size, unit)
-            maxmemorymsg = "%.2f %sB" % (msize, munit)
-            result["message"] = "*Port*: %s. *Memory usage*: %s/ %s" % (
-                port,
-                used_memorymsg,
-                maxmemorymsg,
-            )
+        maxmemory = float(rcl.config_get("maxmemory").get("maxmemory", 100))
+        used_memory = rcl.info()["used_memory"]
+        size, unit = j.tools.units.bytes.converToBestUnit(used_memory)
+        msize, munit = j.tools.units.bytes.converToBestUnit(maxmemory)
+        used_memorymsg = "%.2f %sB" % (size, unit)
+        maxmemorymsg = "%.2f %sB" % (msize, munit)
+        result["message"] = "*Port*: %s. *Memory usage*: %s/ %s" % (
+            port,
+            used_memorymsg,
+            maxmemorymsg,
+        )
 
-            if (used_memory / maxmemory) * 100 > 90:
-                state = "WARNING"
+        if (used_memory / maxmemory) * 100 > 90:
+            state = "WARNING"
 
-            result["state"] = state
-            print results
+        result["state"] = state
 
+    print results
     return results
 
 

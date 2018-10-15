@@ -41,8 +41,8 @@ def action():
     rediscl = j.clients.redis.getByInstance("system")
     results = dict()
     pattern = None
-    if j.application.config.exists("nic.pattern"):
-        pattern = j.application.config.getStr("nic.pattern")
+    if j.application.config["system"].get("nic", {}).get("pattern"):
+        pattern = j.application.config["system"]["nic"]["pattern"]
 
     for netitem in netinfo:
         name = netitem["name"]

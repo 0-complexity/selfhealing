@@ -107,10 +107,7 @@ def action(locations=["/opt/jumpscale7/var/log/", "/var/log/"], freespace_needed
     # In case any error occurred raise error
     if errors:
         raise RuntimeError("Failures in log cleanup:\n\n{}".format("\n\n".join(errors)))
-    nginx_services = j.atyourservice.findServices(name="nginx")
-    for service in nginx_services:
-        service.restart()
-    for service, status in j.system.platform.ubuntu.listServices().items():
+    for service in j.system.platform.ubuntu.listServices().keys():
         if "nginx" in service:
             j.system.platform.ubuntu.restartService(service)
 
