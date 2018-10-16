@@ -38,8 +38,7 @@ def action():
     nid = j.application.whoAmI.nid
     ncl = j.clients.osis.getNamespace("system").node
     current_node = ncl.get(nid).dump()
-    nodes = ncl.search({"roles": {"$in": roles}, "status": "ENABLED", "gid": gid})[1:]
-    nodes += ncl.search({"roles": {"$in": ["reflector"]}, "status": "ENABLED"})[1:]
+    nodes = ncl.search({"roles": {"$in": roles}, "gid": gid})[1:]
 
     # make sure we actually have ssh key
     if not j.system.fs.exists("/root/.ssh/id_rsa"):
@@ -92,20 +91,18 @@ def action():
         j.system.fs.writeFile("/root/.ssh/known_hosts", known_hosts)
 
     known_hosts = cleanup_list(known_hosts.splitlines())
-    authorized_keys = cleanup_list(authorized_keys.splitlines())
+    authorized_keys = set(cleanup_list(authorized_keys.splitlines()))
 
     allnodes = set(node["name"] for node in nodes)
     changes = {"public": set(), "host": set()}
+    requiredkeys = set()
     for node in nodes:
         # deal with public keys
         if len(node["publickeys"]) <= 0:
             print("Node {} doesn't have public keys configured.".format(node["name"]))
         else:
             for key in node["publickeys"]:
-                key = key.strip()
-                if key not in authorized_keys:
-                    authorized_keys.append(key)
-                    changes["public"].add(node["name"])
+                requiredkeys.add(key)
 
         # deal with host keys
         hostkey = node["hostkey"].strip()
@@ -123,14 +120,19 @@ def action():
                 known_hosts.append(entry)
                 changes["host"].add(node["name"])
 
-    if allnodes - changes["public"]:
-        print(
-            "Found public keys for {}".format(", ".join(allnodes - changes["public"]))
-        )
-    if changes["public"]:
-        print("Adding public keys for {}".format(", ".join(changes["public"])))
-        authorized_keys.append("")
-        j.system.fs.writeFile("/root/.ssh/authorized_keys", "\n".join(authorized_keys))
+    if requiredkeys != authorized_keys:
+        keystoremove = authorized_keys - requiredkeys
+        keystoadd = requiredkeys - authorized_keys
+        if keystoremove:
+            msg = "Going to remove keys \n{}".format("\n".join(keystoremove))
+            print(msg)
+            j.errorconditionhandler.raiseOperationalWarning(msg, category="selfhealing")
+        if keystoadd:
+            print("Going to add keys {}\n".format("\n".join(keystoadd)))
+
+        requiredkeys = list(requiredkeys)
+        requiredkeys.append("")
+        j.system.fs.writeFile("/root/.ssh/authorized_keys", "\n".join(requiredkeys))
 
     if allnodes - changes["host"]:
         print("Found host keys for {}".format(", ".join(allnodes - changes["host"])))
