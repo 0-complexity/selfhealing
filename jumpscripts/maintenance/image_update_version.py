@@ -42,6 +42,7 @@ def action():
             )
             curr_time = int(time.time())
             while int(time.time()) < curr_time + timeout / 6:
+                time.sleep(30)
                 report = pcl.system.task.get(taskguid=task_guid)
                 if report and report[0] is True:
                     pcl.cloudbroker.image.delete(
