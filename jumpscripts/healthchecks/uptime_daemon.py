@@ -18,17 +18,17 @@ def action(always_restart=False):
     is_active = j.system.platform.ubuntu.statusService
     healthcheck = {"uid": "Uptime Daemon", "category": "Uptime Daemon"}
 
-    if is_active("uptime-daemon"):
+    if is_active("openvcloud_uptime-daemon"):
         if always_restart:
-            j.do.execute("systemctl restart uptime-daemon")
+            j.do.execute("systemctl restart openvcloud_uptime-daemon")
             healthcheck.update(
                 {"message": "The uptime daemon had to be restarted", "state": "WARNING"}
             )
         else:
             healthcheck.update({"message": "Uptime daemon is running", "state": "OK"})
     else:
-        exitcode, _, _ = j.do.execute("systemctl restart uptime-daemon; sleep 3")
-        if exitcode or not is_active("uptime-daemon"):
+        exitcode, _, _ = j.do.execute("systemctl restart openvcloud_uptime-daemon; sleep 3")
+        if exitcode or not is_active("openvcloud_uptime-daemon"):
             healthcheck.update(
                 {
                     "message": "The uptime daemon crashed and couldn't restart it again",
