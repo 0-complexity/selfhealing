@@ -49,8 +49,19 @@ def action():
         try:
             vdisk = ovscl.get(
                 "/vdisks/{}".format(guid),
-                params={"contents": "vpool,storagerouter_guid"},
+                params={"contents": "vpool,storagerouter_guid,info"},
             )
+            if vdisk["info"]["live_status"] != "RUNNING":
+                taskguid = ovscl.post("/vdisks/{}/restart".format(guid))
+                status, result = ovscl.wait_for_task(taskguid, 30)
+                if not status:
+                    j.errorconditionhandler.raiseOperationalWarning(
+                        message="Can not restart vdisk {}, {}".format(
+                            vdisk["name"], result
+                        ),
+                        category="storage",
+                        tags="vdiskguid:{}".format(guid),
+                    )
         except NotFoundException:
             # skip non existent disks in OVS, in case of a race condition happens (Disk is deleted during the execution time of this script)
             continue
